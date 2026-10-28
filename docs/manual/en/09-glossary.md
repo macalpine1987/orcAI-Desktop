@@ -1,0 +1,47 @@
+# Glossary
+
+## Terms
+
+| Term | Meaning |
+|------|---------|
+| Annotation | A manual label for a recording: where each sound occurs. Stored as an Audacity label text file |
+| Batch | The group of training examples the model processes in one step |
+| Call equivalences | A mapping between the labels in your annotations and the model classes |
+| Class | A type of sound the model detects, such as `WHISTLE` |
+| Epoch | One full training cycle |
+| Fine-tuning | Continuing to train an existing model on new data |
+| Hyperparameters | Settings of the network design: number of filters, kernel size, dropout and others |
+| Pipeline | The sequence of eight steps the data goes through during training |
+| Snippet | A short, fixed-length piece of a spectrogram — one training example |
+| Spectrogram | A picture of sound: time horizontally, frequency vertically, brightness for loudness |
+| Threshold | The minimum probability for a signal to be written to the label file |
+| Train / val / test sets | Three parts of the data: for learning, for monitoring during training, and for the final evaluation |
+
+## App sections and orcAI commands
+
+| App section | orcAI command | Files |
+|-------------|---------------|-------|
+| Predictions | `predict` | `*_predicted.txt` |
+| Filtering | `filter-predictions` | `*_predicted_filtered.txt`, `*_call_duration_limits.json` |
+| Training | `train` and the preparation steps | `models/<name>/` |
+| Fine-tuning | `train` with a base model | `models/<name>/` |
+| Model test | `test` | test results in the model folder |
+| Creating a project | `init` | `*_orcai_parameter.json` |
+| Recordings table | `create-recording-table` | `recording_table.csv` |
+| Call equivalences | used by `create-label-arrays` | `call_equivalences.json` |
+
+## Sound classes
+
+Class names are not translated, so they are easy to match with the publications. The app's tables show a plain-language name next to each class.
+
+| Class | Name in the app | Sound |
+|-------|-----------------|-------|
+| `WHISTLE` | whistles | tonal calls, usually higher than pulsed calls |
+| `BUZZ` | buzzing | a rapid sequence of echolocation clicks with very short intervals |
+| `PHS` | prey handling sounds | brief broadband pulses while feeding on incapacitated prey |
+| `SS` | pulsed calls | stereotyped discrete pulsed calls |
+| `BR` | breathing | surfacing on a tag recording, not always an audible breath |
+| `HERDING` | herding calls | a low, nearly constant-frequency call before an underwater tail slap |
+| `TAILSLAP` | tail slaps | an underwater tail slap on a tightly grouped school |
+
+The exact set of classes depends on the model — you can see it in the model description in **Models**.

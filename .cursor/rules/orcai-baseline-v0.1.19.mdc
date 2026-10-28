@@ -1,0 +1,49 @@
+---
+description: Эталонная сборка orcAI Desktop v0.1.19 — откат и сравнение с baseline
+alwaysApply: true
+---
+
+# orcAI Desktop v0.1.19 (previous baseline)
+
+Версия **v0.1.19** (2026-09-22) — предыдущий эталон (текущий: **v0.1.20**). При запросе «откатись на v0.1.19», «как в v0.1.19», «верни поведение v0.1.19» — ориентируйтесь на этот baseline.
+
+Предыдущий эталон **v0.1.18** сохранён отдельно (`orcai-baseline-v0.1.18.mdc`).
+
+## Артефакты
+
+- **.app:** `/tmp/orcAI-Desktop_0.1.19_aarch64.app` (и архив `/tmp/orcai-desktop-baseline-v0.1.19-app`)
+- **Исходники:** `/tmp/orcai-desktop-baseline-v0.1.19-src` (снимок `orcai-desktop` на момент релиза)
+- **Документация:** `docs/RELEASES.md`
+
+## Архитектура (зафиксирована)
+
+| Слой | Путь / роль |
+|------|-------------|
+| Shell | Tauri 2 + Rust (`src-tauri/`) — spawn sidecar, порты, hide-on-close |
+| UI | React + TypeScript + Vite + Tailwind (`apps/ui/`) — только Lab |
+| Backend | Python 3.11 FastAPI sidecar (`apps/sidecar/`) + orcAI pip (**без форка**) |
+| Runtime | Динамический порт; `startAll` / `stopAll` / restart; bundled Python + AUTONOMY GATE |
+| Данные | SQLite (jobs/settings) + DuckDB; проекты = каталог orcAI на диске |
+| i18n | RU/EN; в UI `predict` → «распознавание»; **в таблице Задачи** — CLI-id (`predict`) |
+
+### Runtime (не ломать без явного запроса)
+
+- Старт приложения: прогресс **0%**, sidecar и движок **остановлены**
+- Запуск только кнопкой **«Запуск»** на Главной (`startAll`)
+- **Перезапуск:** `stopAll` → `startAll` с синхронным сбросом refs + live-check `invokeSidecarIsRunning` (фикс v0.1.9)
+- macOS: X / ⌘W — hide; ⌘Q — `stopEngine` + `stopSidecar`
+- Health / capabilities — только при `runtimeBase` сессии (не дефолт 8741)
+- `engineReady` / sidecar «готов» — только при `sidecarPhase === "running"`
+- Автономность / переносимость: `Python.framework` (incl. nested Python.app `@loader_path`) + vendored OpenSSL/sqlite/xz/mpdecimal; каждая сборка — **AUTONOMY GATE PASSED** (`orcai-autonomy-gate.mdc`)
+
+### UI (v0.1.19 snapshot)
+
+- Как v0.1.18 + ЭК-12/13 (конвейер, мастер обучения) + ЭК-14 монитор (m14 modal)
+- Монитор: KPI / батч-прогресс / график / Stop / Open folder; ошибки конвейера с RU/EN remediation
+- Фикс WKWebView: SVG-линии графика (backdrop-filter на `::before` оверлея)
+- Задачи (m16): шапка колонок charcoal, LED-индикаторы у CLI-команд
+- `PageHelpButton` — outlined «Справка» во всех основных разделах (на экране Справки нет)
+
+## Откат
+
+См. `docs/RELEASES.md` — `rsync` из `/tmp/orcai-desktop-baseline-v0.1.19-src` или пересборка `scripts/build-macos-release.sh`.

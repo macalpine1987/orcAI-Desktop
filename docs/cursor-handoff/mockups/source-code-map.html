@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>orcAI Desktop — карта исходников</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --card: #ffffff;
+      --ink: #1a1d21;
+      --muted: #5c6570;
+      --line: #d8dce2;
+      --shell: #eef1f4;
+      --ui: #e8f1ee;
+      --side: #e7eef6;
+      --eng: #dcefe6;
+      --eng-line: #3d8f6e;
+      --pill: #f7f8fa;
+      --mono: ui-monospace, "SF Mono", Menlo, monospace;
+      --sans: "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      width: 1600px;
+      height: 1120px;
+      overflow: hidden;
+    }
+    .page {
+      width: 1600px;
+      height: 1120px;
+      padding: 28px 36px 24px;
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 22px;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    .sub {
+      margin: 0 0 22px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .layers {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .layer {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 18px 16px;
+    }
+    .layer.shell { background: var(--shell); }
+    .layer.ui { background: var(--ui); }
+    .layer.side { background: var(--side); }
+    .layer.eng { background: var(--eng); border-color: var(--eng-line); }
+    .layer.head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+    .layer h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 650;
+    }
+    .layer .path {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: 8px;
+      font-weight: 400;
+    }
+    .badge {
+      font-size: 11px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      background: var(--pill);
+      border-radius: 999px;
+      padding: 2px 9px;
+      white-space: nowrap;
+    }
+    .grid {
+      display: grid;
+      gap: 8px 14px;
+    }
+    .g4 { grid-template-columns: repeat(4, 1fr); }
+    .g5 { grid-template-columns: repeat(5, 1fr); }
+    .g3 { grid-template-columns: repeat(3, 1fr); }
+    .box {
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px 9px;
+      min-height: 72px;
+    }
+    .box h3 {
+      margin: 0 0 4px;
+      font-size: 12px;
+      font-weight: 650;
+      font-family: var(--mono);
+    }
+    .box p, .box ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+    .box li { font-family: var(--mono); color: #3a414a; }
+    .arrow {
+      display: flex;
+      justify-content: center;
+      color: #6b7280;
+      font-size: 11px;
+      gap: 8px;
+      align-items: center;
+      height: 22px;
+    }
+    .arrow span {
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+    .bottom {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .note {
+      background: var(--card);
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      padding: 14px 18px;
+    }
+    .note h2 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .note ul {
+      margin: 0;
+      padding-left: 16px;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    .note code {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #1a1d21;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>orcAI Desktop v0.1.17 — карта исходного кода</h1>
+    <p class="sub">Репозиторий <code>orcai-desktop/</code> · вызовы сверху вниз · движок orcAI не форкается</p>
+
+    <div class="layers">
+      <section class="layer shell">
+        <div class="head">
+          <h2>Оболочка <span class="path">src-tauri/</span></h2>
+          <span class="badge">Tauri 2 · Rust</span>
+        </div>
+        <div class="grid g4">
+          <div class="box">
+            <h3>src/</h3>
+            <ul>
+              <li>main.rs</li>
+              <li>lib.rs — IPC commands</li>
+              <li>sidecar.rs — spawn / port</li>
+              <li>opened_files.rs</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>IPC</h3>
+            <ul>
+              <li>sidecar_start / stop</li>
+              <li>window_close_policy</li>
+              <li>ui_get_scale / set_scale</li>
+              <li>shell_reveal_in_finder</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>ACL</h3>
+            <ul>
+              <li>capabilities/default.json</li>
+              <li>permissions/*.toml</li>
+              <li>tauri.conf.json</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>scripts/</h3>
+            <ul>
+              <li>build-macos-release.sh</li>
+              <li>embed-python-*.sh</li>
+              <li>verify-app-python.sh</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <div class="arrow">↓ <span>invoke · hide-on-close · динамический порт</span></div>
+
+      <section class="layer ui">
+        <div class="head">
+          <h2>Lab UI <span class="path">apps/ui/src/</span></h2>
+          <span class="badge">React · TypeScript · Vite · i18n RU/EN</span>
+        </div>
+        <div class="grid g5">
+          <div class="box">
+            <h3>pages/</h3>
+            <ul>
+              <li>HomePage</li>
+              <li>ProjectsPage</li>
+              <li>PredictPage</li>
+              <li>ResultsPage · JobsPage</li>
+              <li>SettingsPage · HelpPage</li>
+              <li>PipelinePage · ModelsPage</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>components/</h3>
+            <ul>
+              <li>Predict*Studio</li>
+              <li>SpectrogramViewer</li>
+              <li>ResultsStudio</li>
+              <li>projects/*</li>
+              <li>LabDock · AppShell</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>api/ · sidecar/</h3>
+            <ul>
+              <li>SidecarContext</li>
+              <li>spectrogram.ts</li>
+              <li>labels.ts · results.ts</li>
+              <li>jobs · maintenance</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>workspace/ · prefs</h3>
+            <ul>
+              <li>predictQueue.ts</li>
+              <li>predictSettings.ts</li>
+              <li>PreferencesContext</li>
+              <li>platform/ · layout/</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>locales</h3>
+            <ul>
+              <li>public/locales/ru</li>
+              <li>public/locales/en</li>
+              <li>predict → «распознавание»</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <div class="arrow">↓ <span>HTTP 127.0.0.1:&lt;port&gt; · /health · /v1/*</span></div>
+
+      <section class="layer side">
+        <div class="head">
+          <h2>Sidecar <span class="path">apps/sidecar/src/orcai_desktop_sidecar/</span></h2>
+          <span class="badge">Python 3.11 · FastAPI</span>
+        </div>
+        <div class="grid g4">
+          <div class="box">
+            <h3>ядро</h3>
+            <ul>
+              <li>main.py — маршруты</li>
+              <li>jobs.py · job_queue.py</li>
+              <li>job_worker.py · runner.py</li>
+              <li>engine.py · engine_call.py</li>
+              <li>store.py · maintenance.py</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>adapters/</h3>
+            <ul>
+              <li>predict.py</li>
+              <li>spectrogram.py + render</li>
+              <li>filter_preview.py</li>
+              <li>results_summary.py</li>
+              <li>labels.py · training.py</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>проекты</h3>
+            <ul>
+              <li>project_studio.py</li>
+              <li>project_registry.py</li>
+              <li>recording_table_params.py</li>
+              <li>adapters/audio_import.py</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>/v1 API</h3>
+            <ul>
+              <li>/jobs · /projects</li>
+              <li>/spectrogram/tile</li>
+              <li>/filter-predictions</li>
+              <li>/results/summary</li>
+              <li>/audio/playback</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <div class="arrow">↓ <span>import orcai · без форка · CLI 3.0.2</span></div>
+
+      <section class="layer eng">
+        <div class="head">
+          <h2>Движок orcAI <span class="path">pip в bundled Python.framework</span></h2>
+          <span class="badge">не исходники Desktop</span>
+        </div>
+        <div class="grid g3">
+          <div class="box">
+            <h3>пакет</h3>
+            <p>orcAI 3.0.2 · TensorFlow · librosa · модели orcai-isl-v1, orcai-nor-v1</p>
+          </div>
+          <div class="box">
+            <h3>команды</h3>
+            <p>predict · filter-predictions · create-spectrograms · train · и остальные CLI</p>
+          </div>
+          <div class="box">
+            <h3>автономия</h3>
+            <p>Contents/Resources/python/ · dylibs/ · nested Python.app @loader_path</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="bottom">
+      <section class="note">
+        <h2>Данные на диске пользователя</h2>
+        <ul>
+          <li>Каталог проекта orcAI: WAV, <code>recording_table.csv</code>, <code>*_predicted.txt</code>, параметры, модели</li>
+          <li>SQLite sidecar: очередь задач, настройки, <code>project_focus</code></li>
+          <li>DuckDB: индексы CSV / сводки</li>
+          <li>Preferences Store (Tauri): тема, язык, масштаб, CPU/GPU</li>
+        </ul>
+      </section>
+      <section class="note">
+        <h2>Что не смешивать</h2>
+        <ul>
+          <li>UI не вызывает orcAI напрямую — только sidecar HTTP</li>
+          <li>Rust не считает спектрограммы — только spawn и порты</li>
+          <li>Исходники orcAI в репозитории Desktop нет</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

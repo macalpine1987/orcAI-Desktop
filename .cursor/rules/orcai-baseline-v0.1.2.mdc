@@ -1,0 +1,29 @@
+---
+description: Эталонная сборка orcAI Desktop v0.1.2 — откат и сравнение с baseline
+alwaysApply: true
+---
+
+# orcAI Desktop v0.1.2 (baseline)
+
+Версия **v0.1.2** (2026-07-22) — предыдущая эталонная сборка (текущий baseline: **v0.1.7**). При запросе «откатись на v0.1.2», «как в v0.1.2», «верни поведение v0.1.2» — ориентируйтесь на этот baseline.
+
+Предыдущий эталон **v0.1.1** сохраняется отдельно (`orcai-baseline-v0.1.1.mdc`, пути `/tmp/...v0.1.1...`).
+
+## Артефакты
+
+- **.app:** `/tmp/orcAI-Desktop_0.1.2_aarch64.app` (и архив `/tmp/orcai-desktop-baseline-v0.1.2-app`)
+- **Исходники:** `/tmp/orcai-desktop-baseline-v0.1.2-src` (снимок `orcai-desktop` на момент релиза)
+- **Документация:** `docs/RELEASES.md`
+
+## Поведение runtime (не ломать без явного запроса)
+
+- При запуске приложения: прогресс **0%**, sidecar и движок **остановлены**
+- Запуск только по кнопке **«Запуск»** на главной (`startAll`)
+- Закрытие приложения: `stopEngine` + `stopSidecar` (UI `onCloseRequested` + Rust `RunEvent::Exit`)
+- `fetchSidecarHealth` / capabilities — **только** при привязанном порту сессии (`runtimeBase`), не дефолтный 8741
+- `engineReady` и статус sidecar «готов» — только при `sidecarPhase === "running"`
+- Индикатор готовности панели «Среда для анализа»: зелёная jewel-лампочка (`RuntimeReadyLamp`), не mono-accent
+
+## Откат
+
+См. `docs/RELEASES.md` — `rsync` из `/tmp/orcai-desktop-baseline-v0.1.2-src` или пересборка `scripts/build-macos-release.sh`.

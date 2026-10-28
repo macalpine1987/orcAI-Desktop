@@ -1,0 +1,53 @@
+---
+description: Эталонная сборка orcAI Desktop v0.1.18 — откат и сравнение с baseline
+alwaysApply: true
+---
+
+# orcAI Desktop v0.1.18 (baseline)
+
+Версия **v0.1.18** (2026-09-18) — предыдущий эталон (текущий: **v0.1.19**). При запросе «откатись на v0.1.18», «как в v0.1.18», «верни поведение v0.1.18» — ориентируйтесь на этот baseline.
+
+Предыдущий эталон **v0.1.17** сохранён отдельно (`orcai-baseline-v0.1.17.mdc`).
+
+## Артефакты
+
+- **.app:** `/tmp/orcAI-Desktop_0.1.18_aarch64.app` (и архив `/tmp/orcai-desktop-baseline-v0.1.18-app`)
+- **Исходники:** `/tmp/orcai-desktop-baseline-v0.1.18-src` (снимок `orcai-desktop` на момент релиза)
+- **Документация:** `docs/RELEASES.md`
+
+## Архитектура (зафиксирована)
+
+| Слой | Путь / роль |
+|------|-------------|
+| Shell | Tauri 2 + Rust (`src-tauri/`) — spawn sidecar, порты, hide-on-close |
+| UI | React + TS + Vite + Tailwind (`apps/ui/`) — только Lab |
+| Backend | Python 3.11 FastAPI sidecar (`apps/sidecar/`) + orcAI pip (**без форка**) |
+| Runtime | Динамический порт; `startAll` / `stopAll` / restart; bundled Python + AUTONOMY GATE |
+| Данные | SQLite (jobs/settings) + DuckDB; проекты = каталог orcAI на диске |
+| i18n | RU/EN; в UI `predict` → «распознавание»; **в таблице Задачи** — CLI-id (`predict`) |
+
+### Runtime (не ломать без явного запроса)
+
+- Старт приложения: прогресс **0%**, sidecar и движок **остановлены**
+- Запуск только кнопкой **«Запуск»** на Главной (`startAll`)
+- **Перезапуск:** `stopAll` → `startAll` с синхронным сбросом refs + live-check `invokeSidecarIsRunning` (фикс v0.1.9)
+- macOS: X / ⌘W — hide; ⌘Q — `stopEngine` + `stopSidecar`
+- Health / capabilities — только при `runtimeBase` сессии (не дефолт 8741)
+- `engineReady` / sidecar «готов» — только при `sidecarPhase === "running"`
+- Автономность / переносимость: `Python.framework` (incl. nested Python.app `@loader_path`) + vendored OpenSSL/sqlite/xz/mpdecimal; каждая сборка — **AUTONOMY GATE PASSED** (`orcai-autonomy-gate.mdc`)
+
+### UI (v0.1.18 snapshot)
+
+- Главная / Проекты / Параметры — как v0.1.12; вкладки Проектов — капсулы как в Задачах; радиокнопки фокуса круглые
+- Анализ (ЭК-7 / m04) — как v0.1.13; пол вероятности: бейдж `> N`; черта `-th` совпадает с подписью **50**
+- Фильтрация (ЭК-8 / m05) — как v0.1.15 + кнопка «Результаты» как на Анализе
+- Результаты (ЭК-9 / m06) — как v0.1.16
+- Настройки (ЭК-10 / m17): Среда выполнения + Данные; Интерфейс; капсулы как в Задачах; factory reset → тёмная тема + ACL window chrome; `-cdl` opt-in. Вкладка «О программе» **снята**
+- **Справка (ЭК-11 / m18–m22, m38):** Руководство / О программе / Лицензия; About = Desktop + CITATION.cff + публикация MMS; LICENSE-файл на вкладке Лицензия; THIRD_PARTY только в пакете; Т-16 UI sign-off **Pass**
+- Иконка `.app`: squircle с прозрачными углами (`scripts/prepare-app-icon-master.py`)
+- Задачи (m16): шапка колонок charcoal, LED-индикаторы у CLI-команд
+- `PageHelpButton` — outlined «Справка» во всех основных разделах (на экране Справки нет)
+
+## Откат
+
+См. `docs/RELEASES.md` — `rsync` из `/tmp/orcai-desktop-baseline-v0.1.18-src` или пересборка `scripts/build-macos-release.sh`.

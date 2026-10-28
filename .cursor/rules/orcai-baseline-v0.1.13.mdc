@@ -1,0 +1,49 @@
+---
+description: Эталонная сборка orcAI Desktop v0.1.13 — откат и сравнение с baseline (предыдущий; текущий v0.1.18)
+alwaysApply: true
+---
+
+# orcAI Desktop v0.1.13 (previous baseline)
+
+Версия **v0.1.13** (2026-09-16) — предыдущий эталон (текущий: **v0.1.18**). При запросе «откатись на v0.1.13», «как в v0.1.13», «верни поведение v0.1.13» — ориентируйтесь на этот baseline.
+
+Предыдущий эталон **v0.1.12** сохранён отдельно (`orcai-baseline-v0.1.12.mdc`).
+
+## Артефакты
+
+- **.app:** `/tmp/orcAI-Desktop_0.1.13_aarch64.app` (и архив `/tmp/orcai-desktop-baseline-v0.1.13-app`)
+- **Исходники:** `/tmp/orcai-desktop-baseline-v0.1.13-src` (снимок `orcai-desktop` на момент релиза)
+- **Документация:** `docs/RELEASES.md`
+
+## Архитектура (зафиксирована)
+
+| Слой | Путь / роль |
+|------|-------------|
+| Shell | Tauri 2 + Rust (`src-tauri/`) — spawn sidecar, порты, hide-on-close |
+| UI | React + TS + Vite + Tailwind (`apps/ui/`) — только Lab |
+| Backend | Python 3.11 FastAPI sidecar (`apps/sidecar/`) + orcAI pip (**без форка**) |
+| Runtime | Динамический порт; `startAll` / `stopAll` / restart; bundled Python + AUTONOMY GATE |
+| Данные | SQLite (jobs/settings) + DuckDB; проекты = каталог orcAI на диске |
+| i18n | RU/EN; в UI `predict` → «распознавание»; **в таблице Задачи** — CLI-id (`predict`) |
+
+### Runtime (не ломать без явного запроса)
+
+- Старт приложения: прогресс **0%**, sidecar и движок **остановлены**
+- Запуск только кнопкой **«Запуск»** на Главной (`startAll`)
+- **Перезапуск:** `stopAll` → `startAll` с синхронным сбросом refs + live-check `invokeSidecarIsRunning` (фикс v0.1.9)
+- macOS: X / ⌘W — hide; ⌘Q — `stopEngine` + `stopSidecar`
+- Health / capabilities — только при `runtimeBase` сессии (не дефолт 8741)
+- `engineReady` / sidecar «готов» — только при `sidecarPhase === "running"`
+- Автономность / переносимость: `Python.framework` (incl. nested Python.app `@loader_path`) + vendored OpenSSL/sqlite/xz/mpdecimal; каждая сборка — **AUTONOMY GATE PASSED** (`orcai-autonomy-gate.mdc`)
+
+### UI (v0.1.13 snapshot)
+
+- Главная / Проекты / Параметры — как v0.1.12
+- **Распознавание · Анализ (ЭК-7 / m04, code gate Pass 2026-09-16):** studio transport + сегменты + спектрограмма + таблица детекций; вкладка «Анализ»; prev/next записей у центральной линии; таблица 3–8 видимых строк; спектрограмма с потолком (`cqh`, не бесконечный flex)
+- ТЗ масштабирования Lab UI: `docs/cursor-handoff/TZ-layout-scale.md` (§9 — внедрено)
+- Задачи (m16): шапка колонок charcoal, LED-индикаторы у CLI-команд
+- `PageHelpButton` — outlined «Справка» во всех основных разделах
+
+## Откат
+
+См. `docs/RELEASES.md` — `rsync` из `/tmp/orcai-desktop-baseline-v0.1.13-src` или пересборка `scripts/build-macos-release.sh`.

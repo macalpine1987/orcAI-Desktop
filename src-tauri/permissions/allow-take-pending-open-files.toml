@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-take-pending-open-files"
+description = "Read file paths passed by the OS at startup (Open With, double-click)."
+commands.allow = ["take_pending_open_files"]

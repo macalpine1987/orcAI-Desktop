@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>orcAI Desktop · Filter studio (from code)</title>
+<style>
+  :root {
+    --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --font-sans: "Inter", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #0c0c0c;
+    color: rgb(255 255 255 / 0.92);
+    font-family: var(--font-sans);
+    font-size: 13px;
+  }
+  .shell {
+    display: grid;
+    grid-template-columns: 11.5rem 1fr;
+    width: 1280px;
+    height: 800px;
+    margin: 0 auto;
+    background: #121212;
+    border: 1px solid #2a2a2a;
+  }
+  .sidebar {
+    border-right: 1px solid #2a2a2a;
+    padding: 0.75rem 0.5rem;
+    background: #0f0f0f;
+  }
+  .brand { font-size: 11px; font-weight: 650; letter-spacing: 0.02em; margin: 0 0 0.85rem 0.35rem; color: #e8e8ea; }
+  .brand span { opacity: 0.55; font-weight: 500; }
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav a {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.5rem; border-radius: 6px;
+    color: rgb(255 255 255 / 0.7); text-decoration: none; font-size: 12px;
+  }
+  .nav a.is-active { background: #e8e8ea; color: #111; font-weight: 600; }
+  .main {
+    display: flex; flex-direction: column; min-width: 0; min-height: 0;
+    width: 100%; padding: 10px; box-sizing: border-box; background: #0c0c0c;
+  }
+  .studio-panel {
+    flex: 1; min-height: 0; display: flex; flex-direction: column;
+    border: 1px solid #2a2c2f; border-radius: 8px; background: #1a1a1a;
+    box-shadow: inset 0 1px 0 #3d3e40, 0 0 0 1px #2a2c2f;
+    overflow: hidden;
+  }
+  .page-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 0.75rem 1.15rem 0.35rem; gap: 1rem; flex: 0 0 auto;
+  }
+  .page-head h1 { margin: 0; font-size: 1.35rem; font-weight: 650; }
+  .page-head p { margin: 0.35rem 0 0; font-size: 12px; color: rgb(255 255 255 / 0.5); max-width: 36rem; }
+  .head-actions { display: flex; align-items: center; gap: 0.65rem; }
+  .crumb { font-size: 11px; color: rgb(255 255 255 / 0.45); }
+  .crumb span { color: rgb(255 255 255 / 0.28); }
+  .help-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    border: 1px solid #4a4a4a; background: #1e1e1e; color: #c8c8c8;
+    border-radius: 999px; padding: 0.25rem 0.65rem 0.25rem 0.35rem; font-size: 11px;
+  }
+  .help-btn i {
+    display: inline-flex; width: 1.15rem; height: 1.15rem; border-radius: 999px;
+    border: 1px solid #5a5a5a; align-items: center; justify-content: center; font-style: normal;
+  }
+  .tabs-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.1rem 1.15rem 0.4rem; gap: 0.75rem; flex: 0 0 auto;
+  }
+  .tabs { display: flex; gap: 0.35rem; }
+  .tab {
+    padding: 0.4rem 0.75rem; border-radius: 999px; border: 1px solid #3a3a3a;
+    background: #1a1a1a; color: rgb(255 255 255 / 0.7); font-size: 12px;
+  }
+  .tab.is-active { background: #e8e8ea; color: #111; border-color: #e8e8ea; font-weight: 600; }
+  .tab .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 1.35rem; height: 1.1rem; margin-left: 0.25rem; padding: 0 0.3rem;
+    border-radius: 999px; background: #c8c8c8; color: #222; font-size: 10px; font-weight: 650;
+  }
+  .predict-filter-track-bar {
+    display: flex;
+    align-items: center;
+    flex: 0 1 34rem;
+    min-width: 18rem;
+    max-width: 38rem;
+    height: 2.5rem;
+    margin-left: auto;
+    padding: 0 0.85rem;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: 1px solid #3a3a3c;
+    background: #242426;
+    color: #ececec;
+    border-radius: 0.625rem;
+  }
+  .track-file {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    min-width: 0;
+    width: 100%;
+    height: 1.5rem;
+  }
+  .track-wave {
+    display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center;
+    width: 1rem; height: 1rem; margin-right: 0.625rem; color: #e8e8e8;
+  }
+  .track-name {
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    margin-right: 0.5rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500;
+  }
+  .track-end {
+    display: inline-flex; flex: 0 0 auto; align-items: center; margin-left: auto; gap: 0.4rem; height: 100%;
+  }
+  .track-nav {
+    display: inline-flex; align-items: stretch; height: 1.5rem;
+    border: 1px solid #353537; border-radius: 0.375rem; overflow: hidden;
+    background: linear-gradient(180deg, #2e2f31 0%, #242526 100%);
+  }
+  .track-nav span {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.55rem; color: #f0f0f0; font-size: 12px;
+  }
+  .track-nav span + span { border-left: 1px solid #3a3a3c; }
+  .track-menu {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.5rem; height: 1.5rem; border: 1px solid #353537; border-radius: 0.3125rem;
+    background: #28292b; color: #e8e8e8;
+  }
+  .track-meta {
+    white-space: nowrap; font-size: 0.6875rem; font-variant-numeric: tabular-nums; color: #6a6a6a;
+  }
+  .dock {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.25rem 0.75rem; border-top: 1px solid #2a2a2a; background: #0f0f0f;
+    font-size: 11px; color: rgb(255 255 255 / 0.45);
+  }
+
+  /* PredictFilterStudio + predict-filter.css + ps-btn from projects-studio.css */
+  .predict-filter-studio {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    container-type: size;
+    container-name: studio-filter;
+  }
+  .predict-filter-m05 {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: auto;
+    padding: 0.85rem 1rem 0.75rem;
+    gap: 0.7rem;
+  }
+  .predict-filter-m05-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(16rem, 0.85fr);
+    gap: 0.75rem;
+    align-items: stretch;
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+  .predict-filter-m05-limits,
+  .predict-filter-m05-side {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid #2a2c2f;
+    border-radius: 0.65rem;
+    background: #191a1b;
+    padding: 0.7rem 0.8rem 0.75rem;
+  }
+  .predict-filter-m05-limits-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-bottom: 0.55rem;
+  }
+  .predict-filter-m05-limits-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .predict-filter-m05-limits-head h3,
+  .predict-filter-m05-side h3 {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a8b8e;
+  }
+  .predict-filter-m05-limits-file {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: #6a6b6e;
+  }
+  .predict-filter-m05-limits-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .predict-filter-m05-tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 1.85rem;
+    padding: 0 0.8rem;
+    border-radius: 999px;
+    border: 1px solid #3a3b3e;
+    background: #2a2b2e;
+    color: #e4e5e7;
+    font-size: 0.75rem;
+  }
+  .predict-filter-m05-tool.is-outline {
+    background: transparent;
+    color: #c8c9cc;
+    border-color: #4a4b4e;
+  }
+  .predict-filter-m05-tool.is-quiet {
+    margin-left: auto;
+    border: none;
+    background: none;
+    color: #7a7b7e;
+    padding: 0 0.2rem;
+  }
+  .ps-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2rem;
+    padding: 0 0.95rem;
+    border-radius: 8px;
+    border: 1px solid #4a4b4e;
+    background: linear-gradient(180deg, #2a2b2d 0%, #1a1b1c 100%);
+    color: #d8d9db;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      0 1px 2px rgb(0 0 0 / 0.35);
+  }
+  .ps-btn-sm {
+    min-height: 1.7rem;
+    padding: 0 0.65rem;
+    font-size: 0.75rem;
+    border-radius: 7px;
+  }
+  .ps-btn-primary {
+    color: #0a0a0a;
+    background: linear-gradient(180deg, #f3f3f4 0%, #d6d6d8 100%);
+    border: 1px solid #bdbdc0;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.7),
+      0 1px 2px rgb(0 0 0 / 0.4);
+  }
+  .predict-filter-m05-table-wrap {
+    --m16-fs-10: 10px;
+    --m16-fs-11: 11px;
+    --m16-th-pad-y: 6px;
+    --m16-td-pad-y: 9px;
+    --m16-cell-pad-x: 12px;
+    --m16-row-h: 34px;
+    --m16-table-well: #131415;
+    --m16-table-head: #212224;
+    --m16-table-head-top: #232426;
+    --m16-table-head-bot: #1e1f21;
+    --m16-table-row-a: #101112;
+    --m16-table-row-b: #0f1011;
+    --m16-table-row-hover: #141516;
+    --m16-table-rim: #1c1e20;
+    --m16-table-rim-outer: #2a2c2f;
+    --m16-thead-text: #757578;
+    overflow: auto;
+    min-height: 0;
+    flex: 0 1 auto;
+    border: 1px solid var(--m16-table-rim-outer);
+    border-radius: 6px;
+    background: var(--m16-table-well);
+    box-shadow:
+      inset 0 1px 0 #3d3e40,
+      inset 0 2px 8px rgb(0 0 0 / 0.55);
+  }
+  .predict-filter-m05-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .predict-filter-m05-table thead tr {
+    border-bottom: 1px solid var(--m16-table-rim);
+    background: var(--m16-table-head);
+  }
+  .predict-filter-m05-table th {
+    position: sticky;
+    top: 0;
+    padding: 6px 12px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--m16-thead-text);
+    font-weight: 600;
+    text-align: left;
+    border: none;
+    background: linear-gradient(180deg, #232426 0%, #1e1f21 100%);
+    box-shadow: 0 1px 0 #1c1e20;
+  }
+  .predict-filter-m05-table thead tr:first-child th:first-child {
+    border-top-left-radius: 5px;
+  }
+  .predict-filter-m05-table thead tr:first-child th:last-child {
+    border-top-right-radius: 5px;
+  }
+  .predict-filter-m05-table tbody tr {
+    background: var(--m16-table-row-a);
+    min-height: 34px;
+  }
+  .predict-filter-m05-table tbody tr + tr {
+    border-top: 1px solid var(--m16-table-rim);
+  }
+  .predict-filter-m05-table tbody tr:nth-child(even) {
+    background: var(--m16-table-row-b);
+  }
+  .predict-filter-m05-table tbody tr.is-selected {
+    background: #20262b;
+  }
+  .predict-filter-m05-table tbody tr.is-selected td:first-child {
+    box-shadow: inset 3px 0 0 #6a8ec8;
+  }
+  .predict-filter-m05-table td {
+    padding: 9px 12px;
+    font-size: 11px;
+    color: #d4d4d4;
+    border: none;
+    vertical-align: middle;
+  }
+  .predict-filter-m05-class {
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .predict-filter-m05-table input {
+    width: 3.2rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0;
+  }
+  .predict-filter-m05-table input::placeholder { color: #6a6b6e; }
+  .predict-filter-m05-table th.is-num,
+  .predict-filter-m05-table td.is-num { text-align: right; }
+  .predict-filter-m05-table td.is-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .predict-filter-m05-table .is-keep { color: #49c578; }
+  .predict-filter-m05-table .is-drop { color: #e05b5b; }
+  .predict-filter-m05-hint,
+  .predict-filter-m05-note,
+  .predict-filter-m05-source-n {
+    margin: 0.45rem 0 0;
+    font-size: 0.68rem;
+    line-height: 1.4;
+    color: #7a7b7e;
+  }
+  .predict-filter-m05-hist {
+    flex: 0 0 auto;
+    margin-top: 0.45rem;
+  }
+  .predict-filter-m05-hist-plot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 9.75rem;
+    min-height: 7.25rem;
+    padding: 1.45rem 0.55rem 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #1c1e20;
+    background: #0a0b0c;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+    overflow: visible;
+  }
+  .predict-filter-m05-hist-canvas {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .predict-filter-m05-hist-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.2rem;
+    height: 100%;
+    pointer-events: none;
+  }
+  .predict-filter-m05-hist-bar {
+    flex: 1 1 0;
+    min-width: 0;
+    border-radius: 0.14rem 0.14rem 0 0;
+    opacity: 0.92;
+    background: #AA4499;
+  }
+  .predict-filter-m05-hist-bar.is-drop {
+    background: #8a6844;
+    opacity: 0.88;
+  }
+  .predict-filter-m05-hist-range {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgb(125 255 163 / 0.1);
+    box-shadow: inset 0 0 0 1px rgb(125 255 163 / 0.14);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .predict-filter-m05-hist-gate {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    margin-left: -5px;
+    background: transparent;
+    z-index: 2;
+  }
+  .predict-filter-m05-hist-gate::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1.5px;
+    margin-left: -0.75px;
+    background: #7dffa3;
+    box-shadow: 0 0 7px rgb(125 255 163 / 0.55);
+  }
+  .predict-filter-m05-hist-mark {
+    position: absolute;
+    top: -1.15rem;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: #7dffa3;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .predict-filter-m05-hist-mark.is-min { transform: translateX(0.4rem); }
+  .predict-filter-m05-hist-mark.is-max { transform: translateX(calc(-100% - 0.4rem)); }
+  .predict-filter-m05-hist-axis {
+    margin-top: 0.4rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6a6b6e;
+  }
+  .predict-filter-m05-hist-hint {
+    margin: 0.3rem 0 0;
+    font-size: 0.62rem;
+    line-height: 1.35;
+    color: #6a6b6e;
+  }
+  .predict-filter-m05-source {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.9rem;
+  }
+  .predict-filter-m05-source h3 { margin: 0; }
+  .predict-filter-m05-source select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    min-height: 2.1rem;
+    padding: 0.4rem 1.9rem 0.4rem 0.7rem;
+    border: 1px solid #2e3033;
+    border-radius: 0.45rem;
+    background-color: #101112;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%238a8b8e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.65rem center;
+    background-size: 0.75rem;
+    color: #c8c9cc;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+  }
+  .predict-filter-m05-source-n { margin: 0; }
+  .predict-filter-m05-switch {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    margin-top: 0.7rem;
+    padding: 0;
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 0.75rem;
+    color: #c8c9cc;
+    cursor: pointer;
+  }
+  .predict-filter-m05-switch + .predict-filter-m05-switch { margin-top: 0.55rem; }
+  .predict-filter-m05-toggle {
+    position: relative;
+    flex-shrink: 0;
+    width: 2.35rem;
+    height: 1.28rem;
+    border-radius: 999px;
+    background: #2a2c2f;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
+  }
+  .predict-filter-m05-switch[aria-checked="true"] .predict-filter-m05-toggle {
+    background: #ececee;
+    box-shadow: inset 0 1px 1px rgb(255 255 255 / 0.35);
+  }
+  .predict-filter-m05-toggle-knob {
+    position: absolute;
+    top: 0.14rem;
+    left: 0.14rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #5c5d60;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+  }
+  .predict-filter-m05-switch[aria-checked="true"] .predict-filter-m05-toggle-knob {
+    transform: translateX(1.07rem);
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.22);
+  }
+  .predict-filter-m05-note { margin-top: 0.75rem; }
+  .predict-filter-m05-foot { padding-top: 0.25rem; }
+  .pp-footer-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem 1rem;
+  }
+  .pp-footer-cmd {
+    flex: 1 1 16rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .pp-cmd-label {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: #8a8c90;
+  }
+  .pp-cmd-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .pp-cmd-lcd {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    min-height: 2.35rem;
+    max-height: 2.35rem;
+    margin: 0;
+    overflow: hidden;
+    padding: 0.55rem 0.85rem;
+    border-radius: 10px;
+    border: 1px solid #0b0c0d;
+    background: #050607;
+    color: #7dffa3;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.25;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.65);
+  }
+  .pp-cmd-copy {
+    flex: 0 0 auto;
+    align-self: stretch;
+  }
+  .pp-footer-side {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.3rem;
+    flex: 0 0 auto;
+  }
+  .pp-footer-count {
+    font-size: 10px;
+    color: #6e7074;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .pp-footer-btns { display: flex; align-items: center; gap: 0.5rem; }
+  .pp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.35rem;
+    border-radius: 10px;
+    border: 1px solid #4a4b4e;
+    background: linear-gradient(180deg, #2a2b2d 0%, #1a1b1c 100%);
+    color: #e8e8ea;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0.45rem 0.95rem;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      0 1px 2px rgb(0 0 0 / 0.35);
+  }
+  .pp-btn-preset {
+    background: #1a1b1c;
+    border-color: #4a4b4e;
+    color: #e8e8ea;
+  }
+  .pp-btn-primary {
+    border-color: #f2f2f3;
+    background: linear-gradient(180deg, #ffffff 0%, #e8e8ea 100%);
+    color: #0c0d0e;
+    font-weight: 600;
+    padding: 0.45rem 1.15rem;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.75),
+      0 1px 2px rgb(0 0 0 / 0.35);
+  }
+</style>
+</head>
+<body>
+  <div class="shell" id="shot">
+    <aside class="sidebar">
+      <div class="brand">orcAI Desktop <span>v0.1.15</span></div>
+      <nav class="nav">
+        <a href="#">Главная</a>
+        <a href="#">Проекты</a>
+        <a class="is-active" href="#">Распознавание</a>
+        <a href="#">Обучение</a>
+        <a href="#">Модели</a>
+        <a href="#">Результаты</a>
+        <a href="#">Задачи</a>
+        <a href="#">Настройки</a>
+        <a href="#">Справка</a>
+      </nav>
+    </aside>
+    <section class="main">
+      <div class="studio-panel">
+        <div class="page-head">
+          <div>
+            <h1>Распознавание</h1>
+            <p>Параметры прогона, просмотр спектрограммы и фильтрация длительностей.</p>
+          </div>
+          <div class="head-actions">
+            <div class="crumb">Распознавание <span>/</span> Фильтрация</div>
+            <div class="help-btn"><i>?</i> Справка</div>
+          </div>
+        </div>
+        <div class="tabs-bar">
+          <div class="tabs">
+            <div class="tab">Параметры</div>
+            <div class="tab">Анализ <span class="badge">218</span></div>
+            <div class="tab is-active">Фильтрация</div>
+          </div>
+          <div class="predict-filter-track-bar">
+            <div class="track-file">
+              <span class="track-wave" aria-hidden>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M3 12h2l1.5-5 2 10L11 8l2 8 2-6 1.5 3H21"/></svg>
+              </span>
+              <span class="track-name">10 Slow Motion.wav</span>
+              <div class="track-end">
+                <div class="track-nav">
+                  <span>‹</span>
+                  <span>›</span>
+                </div>
+                <span class="track-menu" aria-hidden>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="4" y="5" width="16" height="4" rx="1"/><rect x="4" y="11" width="16" height="4" rx="1"/><rect x="4" y="17" width="16" height="4" rx="1"/></svg>
+                </span>
+                <span class="track-meta">48 кГц · канал 1 · 2:24</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="predict-filter-studio">
+          <div class="predict-filter-m05">
+            <div class="predict-filter-m05-grid">
+              <section class="predict-filter-m05-limits">
+                <header class="predict-filter-m05-limits-head">
+                  <div class="predict-filter-m05-limits-title-row">
+                    <h3>Пределы длительности, с</h3>
+                    <span class="predict-filter-m05-limits-file">call_duration_limits.json</span>
+                  </div>
+                  <div class="predict-filter-m05-limits-actions">
+                    <button type="button" class="predict-filter-m05-tool">
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 4.5h4l1.2 1.5H14.5v7a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-7.5a1 1 0 0 1 1-1Z"/><path d="M1.5 7h13"/></svg>
+                      Загрузить
+                    </button>
+                    <button type="button" class="predict-filter-m05-tool">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M8 2.5v8"/><path d="M5 8.2 8 11.2 11 8.2"/><path d="M3 13.5h10"/></svg>
+                      Сохранить
+                    </button>
+                    <button type="button" class="predict-filter-m05-tool is-outline">Сбросить</button>
+                    <button type="button" class="predict-filter-m05-tool is-quiet">Пример orcai-v1</button>
+                  </div>
+                </header>
+                <div class="predict-filter-m05-table-wrap">
+                  <table class="predict-filter-m05-table">
+                    <thead>
+                      <tr>
+                        <th>Класс</th>
+                        <th>Мин</th>
+                        <th>Макс</th>
+                        <th class="is-num">Найдено</th>
+                        <th class="is-num">Останется</th>
+                        <th class="is-num">Удалится</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="predict-filter-m05-class">default</td>
+                        <td><input value="0" readonly></td>
+                        <td><input placeholder="—" value="" readonly></td>
+                        <td class="is-num">218</td>
+                        <td class="is-num is-keep">196</td>
+                        <td class="is-num is-drop">22</td>
+                      </tr>
+                      <tr class="is-selected">
+                        <td class="predict-filter-m05-class">WHISTLE</td>
+                        <td><input value="0.1" readonly></td>
+                        <td><input placeholder="—" value="12" readonly></td>
+                        <td class="is-num">96</td>
+                        <td class="is-num is-keep">88</td>
+                        <td class="is-num is-drop">8</td>
+                      </tr>
+                      <tr>
+                        <td class="predict-filter-m05-class">BUZZ</td>
+                        <td><input value="0.05" readonly></td>
+                        <td><input placeholder="—" value="" readonly></td>
+                        <td class="is-num">54</td>
+                        <td class="is-num is-keep">49</td>
+                        <td class="is-num is-drop">5</td>
+                      </tr>
+                      <tr>
+                        <td class="predict-filter-m05-class">PHS</td>
+                        <td><input value="0.1" readonly></td>
+                        <td><input placeholder="—" value="" readonly></td>
+                        <td class="is-num">21</td>
+                        <td class="is-num is-keep">19</td>
+                        <td class="is-num is-drop">2</td>
+                      </tr>
+                      <tr>
+                        <td class="predict-filter-m05-class">SS</td>
+                        <td><input value="0.05" readonly></td>
+                        <td><input placeholder="—" value="" readonly></td>
+                        <td class="is-num">18</td>
+                        <td class="is-num is-keep">15</td>
+                        <td class="is-num is-drop">3</td>
+                      </tr>
+                      <tr>
+                        <td class="predict-filter-m05-class">BR</td>
+                        <td><input value="0.4" readonly></td>
+                        <td><input placeholder="—" value="" readonly></td>
+                        <td class="is-num">14</td>
+                        <td class="is-num is-keep">12</td>
+                        <td class="is-num is-drop">2</td>
+                      </tr>
+                      <tr>
+                        <td class="predict-filter-m05-class">HERDING</td>
+                        <td><input value="1" readonly></td>
+                        <td><input placeholder="—" value="" readonly></td>
+                        <td class="is-num">9</td>
+                        <td class="is-num is-keep">9</td>
+                        <td class="is-num is-drop">—</td>
+                      </tr>
+                      <tr>
+                        <td class="predict-filter-m05-class">TAILSLAP</td>
+                        <td><input value="0.05" readonly></td>
+                        <td><input placeholder="—" value="" readonly></td>
+                        <td class="is-num">6</td>
+                        <td class="is-num is-keep">4</td>
+                        <td class="is-num is-drop">2</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="predict-filter-m05-hint">«—» в максимуме = без верхнего предела (null в JSON). Строка default применяется к классам без своего правила.</p>
+              </section>
+              <aside class="predict-filter-m05-side">
+                <h3>Предпросмотр · WHISTLE</h3>
+                <div class="predict-filter-m05-hist">
+                  <div class="predict-filter-m05-hist-plot">
+                    <div class="predict-filter-m05-hist-canvas">
+                      <div class="predict-filter-m05-hist-bars">
+                        <div class="predict-filter-m05-hist-bar" style="height:10%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:22%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:38%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:58%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:78%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:96%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:100%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:86%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:68%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:50%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:36%"></div>
+                        <div class="predict-filter-m05-hist-bar" style="height:26%"></div>
+                        <div class="predict-filter-m05-hist-bar is-drop" style="height:18%"></div>
+                        <div class="predict-filter-m05-hist-bar is-drop" style="height:12%"></div>
+                        <div class="predict-filter-m05-hist-bar is-drop" style="height:10%"></div>
+                        <div class="predict-filter-m05-hist-bar is-drop" style="height:7%"></div>
+                      </div>
+                      <div class="predict-filter-m05-hist-range" style="left:7%;width:79%"></div>
+                      <div class="predict-filter-m05-hist-gate is-min" style="left:7%"></div>
+                      <span class="predict-filter-m05-hist-mark is-min" style="left:7%">мин 0.1</span>
+                      <div class="predict-filter-m05-hist-gate is-max" style="left:86%"></div>
+                      <span class="predict-filter-m05-hist-mark is-max" style="left:86%">макс 12.0</span>
+                    </div>
+                  </div>
+                  <div class="predict-filter-m05-hist-axis">Длительность, с</div>
+                  <p class="predict-filter-m05-hist-hint">Выделите область на гистограмме, чтобы задать мин и макс. Двойной щелчок сбрасывает оба предела.</p>
+                </div>
+                <div class="predict-filter-m05-source">
+                  <h3>Источник</h3>
+                  <select>
+                    <option selected>..._orcai-isl-v1_predicted.txt</option>
+                  </select>
+                  <p class="predict-filter-m05-source-n">12 файлов предсказаний в проекте</p>
+                </div>
+                <button type="button" class="predict-filter-m05-switch" role="switch" aria-checked="true">
+                  <span class="predict-filter-m05-toggle" aria-hidden><span class="predict-filter-m05-toggle-knob"></span></span>
+                  <span>Применить ко всем файлам проекта</span>
+                </button>
+                <button type="button" class="predict-filter-m05-switch" role="switch" aria-checked="false">
+                  <span class="predict-filter-m05-toggle" aria-hidden><span class="predict-filter-m05-toggle-knob"></span></span>
+                  <span>Перезаписать существующие _filtered.txt</span>
+                </button>
+                <p class="predict-filter-m05-note">Исходный файл не изменяется: результат рядом как *_predicted_filtered.txt.</p>
+              </aside>
+            </div>
+            <footer class="pp-footer predict-filter-m05-foot">
+              <div class="pp-footer-main">
+                <div class="pp-footer-cmd">
+                  <p class="pp-cmd-label">КОМАНДА orcAI ×12 файлов</p>
+                  <div class="pp-cmd-row">
+                    <pre class="pp-cmd-lcd" title="orcai filter-predictions 01_Just_Passing_Through_c1_orcai-isl-v1_predicted.txt -cdl Isafjordur-2026_call_duration_limits.json">orcai filter-predictions 01_Just_Passing_Through_c1_orcai-isl-v1_predicted.txt -cdl Isafjordur-2026_call_duration_limits.json</pre>
+                    <button type="button" class="pp-btn pp-btn-preset pp-cmd-copy">Копировать</button>
+                  </div>
+                </div>
+                <div class="pp-footer-side">
+                  <span class="pp-footer-count">Останется 196 из 218 детекций</span>
+                  <div class="pp-footer-btns">
+                    <button type="button" class="pp-btn pp-btn-primary">Применить фильтр</button>
+                  </div>
+                </div>
+              </div>
+            </footer>
+          </div>
+        </div>
+      </div>
+      <div class="dock">
+        <span>консоль · Лог и инспектор скрыты</span>
+        <span>Развернуть ▴</span>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+orcAI Desktop — third-party licenses
+
+This file lists major bundled components. Full texts live with each package
+inside the application (Python site-packages, node_modules at build time,
+and the Tauri / WebView stack).
+
+Component     Version    License              Role
+-----------   --------   -------------------  --------------------------
+Tauri         2.x        Apache-2.0 / MIT     application shell
+React         19         MIT                  Lab UI
+TensorFlow    2.x        Apache-2.0           orcAI engine
+Python        3.11       PSF                  sidecar + orcAI
+librosa       0.10       ISC                  orcAI audio
+FastAPI       0.115      MIT                  sidecar HTTP
+orcAI         3.0.4      CC BY-SA 4.0         detection / training engine
+  (ETH Zurich / original authors; source unchanged in this product)
+
+orcAI Desktop does not claim endorsement by ETH Zurich or the orcAI authors.

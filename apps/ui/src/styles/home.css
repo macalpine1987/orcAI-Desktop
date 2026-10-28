@@ -1,0 +1,688 @@
+/* Home studio — outer rim like /jobs (mat-face on canvas). Nested cards use raised face. */
+.app-viewport--home-studio {
+  --m16-pad-main: 10px;
+  --m16-studio-gutter: var(--m16-pad-main);
+  --m16-gap-page: 10px;
+  --m16-chrome-border: var(--border);
+  --home-card-radius: var(--ctrl-radius, 8px);
+  /* Outlined rects on the same 8px radius as other studio controls. */
+  --home-btn-radius: var(--ctrl-radius, 8px);
+  --home-btn-fg: #b4b5b7;
+  --home-btn-border: #4f4f51;
+  --home-btn-bg: #181a1b;
+}
+
+.app-viewport--home-studio .home-work-panel.studio-panel {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--mat-face);
+  border: 1px solid var(--m16-chrome-border);
+  border-radius: var(--studio-radius, 8px);
+  box-shadow:
+    inset 0 1px 0 var(--m16-panel-top-hi, #3d3e40),
+    0 0 0 1px var(--m16-chrome-border);
+}
+
+/* Inner cards must stay above the outer face (m01). */
+.app-viewport--home-studio .home-work-panel .mat-card {
+  background: var(--mat-raised);
+  border-radius: var(--home-card-radius);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    0 0 0 1px rgb(0 0 0 / 0.35);
+}
+
+/*
+ * Home card footers (Runtime / Project) — both actions share one outlined style
+ * (screenshot: Перезапустить + Остановить).
+ */
+.app-viewport--home-studio .home-runtime-footer .mat-btn,
+.app-viewport--home-studio .home-project-footer .mat-btn,
+.app-viewport--home-studio .home-runtime-footer .mat-btn-primary,
+.app-viewport--home-studio .home-project-footer .mat-btn-primary {
+  height: 2rem;
+  padding: 0 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--home-btn-fg);
+  background: var(--home-btn-bg);
+  border: 1px solid var(--home-btn-border);
+  border-radius: var(--home-btn-radius);
+  box-shadow: none;
+  filter: none;
+}
+
+.app-viewport--home-studio .home-runtime-footer .mat-btn:hover:not(:disabled),
+.app-viewport--home-studio .home-project-footer .mat-btn:hover:not(:disabled),
+.app-viewport--home-studio .home-runtime-footer .mat-btn-primary:hover:not(:disabled),
+.app-viewport--home-studio .home-project-footer .mat-btn-primary:hover:not(:disabled) {
+  color: var(--text);
+  background: #1c1e1f;
+  border-color: #5a5a5c;
+  filter: none;
+}
+
+.app-viewport--home-studio .home-runtime-footer .mat-btn:active:not(:disabled),
+.app-viewport--home-studio .home-project-footer .mat-btn:active:not(:disabled),
+.app-viewport--home-studio .home-runtime-footer .mat-btn-primary:active:not(:disabled),
+.app-viewport--home-studio .home-project-footer .mat-btn-primary:active:not(:disabled) {
+  background: #141617;
+  box-shadow: none;
+  filter: none;
+}
+
+.app-viewport--home-studio .mat-shell-main--home-studio {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0 var(--m16-studio-gutter);
+  padding-bottom: 0;
+  background: var(--mat-canvas);
+  scrollbar-gutter: auto;
+}
+
+.app-viewport--home-studio .lab-dock-root {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  padding: 6px var(--m16-studio-gutter) 6px;
+}
+
+.home-page.home-studio {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.home-work-panel {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 0;
+  container-type: size;
+  container-name: studio-work;
+}
+
+.home-page-header {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.25rem 1.25rem 0;
+  margin-bottom: 0;
+}
+
+.home-page-header-copy {
+  min-width: 0;
+  max-width: 48rem;
+}
+
+.home-panel-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow: auto;
+  padding: 1.25rem;
+}
+
+/* Chrome above recent jobs must not shrink when the list fills leftover height. */
+.home-panel-body > :not(.home-recent-jobs) {
+  flex-shrink: 0;
+}
+
+.home-recent-jobs {
+  display: flex;
+  min-width: 0;
+  min-height: min(10rem, 28cqh);
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.home-recent-jobs-header {
+  flex-shrink: 0;
+}
+
+/*
+ * QA-L1: one scroll mode for both dock states (TZ-layout-scale — no dual-mode).
+ * Body scrolls only if chrome above the hero no longer fits; the jobs panel
+ * owns nested table scroll with a cqh ceiling.
+ */
+.app-viewport--home-studio .home-panel-body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.home-recent-jobs-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  /* ~14 rows (thead + 14×34px) on tall / fullscreen; short windows still fit via cqh. */
+  max-height: min(32rem, 55cqh);
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.cleared-active-project-overlay {
+  background: rgb(0 0 0 / 0.48);
+  backdrop-filter: blur(3px);
+}
+
+.cleared-active-project-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: min(28rem, 100%);
+  padding: 1.35rem 1.5rem 1.25rem;
+  border-radius: calc(var(--radius, 0.5rem) + 4px);
+  border: 1px solid color-mix(in srgb, var(--border, #888) 70%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--mat-raised, var(--surface, var(--bg, #fff))) 78%,
+    transparent
+  );
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.28);
+  text-align: center;
+}
+
+.cleared-active-project-modal .modal-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+}
+
+.cleared-active-project-modal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, #c47a12 72%, var(--foreground, #222));
+}
+
+.cleared-active-project-modal-icon circle:first-child {
+  fill: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.cleared-active-project-modal-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--foreground, inherit);
+  overflow-wrap: anywhere;
+}
+
+.cleared-active-project-modal-ok {
+  min-width: 5.5rem;
+  margin-top: 0.15rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border, rgb(0 0 0 / 0.14));
+  background: color-mix(
+    in srgb,
+    var(--mat-raised, var(--bg, #fff)) 88%,
+    transparent
+  );
+  padding: 0.45rem 1.15rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground, inherit);
+  cursor: pointer;
+}
+
+.cleared-active-project-modal-ok:hover {
+  border-color: color-mix(in srgb, var(--foreground, #000) 28%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--mat-raised, var(--bg, #fff)) 96%,
+    transparent
+  );
+}
+
+.cleared-active-project-modal-ok:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent, #6b7280) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.home-studio {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.home-grid-top {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .home-grid-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+
+/*
+ * Same four tracks and the same 0.75rem gap as .home-quick-actions-grid.
+ * «Среда выполнения» ends on the right edge of «Обучить модель».
+ * «Текущий проект» starts on «Отфильтровать» and ends on «Посмотреть результаты».
+ */
+@media (min-width: 1280px) {
+  .home-grid-top {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: 0.75rem;
+  }
+
+  .home-grid-top > .home-runtime-panel {
+    grid-column: 1 / 3;
+  }
+
+  .home-grid-top > .home-project-card {
+    grid-column: 3 / 5;
+  }
+}
+
+.home-project-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+/* m01 section titles: small uppercase muted (СРЕДА / ТЕКУЩИЙ ПРОЕКТ). */
+.home-card-eyebrow {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.home-project-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.home-project-path {
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.home-project-metrics {
+  min-width: 0;
+}
+
+.home-project-footer {
+  margin-top: auto;
+  padding-top: 0.75rem;
+}
+
+.home-project-table-status {
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.home-project-table-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 5px currentColor;
+}
+
+.home-project-table-status.is-current {
+  color: #49c578;
+}
+
+.home-project-table-status.is-stale {
+  color: var(--accent);
+}
+
+.home-project-table-status.is-missing {
+  color: #d64545;
+}
+
+/* Same rounded frame as the training-monitor KPI tiles (.tm-kpi). */
+.home-project-metric {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.55rem 0.45rem;
+  text-align: center;
+  background: #161718;
+  border: 1px solid #2a2c2f;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+  color: #9ce3ba;
+}
+
+[data-theme="light"] .home-project-metric {
+  background: var(--mat-raised);
+  border-color: var(--border-strong);
+}
+
+.home-project-metric-label {
+  display: block;
+  font-family: var(--font-sans, inherit);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: #4d735d;
+}
+
+.home-project-metric-value {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.15;
+  color: #9ce3ba;
+  letter-spacing: 0.02em;
+}
+
+.home-project-metric.is-accent .home-project-metric-value {
+  color: #9ce3ba;
+}
+
+.home-project-metric:not(.is-accent) .home-project-metric-value {
+  color: #6a8f78;
+}
+
+.home-readiness-item.is-ready .font-mono {
+  color: var(--status-ok, #2f8f4e);
+}
+
+.home-readiness-item.is-needed .font-mono {
+  color: var(--accent);
+}
+
+.home-quick-actions-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .home-quick-actions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .home-quick-actions-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.home-quick-action {
+  min-height: 4.5rem;
+}
+
+.home-quick-action-icon svg {
+  display: block;
+}
+
+.home-quick-action:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--border) 60%, var(--accent));
+}
+
+/* Stretch paired top cards to equal height (ek4-v8). */
+.home-grid-top > .home-runtime-panel,
+.home-grid-top > .home-project-card {
+  height: 100%;
+  min-height: 0;
+}
+
+/*
+ * Runtime rows · m01:
+ *   ● Label                 Status
+ *     detail (under label)
+ */
+.home-runtime-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.runtime-component-row {
+  display: grid;
+  grid-template-columns: 1.125rem minmax(0, 1fr) auto;
+  column-gap: 0.55rem;
+  align-items: start;
+}
+
+.runtime-component-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.runtime-component-label {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.runtime-component-row.is-ready .runtime-component-label,
+.runtime-component-row.is-available .runtime-component-label,
+.runtime-component-row.is-active .runtime-component-label {
+  color: var(--text);
+}
+
+.runtime-component-detail {
+  display: block;
+  overflow: hidden;
+  min-height: 1.3em;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--text-muted);
+}
+
+.runtime-component-detail.is-empty {
+  visibility: hidden;
+}
+
+.runtime-component-status {
+  padding-top: 0.05rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.runtime-component-status.is-ready {
+  color: #49c578;
+}
+
+.runtime-component-status.is-available {
+  color: rgb(56 189 248);
+}
+
+.runtime-component-status.is-active {
+  color: #e6b422;
+}
+
+.runtime-component-status.is-error {
+  color: #d64545;
+}
+/*
+ * Runtime status lamps (m01 screenshot): recessed well + glowing jewel core.
+ */
+.runtime-row-lamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.05rem;
+}
+
+.runtime-row-lamp-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 999px;
+  background: #0a0b0c;
+  border: 1px solid #2a2c2e;
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.65),
+    inset 0 -1px 0 rgb(255 255 255 / 0.04);
+}
+
+.runtime-row-lamp-jewel {
+  position: relative;
+  display: block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #3a3c40;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+
+.runtime-row-lamp.is-ready .runtime-row-lamp-jewel {
+  background: radial-gradient(circle at 35% 30%, #a8f0c8 0%, #5cd68a 42%, #2f9a58 100%);
+  box-shadow:
+    0 0 0 1px rgb(73 197 120 / 0.25),
+    0 0 8px rgb(92 214 139 / 0.75),
+    0 0 14px rgb(73 197 120 / 0.35);
+}
+
+.runtime-row-lamp.is-ready .runtime-row-lamp-jewel::after {
+  content: "";
+  position: absolute;
+  top: 12%;
+  left: 16%;
+  width: 42%;
+  height: 42%;
+  border-radius: 999px;
+  background: #e8fff2;
+  opacity: 0.9;
+}
+
+.runtime-row-lamp.is-available .runtime-row-lamp-jewel {
+  background: radial-gradient(circle at 35% 30%, #b8dcff 0%, #6ab0ef 42%, #3a7ec4 100%);
+  box-shadow:
+    0 0 0 1px rgb(56 189 248 / 0.28),
+    0 0 8px rgb(109 170 229 / 0.8),
+    0 0 14px rgb(56 189 248 / 0.4);
+}
+
+.runtime-row-lamp.is-available .runtime-row-lamp-jewel::after {
+  content: "";
+  position: absolute;
+  top: 12%;
+  left: 16%;
+  width: 42%;
+  height: 42%;
+  border-radius: 999px;
+  background: #f0f7ff;
+  opacity: 0.9;
+}
+
+.runtime-row-lamp.is-active .runtime-row-lamp-jewel {
+  background: radial-gradient(circle at 35% 30%, #ffe566 0%, #e6b422 55%, #b8860b 100%);
+  box-shadow:
+    0 0 0 1px rgb(230 180 34 / 0.35),
+    0 0 8px rgb(230 180 34 / 0.7),
+    0 0 14px rgb(230 180 34 / 0.35);
+  animation: runtime-row-lamp-pulse 1.2s ease-in-out infinite;
+}
+
+.runtime-row-lamp.is-active .runtime-row-lamp-jewel::after {
+  content: "";
+  position: absolute;
+  top: 12%;
+  left: 16%;
+  width: 42%;
+  height: 42%;
+  border-radius: 999px;
+  background: #fff4b8;
+  opacity: 0.95;
+}
+
+.runtime-row-lamp.is-active .runtime-row-lamp-well {
+  border-color: #4a3f1a;
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.65),
+    0 0 10px rgb(230 180 34 / 0.22);
+}
+
+.runtime-row-lamp.is-error .runtime-row-lamp-jewel {
+  background: radial-gradient(circle at 35% 30%, #ff9a9a 0%, #d64545 55%, #9a2a2a 100%);
+  box-shadow:
+    0 0 0 1px rgb(214 69 69 / 0.3),
+    0 0 8px rgb(214 69 69 / 0.55);
+}
+
+.runtime-row-lamp.is-stopped .runtime-row-lamp-jewel {
+  background: #3a3c40;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+@keyframes runtime-row-lamp-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    box-shadow:
+      0 0 0 1px rgb(230 180 34 / 0.2),
+      0 0 4px rgb(230 180 34 / 0.35),
+      0 0 8px rgb(230 180 34 / 0.15);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      0 0 0 1px rgb(230 180 34 / 0.45),
+      0 0 10px rgb(230 180 34 / 0.85),
+      0 0 18px rgb(230 180 34 / 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .runtime-row-lamp.is-active .runtime-row-lamp-jewel {
+    animation: none;
+    opacity: 1;
+  }
+}

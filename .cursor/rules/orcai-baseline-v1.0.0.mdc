@@ -1,0 +1,54 @@
+---
+description: Эталонная сборка orcAI Desktop v1.0.0 — откат и сравнение с baseline
+alwaysApply: true
+---
+
+# orcAI Desktop v1.0.0 (baseline)
+
+Версия **v1.0.0** (2026-10-28) — эталонная рабочая сборка. При запросе «откатись на v1.0.0», «как в v1.0.0», «верни поведение v1.0.0» — ориентируйтесь на этот baseline.
+
+Предыдущий эталон **v0.1.32** сохранён отдельно (`orcai-baseline-v0.1.32.mdc`).
+
+## Артефакты
+
+- **.app:** `/tmp/orcAI Desktop.app` (и архив `/tmp/orcai-desktop-baseline-v1.0.0-app`)
+- **Исходники:** `/tmp/orcai-desktop-baseline-v1.0.0-src` (снимок `orcai-desktop` на момент релиза)
+- **Документация:** `docs/RELEASES.md`
+
+## Архитектура (зафиксирована)
+
+| Слой | Путь / роль |
+|------|-------------|
+| Shell | Tauri 2 + Rust (`src-tauri/`) — spawn sidecar, порты, hide-on-close |
+| UI | React + TS + Vite + Tailwind (`apps/ui/`) — только Lab |
+| Backend | Python 3.11 FastAPI sidecar (`apps/sidecar/`) + orcAI pip (**без форка**) |
+| Runtime | Динамический порт; `startAll` / `stopAll` / restart; bundled Python + AUTONOMY GATE |
+| Данные | SQLite (jobs/settings) + DuckDB; проекты = каталог orcAI на диске |
+| i18n | RU/EN; в UI `predict` → «распознавание»; **в таблице Задачи** — CLI-id (`predict`) |
+
+### Runtime (не ломать без явного запроса)
+
+- Старт приложения: прогресс **0%**, sidecar и движок **остановлены**
+- Запуск только кнопкой **«Запуск»** на Главной (`startAll`)
+- **Перезапуск:** `stopAll` → `startAll` с синхронным сбросом refs + live-check `invokeSidecarIsRunning` (фикс v0.1.9)
+- Старт движка: host HTTP `sidecar_engine_start` (не WKWebView `fetch`) — фикс v0.1.22
+- macOS: X / ⌘W — hide; ⌘Q — `stopEngine` + `stopSidecar`
+- Health / capabilities — только при `runtimeBase` сессии (не дефолт 8741)
+- `engineReady` / sidecar «готов» — только при `sidecarPhase === "running"`
+- Автономность / переносимость: `Python.framework` (incl. nested Python.app `@loader_path`) + vendored OpenSSL/sqlite/xz/mpdecimal; каждая сборка — **AUTONOMY GATE PASSED** (`orcai-autonomy-gate.mdc`)
+- Новый процесс sidecar снимает незавершённые задачи даже без метки аварии. Скрытие окна и краткий offline процесс не перезапускают, очередь живого sidecar остаётся. Воркер задачи очередь не отменяет
+- Каталог проектов по умолчанию — домашняя папка (`homeDir()`, на macOS `/Users/<имя>/`). Пустой `projectsRoot` к ней и возвращается. Сохранённый в настройках каталог важнее, пока папка есть. Если сохранённый каталог исчез, мастер берёт домашнюю папку и не создаёт отсутствующий родитель
+- Отмена задачи из интерфейса возвращается сразу (`settle=False`). Выход приложения и соседние шаги плана дожидаются остановки процесса
+- Запись `running` или `pending` не затирает в базе `cancelled`, `completed` или `failed`. Чтение базы проекта не создаёт отсутствующий каталог
+
+### UI (v1.0.0 snapshot)
+
+- Как v0.1.32, плюс перенос правок разделов, руководства, рамки, шестерёнки настроек, пустого суффикса и пресетов распознавания
+- Остановка обучения: снимок «Остановлено» и оставшееся время «—» сразу. Монитор закрывается, не дожидаясь процесса. «Готово» только у успешно закончившегося обучения
+- В текстах пин движка orcAI **3.0.4**. Собранный в `.app` пакет orcAI остаётся **3.0.2**, пока не пересобран Python
+- Задачи (m16): шапка колонок charcoal, LED-индикаторы у CLI-команд
+- `PageHelpButton` — outlined «Справка» во всех основных разделах (на экране Справки нет)
+
+## Откат
+
+См. `docs/RELEASES.md` — `rsync` из `/tmp/orcai-desktop-baseline-v1.0.0-src` или пересборка `scripts/build-macos-release.sh`.

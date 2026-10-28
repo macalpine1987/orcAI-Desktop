@@ -1,0 +1,19 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default permissions for orcAI Desktop main window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:default",
+    "core:webview:default",
+    "core:event:default",
+    "os:default",
+    "dialog:default",
+    "allow-take-pending-open-files",
+    "allow-sidecar-control",
+    "allow-shell-helpers",
+    "allow-window-chrome",
+    "store:default"
+  ]
+}

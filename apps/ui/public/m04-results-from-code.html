@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>orcAI Desktop · Results studio (from code)</title>
+<style>
+  /* Snapshot of apps/ui styles + labelColors.ts (Paul Tol / П-4) — static preview for PNG */
+  :root {
+    --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --font-sans: "Inter", system-ui, sans-serif;
+    --bezel: #3a3a3a;
+    --mat-face: #1a1a1a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #0c0c0c;
+    color: rgb(255 255 255 / 0.92);
+    font-family: var(--font-sans);
+    font-size: 13px;
+  }
+  .shell {
+    display: grid;
+    grid-template-columns: 11.5rem 1fr;
+    width: 1280px;
+    height: 800px;
+    margin: 0 auto;
+    background: #121212;
+    border: 1px solid #2a2a2a;
+  }
+  .sidebar {
+    border-right: 1px solid #2a2a2a;
+    padding: 0.75rem 0.5rem;
+    background: #0f0f0f;
+  }
+  .brand { font-size: 11px; font-weight: 650; letter-spacing: 0.02em; margin: 0 0 0.85rem 0.35rem; color: #e8e8ea; }
+  .brand span { opacity: 0.55; font-weight: 500; }
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav a {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.5rem; border-radius: 6px;
+    color: rgb(255 255 255 / 0.7); text-decoration: none; font-size: 12px;
+  }
+  .nav a.is-active { background: #e8e8ea; color: #111; font-weight: 600; }
+  .main {
+    display: flex; flex-direction: column; min-width: 0; min-height: 0;
+    width: 100%; padding: 10px; box-sizing: border-box; background: #0c0c0c;
+  }
+  .studio-panel {
+    flex: 1; min-height: 0; display: flex; flex-direction: column;
+    border: 1px solid #2a2c2f; border-radius: 8px; background: #1a1a1a;
+    box-shadow: inset 0 1px 0 #3d3e40, 0 0 0 1px #2a2c2f;
+    overflow: hidden;
+  }
+  .page-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 1.15rem 1.15rem 0.55rem; gap: 1rem;
+  }
+  .page-head h1 { margin: 0; font-size: 1.35rem; font-weight: 650; }
+  .page-head p { margin: 0.35rem 0 0; font-size: 12px; color: rgb(255 255 255 / 0.5); max-width: 36rem; }
+  .head-actions { display: flex; align-items: center; gap: 0.65rem; }
+  .crumb { font-size: 11px; color: rgb(255 255 255 / 0.45); }
+  .crumb span { color: rgb(255 255 255 / 0.28); }
+  .help-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    border: 1px solid #4a4a4a; background: #1e1e1e; color: #c8c8c8;
+    border-radius: 999px; padding: 0.25rem 0.65rem 0.25rem 0.35rem; font-size: 11px;
+  }
+  .help-btn i {
+    display: inline-flex; width: 1.15rem; height: 1.15rem; border-radius: 999px;
+    border: 1px solid #5a5a5a; align-items: center; justify-content: center; font-style: normal;
+  }
+  .tabs-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.15rem 1.15rem 0.55rem; gap: 0.75rem;
+  }
+  .tabs { display: flex; gap: 0.35rem; }
+  .tab {
+    padding: 0.4rem 0.75rem; border-radius: 999px; border: 1px solid #3a3a3a;
+    background: #1a1a1a; color: rgb(255 255 255 / 0.7); font-size: 12px;
+  }
+  .tab.is-active { background: #e8e8ea; color: #111; border-color: #e8e8ea; font-weight: 600; }
+  .tab .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 1.35rem; height: 1.1rem; margin-left: 0.25rem; padding: 0 0.3rem;
+    border-radius: 999px; background: #c8c8c8; color: #222; font-size: 10px; font-weight: 650;
+  }
+  .page-actions { display: flex; gap: 0.4rem; }
+  /* predict-params.css .predict-results-page-btn */
+  .predict-results-page-btn {
+    appearance: none; border: 1px solid #4a4a4a; background: #1e1e1e;
+    color: #f0f0f0; border-radius: 6px; padding: 0.35rem 0.75rem; font-size: 12px; cursor: default;
+  }
+  .predict-results-page-btn--filled {
+    background: #f2f2f2; color: #111; border-color: #f2f2f2; font-weight: 600;
+  }
+  .studio-wrap { flex: 1; min-height: 0; width: 100%; padding: 0.55rem 0.75rem 0.75rem; display: flex; flex-direction: column; gap: 0.45rem; box-sizing: border-box; }
+  .predict-results-studio {
+    flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.45rem;
+    overflow: hidden; border: none; background: transparent;
+    color: rgb(255 255 255 / 0.92);
+    padding: 0;
+    box-sizing: border-box;
+    width: 100%;
+    align-self: stretch;
+    --prs-chrome-bg: #242426;
+    --prs-chrome-border: #3a3a3c;
+    --prs-chrome-radius: 0.625rem;
+    --prs-chrome-text: #ececec;
+    --prs-chrome-muted: #8a8a8a;
+    --prs-chrome-faint: #6a6a6a;
+    --prs-btn-face: #28292b;
+    --prs-btn-border: #353537;
+    --prs-btn-hi: #4a4a4c;
+  }
+  /* Full-bleed strip — packed single baseline (current analysis-lab.css) */
+  .predict-results-studio > .transport {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    align-items: end;
+    align-self: stretch;
+    column-gap: 0.75rem;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0.85rem 0.55rem 0.28rem;
+    min-height: 0;
+    border: 1px solid var(--prs-chrome-border);
+    border-radius: var(--prs-chrome-radius);
+    background: var(--prs-chrome-bg);
+    font-size: 10px;
+    flex: 0 0 auto;
+  }
+  .transport-left {
+    display: flex; align-items: end; gap: 0.55rem; width: max-content; min-width: 0;
+  }
+  .transport-center {
+    display: flex; align-items: end; justify-content: center; min-width: 0; justify-self: center;
+  }
+  .transport-right {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: end;
+    column-gap: 1rem;
+    min-width: 0;
+    width: max-content;
+    max-width: none;
+    justify-self: end;
+  }
+  .transport-right .view-tools {
+    display: inline-flex; align-items: end; gap: 0.25rem;
+  }
+  .transport-right .view-tools span {
+    box-sizing: border-box;
+    width: 1.875rem; height: 1.875rem; border-radius: 0.3125rem; border: 1px solid #353537;
+    background: #28292b; box-shadow: inset 0 1px 0 #4a4a4c;
+    display: inline-flex; align-items: center; justify-content: center; color: #e8e8e8;
+  }
+  .transport-right .view-tools span.is-on {
+    border-color: #e8e8e8; background: #ececec; color: #121212;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.85), inset 0 -1px 0 rgb(0 0 0 / 0.12);
+  }
+  .transport-right .slider-block {
+    width: 9.5rem;
+    flex: 0 0 9.5rem;
+    min-width: 9.5rem;
+    height: 1.875rem;
+    box-sizing: border-box;
+    padding: 0 0.15rem;
+  }
+  .transport-right .slider-block.vol {
+    width: 8.25rem;
+    flex-basis: 8.25rem;
+    min-width: 8.25rem;
+  }
+  .transport-left .slider-block {
+    flex: 0 0 9.5rem;
+    width: 9.5rem;
+    min-width: 9.5rem;
+    max-width: 9.5rem;
+    height: 1.875rem;
+  }
+  .predict-results-studio > .file-seg,
+  .predict-results-studio > .analysis-spectrogram-studio-with-sidebar,
+  .predict-results-studio > .analysis-detections-panel {
+    margin: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+    padding-left: 0;
+    padding-right: 0;
+    align-self: stretch;
+  }
+  .predict-results-studio > .analysis-spectrogram-studio-with-sidebar {
+    padding-right: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 11.5rem;
+    gap: 0.55rem;
+  }
+  .transport .btns { display: flex; gap: 0.25rem; padding: 0; border: none; border-radius: 0; background: transparent; }
+  .transport .btns span {
+    box-sizing: border-box;
+    width: 1.875rem; height: 1.875rem; border-radius: 0.3125rem; border: 1px solid #353537;
+    background: #28292b;
+    box-shadow: inset 0 1px 0 #4a4a4c;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #e8e8e8;
+  }
+  .transport .btns span svg { width: 20px; height: 20px; display: block; }
+  /* Design ref: contrast ~87px track / zoom=volume ~107px — equal blocks */
+  .slider-block {
+    position: relative; display: flex; align-items: center; gap: 0.35rem;
+    padding: 0 0.15rem;
+    height: 1.875rem;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    box-sizing: border-box;
+  }
+  .slider-block.has-cap { padding-top: 0; }
+  .slider-block label {
+    position: absolute; top: auto; bottom: calc(100% + 0.12rem); left: 50%; transform: translateX(-50%);
+    text-transform: uppercase; letter-spacing: 0.05em; color: rgb(255 255 255 / 0.55); font-size: 10px; font-weight: 650;
+    line-height: 1; white-space: nowrap; pointer-events: none;
+  }
+  .slider-block .row { display: flex; align-items: center; gap: 0.3rem; width: 100%; }
+  .slider-block .ico { color: rgb(255 255 255 / 0.55); font-size: 10px; width: 0.9rem; text-align: center; }
+  .slider-block .pct { font-family: var(--font-mono); font-size: 10px; color: rgb(255 255 255 / 0.55); width: 2rem; text-align: right; }
+  .slider-block .track {
+    flex: 1; height: 4px; border-radius: 999px; background: #3f3f3f; position: relative;
+  }
+  .slider-block .track i {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: transparent; border-radius: 999px;
+  }
+  .slider-block .track i::after {
+    content: ""; position: absolute; right: -5px; top: 50%; transform: translateY(-50%);
+    width: 11px; height: 11px; border-radius: 50%; background: #e8e8ea;
+  }
+  .lcd.m04 {
+    display: flex; align-items: center; gap: 0.35rem; height: 1.875rem; margin: 0; padding: 0;
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  }
+  .lcd.m04 .cell {
+    box-sizing: border-box;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem;
+    background: linear-gradient(180deg, #121418 0%, #07080a 60%, #050506 100%);
+    border: 1px solid #2a2a2a; border-radius: 0.375rem;
+    padding: 0.1rem 0.55rem 0.12rem; color: #9ef0c4; min-width: 4.75rem; height: 1.875rem;
+    font-size: 0.95rem; font-weight: 650; line-height: 1.05;
+    text-shadow: 0 0 10px rgb(125 255 163 / 0.18);
+  }
+  .lcd.m04 .cell small {
+    display: block; font-size: 6.4px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgb(170 200 220 / 0.55); margin: 0; font-weight: 700; line-height: 1;
+  }
+  .file-seg {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0;
+    height: 55px;
+    padding: 0 16px;
+    border: 1px solid var(--prs-chrome-border);
+    border-radius: var(--prs-chrome-radius);
+    background: var(--prs-chrome-bg);
+    box-sizing: border-box;
+    color: var(--prs-chrome-text);
+    font-family: Inter, system-ui, sans-serif;
+    font-size: 12px;
+  }
+  .file-seg .file {
+    display: flex; align-items: center;
+    min-width: 0; width: 100%; overflow: hidden; padding-right: 8px;
+  }
+  .file-seg .wave {
+    flex-shrink: 0; width: 16px; height: 16px; color: #e8e8e8; margin-right: 10px;
+  }
+  .file-seg .name {
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-weight: 500; margin-right: 8px; line-height: 1; color: #ececec; font-size: 12px;
+  }
+  .file-seg .muted {
+    flex-shrink: 0; color: var(--prs-chrome-faint); font-weight: 400; font-size: 11px;
+    font-variant-numeric: tabular-nums; white-space: nowrap; margin-right: 10px; line-height: 1;
+  }
+  .file-seg .filemenu {
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: 1.75rem; height: 1.75rem; margin: 0 0.55rem 0 0; padding: 0;
+    border: 1px solid var(--prs-btn-border); border-radius: 0.3125rem;
+    background: var(--prs-btn-face); color: #e8e8e8;
+    box-shadow: inset 0 1px 0 var(--prs-btn-hi);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .file-seg .filemenu svg { width: 1.125rem; height: 1.125rem; }
+  .file-seg .sep {
+    flex-shrink: 0; width: 1px; height: 20px; background: var(--prs-chrome-border); margin: 0;
+    justify-self: center;
+  }
+  .file-seg .right {
+    display: flex; align-items: center; justify-content: flex-end; gap: 12px;
+    min-width: 0; width: 100%; padding-left: 12px; box-sizing: border-box;
+  }
+  .file-seg .seg {
+    display: flex; align-items: center; gap: 10px; white-space: nowrap; line-height: 1;
+    min-width: 0; padding-left: 0;
+  }
+  .file-seg .seg .title { color: var(--prs-chrome-muted); font-weight: 400; font-size: 12px; }
+  .file-seg .seg .range { color: var(--prs-chrome-faint); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .file-seg .seg .dur { color: var(--prs-chrome-faint); font-size: 11px; }
+  .file-seg .nav { display: flex; gap: 8px; flex-shrink: 0; }
+  .file-seg .nav span {
+    width: 28px; height: 28px; border-radius: 5px; border: 1px solid var(--prs-btn-border);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #e8e8e8;
+    background: var(--prs-btn-face);
+    box-shadow: inset 0 1px 0 var(--prs-btn-hi);
+  }
+  .file-seg .nav svg { width: 14px; height: 14px; }
+  /* analysis-spectrogram-studio-with-sidebar */
+  .analysis-spectrogram-studio-with-sidebar {
+    display: grid; grid-template-columns: minmax(0, 1fr) 11.5rem; gap: 0.5rem;
+    align-items: stretch; min-height: 11rem; max-height: 16rem; flex: 2 1 0;
+  }
+  .spec-pane {
+    position: relative; border: 1px solid #1a1a1a; border-radius: 0.375rem;
+    background: #0c0e0f; min-height: 240px; overflow: hidden;
+    display: grid;
+    grid-template-columns: 2.125rem 1fr;
+    grid-template-rows: 1fr 1.625rem;
+  }
+  .spec-bg {
+    grid-column: 2; grid-row: 1;
+    position: relative;
+    overflow: visible;
+    border-left: 1px solid #1a1a1a;
+    border-bottom: 1px solid #1a1a1a;
+    background: linear-gradient(180deg, #ececec 0%, #e4e4e4 55%, #d8d8d8 100%);
+    min-height: 220px;
+  }
+  .axis-y {
+    grid-column: 1; grid-row: 1;
+    position: relative; display: flex; flex-direction: column; justify-content: space-between;
+    padding: 2px 0; box-sizing: border-box;
+    font-family: var(--font-mono); font-size: 8px; font-weight: 500; color: #808080;
+    background: #0c0e0f;
+  }
+  .axis-y .tick {
+    display: flex; align-items: center; justify-content: flex-end; gap: 3px;
+    line-height: 1; color: #808080;
+  }
+  .axis-y .tick .mark {
+    display: block; width: 6px; height: 1px; background: #3a3b3d; flex-shrink: 0;
+  }
+  .axis-corner {
+    grid-column: 1; grid-row: 2;
+    display: flex; align-items: flex-start; justify-content: flex-end;
+    padding: 2px 2px 0 0; font-family: var(--font-mono); font-size: 8px; font-weight: 500; color: #808080;
+    background: #0c0e0f;
+  }
+  .axis-x {
+    grid-column: 2; grid-row: 2;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 0; font-family: var(--font-mono); font-size: 8px; font-weight: 500; color: #808080;
+    background: #0c0e0f;
+  }
+  .axis-x .tick {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    line-height: 1; color: #808080;
+  }
+  .axis-x .tick .mark {
+    display: block; width: 1px; height: 6px; background: #3a3b3d; flex-shrink: 0;
+  }
+  .playhead {
+    position: absolute; top: 0; bottom: 0; left: 42%; width: 2px; background: #e23;
+    box-shadow: 0 0 0 18px rgb(80 160 255 / 0.12); z-index: 3;
+  }
+  .box {
+    position: absolute; border: 1.5px solid; border-radius: 2px;
+    background: color-mix(in srgb, var(--c) 28%, transparent); z-index: 2;
+    overflow: visible;
+  }
+  .box .analysis-overlay-prob {
+    position: absolute; top: auto; bottom: calc(100% + 4px); left: 50%;
+    transform: translateX(-50%);
+    font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600;
+    color: #0a0a0a; text-shadow: none; white-space: nowrap; line-height: 1;
+  }
+  /* Paul Tol from labelColors.ts */
+  .c-whistle { --c: #AA4499; border-color: #AA4499; }
+  .c-buzz { --c: #117733; border-color: #117733; }
+  .c-phs { --c: #88CCEE; border-color: #88CCEE; }
+  .c-ss { --c: #DDCC77; border-color: #DDCC77; }
+  .c-br { --c: #332288; border-color: #332288; }
+  .c-herd { --c: #44AA99; border-color: #44AA99; }
+  .c-ts { --c: #CC6677; border-color: #CC6677; }
+
+  /* predict-results-class-sidebar */
+  .predict-results-class-sidebar {
+    display: flex; flex-direction: column; gap: 0.7rem; min-width: 0;
+    padding: 0.7rem 0.75rem 0.8rem; border: 1px solid #3a3a3e; border-radius: 0.75rem;
+    background: #191a1b; color: rgb(255 255 255 / 0.92);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset;
+  }
+  .predict-results-class-sidebar-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem;
+  }
+  .predict-results-class-sidebar-title {
+    margin: 0; font-size: 10px; font-weight: 650; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #6a6b6e;
+  }
+  .predict-results-class-sidebar-count {
+    font-family: var(--font-mono); font-size: 11px; color: #6a6b6e;
+  }
+  .predict-results-class-list {
+    display: flex; flex-direction: column; gap: 0.32rem; margin: 0; padding: 0; list-style: none;
+  }
+  .predict-results-class-row.is-off { opacity: 0.42; }
+  .predict-results-class-row.is-off .predict-results-class-code,
+  .predict-results-class-row.is-off .predict-results-class-n { color: #55565a; }
+  .predict-results-class-label {
+    display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center; gap: 0.4rem; font-size: 11px;
+  }
+  .predict-results-class-check {
+    width: 0.8rem; height: 0.8rem; border-radius: 0.2rem; border: 1px solid #3a3a3e;
+    background: #f0f0f2; display: inline-block; position: relative; flex-shrink: 0;
+  }
+  .predict-results-class-check::after {
+    content: ""; position: absolute; left: 2px; top: 1px; width: 4px; height: 7px;
+    border: solid #121214; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg);
+  }
+  .predict-results-class-row.is-off .predict-results-class-check {
+    background: #121314; border-color: #3a3a3e;
+  }
+  .predict-results-class-row.is-off .predict-results-class-check::after { display: none; }
+  .predict-results-class-swatch {
+    width: 0.7rem; height: 0.7rem; border-radius: 0.2rem; border: none;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.35);
+  }
+  .predict-results-class-code {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: #f2f2f4;
+  }
+  .predict-results-class-n {
+    font-family: var(--font-mono); font-size: 10px; color: #8a8b8e;
+  }
+  .predict-results-display-block {
+    display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.1rem;
+    padding-top: 0.65rem; border-top: 1px solid #2a2a2c;
+  }
+  .predict-results-display-title {
+    margin: 0; font-size: 10px; font-weight: 650; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #6a6b6e;
+  }
+  .predict-results-display-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    font-size: 11px; color: #9a9b9e;
+  }
+  .predict-results-display-row.is-disabled { opacity: 0.4; }
+  .sw {
+    width: 1.75rem; height: 1rem; border-radius: 999px; border: 1px solid #2e2e30;
+    background: #121314; position: relative; flex-shrink: 0;
+  }
+  .sw.on { background: #d0d0d4; border-color: #d0d0d4; }
+  .sw::after {
+    content: ""; position: absolute; top: 1px; left: 1px;
+    width: 0.7rem; height: 0.7rem; border-radius: 999px; background: #5a5b5e;
+  }
+  .sw.on::after { transform: translateX(0.7rem); background: #ffffff; }
+
+  .analysis-detections-panel {
+    border: 1px solid #2a2a2a; border-radius: 0.5rem; background: #141414;
+    display: flex; flex-direction: column; overflow: hidden; flex: 1 1 auto;
+  }
+  .analysis-detections-header {
+    display: none;
+  }
+  .analysis-detections-title { display: none; }
+  .analysis-detections-table-scroll {
+    /* thead + 4 rows, then scroll */
+    max-height: calc(1.7rem + 4 * 1.9rem);
+    overflow: auto;
+  }
+  table.analysis-detections-table {
+    width: 100%; border-collapse: collapse; font-size: 11px;
+  }
+  .analysis-detections-table th {
+    text-align: left; padding: 6px 12px;
+    background: linear-gradient(180deg, #232426 0%, #1e1f21 100%);
+    color: #757578; font-size: 10px; letter-spacing: 0.07em;
+    text-transform: uppercase; font-weight: 600; border-bottom: 1px solid #2a2a2a;
+    font-family: Inter, system-ui, sans-serif; white-space: nowrap;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+  .analysis-detections-row td {
+    padding: 0.5rem 0.55rem; border-bottom: 1px solid #1e1e1e; color: #ececec;
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 11px;
+    font-variant-numeric: tabular-nums; white-space: nowrap; vertical-align: middle;
+    width: 1%;
+  }
+  .analysis-detections-row:last-child td { border-bottom: none; }
+  .analysis-detections-row.is-selected {
+    background: #1a1e24;
+  }
+  .analysis-detections-row.is-selected td:first-child {
+    box-shadow: inset 3px 0 0 #6aa8e8;
+  }
+  .analysis-detections-td-class {
+    font-family: Inter, system-ui, sans-serif !important; font-weight: 600; letter-spacing: 0.04em;
+  }
+  .analysis-detections-swatch {
+    display: inline-block; width: 9px; height: 9px; border-radius: 2px;
+    vertical-align: middle; margin-right: 0.4rem;
+  }
+  .analysis-detections-row td.analysis-detections-td-type {
+    font-family: Inter, system-ui, sans-serif !important; font-weight: 400;
+    color: var(--detection-swatch, #ececec);
+  }
+  .analysis-detections-prob {
+    position: relative; display: block; width: 3.75rem; height: 0.65rem;
+    border-radius: 999px; background: #1a1a1a; border: 1px solid #2a2a2a;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45); overflow: hidden;
+  }
+  .analysis-detections-prob-fill {
+    display: block; height: 100%; border-radius: 999px;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
+  }
+  .analysis-detections-prob-fill.is-high { background: linear-gradient(90deg, #2d9a5f 0%, #49d487 100%); }
+  .analysis-detections-prob-fill.is-mid { background: linear-gradient(90deg, #c4922a 0%, #e0b84a 100%); }
+  .analysis-detections-prob-label { display: none; }
+  .analysis-detections-td-file {
+    width: auto; color: rgb(255 255 255 / 0.38) !important;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .analysis-detections-footer {
+    padding: 0.35rem 0.65rem; font-size: 10px; color: rgb(255 255 255 / 0.45);
+    border-top: 1px solid #2a2a2a;
+  }
+  .dock {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.25rem 0.75rem; border-top: 1px solid #2a2a2a; background: #0f0f0f;
+    font-size: 11px; color: rgb(255 255 255 / 0.45);
+  }
+  .src-note {
+    position: fixed; bottom: 8px; right: 12px; font-size: 10px;
+    color: rgb(255 255 255 / 0.25); font-family: var(--font-mono);
+  }
+</style>
+</head>
+<body>
+  <div class="shell" id="shot">
+    <aside class="sidebar">
+      <div class="brand">orcAI Desktop <span>v0.1.12</span></div>
+      <nav class="nav">
+        <a href="#">Главная</a>
+        <a href="#">Проекты</a>
+        <a class="is-active" href="#">Распознавание</a>
+        <a href="#">Обучение</a>
+        <a href="#">Модели</a>
+        <a href="#">Результаты</a>
+        <a href="#">Задачи</a>
+        <a href="#">Настройки</a>
+        <a href="#">Справка</a>
+      </nav>
+    </aside>
+    <section class="main">
+      <div class="studio-panel">
+      <div class="page-head">
+        <div>
+          <h1>Распознавание</h1>
+          <p>Параметры прогона, просмотр спектрограммы и фильтрация длительностей.</p>
+        </div>
+        <div class="head-actions">
+          <div class="crumb">Распознавание <span>/</span> Результаты</div>
+          <div class="help-btn"><i>?</i> Справка</div>
+        </div>
+      </div>
+      <div class="tabs-bar">
+        <div class="tabs">
+          <div class="tab">Параметры</div>
+          <div class="tab is-active">Результаты <span class="badge">218</span></div>
+          <div class="tab">Фильтрация</div>
+        </div>
+        <div class="page-actions">
+          <button type="button" class="predict-results-page-btn predict-results-page-btn--filled">Экспорт в Audacity</button>
+          <button type="button" class="predict-results-page-btn predict-results-page-btn--filled">
+            <span class="predict-results-page-btn__icon" aria-hidden>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 16.5 11 12.5l3 2 5-6"/><circle cx="8" cy="16.5" r="1" fill="currentColor" stroke="none"/><circle cx="11" cy="12.5" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="14.5" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="8.5" r="1" fill="currentColor" stroke="none"/></svg>
+            </span>
+            Результаты
+          </button>
+        </div>
+      </div>
+      <div class="studio-wrap">
+        <div class="predict-results-studio">
+          <div class="transport">
+            <div class="transport-left">
+              <div class="btns">
+                <span aria-label="to start"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 6.75v10.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17.25 6.85c0-.48-.5-.78-.9-.55l-7.1 4.7c-.42.28-.42.82 0 1.1l7.1 4.7c.4.23.9-.07.9-.55V6.85Z"/></svg></span>
+                <span aria-label="rewind"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.4 6.85c0-.48-.5-.78-.9-.55L3.4 11c-.42.28-.42.82 0 1.1l7.1 4.7c.4.23.9-.07.9-.55V6.85Z"/><path d="M20.1 6.85c0-.48-.5-.78-.9-.55L12.1 11c-.42.28-.42.82 0 1.1l7.1 4.7c.4.23.9-.07.9-.55V6.85Z"/></svg></span>
+                <span aria-label="play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.2 6.4c0-.55.58-.9 1.06-.64l8.05 4.6c.5.28.5 1 0 1.28l-8.05 4.6c-.48.28-1.06-.09-1.06-.64V6.4Z"/></svg></span>
+                <span aria-label="ff"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 6.85c0-.48.5-.78.9-.55L11.9 11c.42.28.42.82 0 1.1l-7.1 4.7c-.4.23-.9-.07-.9-.55V6.85Z"/><path d="M12.6 6.85c0-.48.5-.78.9-.55L20.6 11c.42.28.42.82 0 1.1l-7.1 4.7c-.4.23-.9-.07-.9-.55V6.85Z"/></svg></span>
+                <span aria-label="to end"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.75 6.85c0-.48.5-.78.9-.55l7.1 4.7c.42.28.42.82 0 1.1l-7.1 4.7c-.4.23-.9-.07-.9-.55V6.85Z"/><path d="M16.5 6.75v10.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                <span aria-label="stop"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="8.1" y="8.1" width="7.8" height="7.8" rx="1.1"/></svg></span>
+                <span aria-label="loop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15.75 8.35H9.1a3.15 3.15 0 0 0 0 7.3h6.65a3.15 3.15 0 0 0 2.55-5.05"/><path fill="currentColor" stroke="none" d="M13.55 5.55 17.15 8.2l-3.6 2.65V5.55Z"/></svg></span>
+              </div>
+              <div class="slider-block has-cap">
+                <label>Контраст</label>
+                <div class="row"><span class="ico">☀</span><div class="track"><i style="width:58%"></i></div><span class="pct">58%</span></div>
+              </div>
+            </div>
+            <div class="transport-center">
+              <div class="lcd m04">
+                <div class="cell"><small>позиция</small>04:47</div>
+                <div class="cell"><small>длина</small>23:12</div>
+                <div class="cell"><small>канал</small>1</div>
+              </div>
+            </div>
+            <div class="transport-right">
+              <div class="view-tools" aria-label="Инструменты вида">
+                <span title="Сброс" aria-label="reset">↺</span>
+                <span class="is-on" title="Рука" aria-label="hand">✋</span>
+              </div>
+              <div class="slider-block has-cap">
+                <label>Масштаб</label>
+                <div class="row"><span class="ico">−</span><div class="track"><i style="width:62%"></i></div><span class="ico">+</span></div>
+              </div>
+              <div class="slider-block vol">
+                <div class="row"><span class="ico">🔊</span><div class="track"><i style="width:100%"></i></div><span class="pct">100%</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="file-seg">
+            <div class="file">
+              <svg class="wave" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M2.5 12c1.5-6 3-8 4.75-8S11 18 12 18s3.75-14 5.5-14S20 18 21.5 12"/></svg>
+              <span class="name">01 Just Passing Through.wav</span>
+              <span class="filemenu" title="Выбор аудиотрека" aria-label="file picker">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" stroke="none" d="M4.2 6.1 9.1 9.05a.55.55 0 0 1 0 .95L4.2 12.95A.55.55 0 0 1 3.4 12.5V6.55a.55.55 0 0 1 .8-.45Z"/>
+                  <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M11.25 7.1H20M11.25 12H20M5.5 17H20"/>
+                </svg>
+              </span>
+              <span class="muted">48 кГц · канал 1 · 23:12</span>
+            </div>
+            <div class="sep" aria-hidden="true"></div>
+            <div class="right">
+              <div class="seg"><span class="title">Сегмент 3 / 7</span> <span class="range">04:00 — 06:30</span> <span class="dur">· по 200 с</span></div>
+              <div class="nav">
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="m14 6-6 6 6 6"/></svg></span>
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="m10 6 6 6-6 6"/></svg></span>
+              </div>
+            </div>
+          </div>
+          <div class="analysis-spectrogram-studio-with-sidebar">
+            <div class="spec-pane">
+              <div class="axis-y">
+                <span class="tick">16<span class="mark"></span></span>
+                <span class="tick">14<span class="mark"></span></span>
+                <span class="tick">12<span class="mark"></span></span>
+                <span class="tick">10<span class="mark"></span></span>
+                <span class="tick">8<span class="mark"></span></span>
+                <span class="tick">6<span class="mark"></span></span>
+                <span class="tick">4<span class="mark"></span></span>
+                <span class="tick">2<span class="mark"></span></span>
+              </div>
+              <div class="spec-bg">
+                <div class="box c-whistle" style="left:18%; top:42%; width:14%; height:18%"><span class="analysis-overlay-prob">0.91</span></div>
+                <div class="box c-buzz" style="left:36%; top:55%; width:11%; height:14%"><span class="analysis-overlay-prob">0.78</span></div>
+                <div class="box c-phs" style="left:52%; top:38%; width:9%; height:16%"><span class="analysis-overlay-prob">0.84</span></div>
+                <div class="box c-ss" style="left:64%; top:48%; width:12%; height:12%"><span class="analysis-overlay-prob">0.72</span></div>
+                <div class="box c-whistle" style="left:78%; top:40%; width:10%; height:15%"><span class="analysis-overlay-prob">0.94</span></div>
+                <div class="playhead"></div>
+              </div>
+              <div class="axis-corner">кГц</div>
+              <div class="axis-x">
+                <span class="tick"><span class="mark"></span>04:00</span>
+                <span class="tick"><span class="mark"></span>04:25</span>
+                <span class="tick"><span class="mark"></span>04:50</span>
+                <span class="tick"><span class="mark"></span>05:15</span>
+                <span class="tick"><span class="mark"></span>05:40</span>
+                <span class="tick"><span class="mark"></span>06:05</span>
+                <span class="tick"><span class="mark"></span>06:30</span>
+              </div>
+            </div>
+            <aside class="predict-results-class-sidebar" aria-label="Классы и отображение">
+              <div class="predict-results-class-sidebar-head">
+                <h3 class="predict-results-class-sidebar-title">Классы</h3>
+                <span class="predict-results-class-sidebar-count">218</span>
+              </div>
+              <ul class="predict-results-class-list">
+                <li class="predict-results-class-row"><label class="predict-results-class-label"><span class="predict-results-class-check"></span><span class="predict-results-class-swatch" style="background:#AA4499"></span><span class="predict-results-class-code">WHISTLE</span><span class="predict-results-class-n">96</span></label></li>
+                <li class="predict-results-class-row"><label class="predict-results-class-label"><span class="predict-results-class-check"></span><span class="predict-results-class-swatch" style="background:#117733"></span><span class="predict-results-class-code">BUZZ</span><span class="predict-results-class-n">54</span></label></li>
+                <li class="predict-results-class-row"><label class="predict-results-class-label"><span class="predict-results-class-check"></span><span class="predict-results-class-swatch" style="background:#88CCEE"></span><span class="predict-results-class-code">PHS</span><span class="predict-results-class-n">21</span></label></li>
+                <li class="predict-results-class-row"><label class="predict-results-class-label"><span class="predict-results-class-check"></span><span class="predict-results-class-swatch" style="background:#DDCC77"></span><span class="predict-results-class-code">SS</span><span class="predict-results-class-n">18</span></label></li>
+                <li class="predict-results-class-row"><label class="predict-results-class-label"><span class="predict-results-class-check"></span><span class="predict-results-class-swatch" style="background:#332288"></span><span class="predict-results-class-code">BR</span><span class="predict-results-class-n">14</span></label></li>
+                <li class="predict-results-class-row is-off"><label class="predict-results-class-label"><span class="predict-results-class-check"></span><span class="predict-results-class-swatch" style="background:#44AA99"></span><span class="predict-results-class-code">HERDING</span><span class="predict-results-class-n">9</span></label></li>
+                <li class="predict-results-class-row is-off"><label class="predict-results-class-label"><span class="predict-results-class-check"></span><span class="predict-results-class-swatch" style="background:#CC6677"></span><span class="predict-results-class-code">TAILSLAP</span><span class="predict-results-class-n">6</span></label></li>
+              </ul>
+              <div class="predict-results-display-block">
+                <h3 class="predict-results-display-title">Отображение</h3>
+                <label class="predict-results-display-row"><span>Вероятность</span><span class="sw on"></span></label>
+                <label class="predict-results-display-row"><span>Аннотации</span><span class="sw"></span></label>
+              </div>
+            </aside>
+          </div>
+          <div class="analysis-detections-panel">
+            <header class="analysis-detections-header">
+              <h3 class="analysis-detections-title">Обнаруженные сигналы</h3>
+            </header>
+            <div class="analysis-detections-table-scroll">
+              <table class="analysis-detections-table">
+                <thead>
+                  <tr>
+                    <th>Начало</th><th>Конец</th><th>Длит.</th><th>Класс</th><th>Тип</th><th>Вероят.</th><th>Частоты</th><th>Файл</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="analysis-detections-row is-selected" style="--detection-swatch:#AA4499">
+                    <td>04:41.2</td><td>04:52.0</td><td>10.8 с</td>
+                    <td class="analysis-detections-td-class"><span class="analysis-detections-swatch" style="background:#AA4499"></span>WHISTLE</td>
+                    <td class="analysis-detections-td-type">whistles</td>
+                    <td><div class="analysis-detections-prob"><div class="analysis-detections-prob-fill is-high" style="width:91%"></div></div></td>
+                    <td>4.5–6.5 кГц</td>
+                    <td class="analysis-detections-td-file">01 Just Passing Through.wav</td>
+                  </tr>
+                  <tr class="analysis-detections-row" style="--detection-swatch:#117733">
+                    <td>04:55.1</td><td>05:02.4</td><td>7.3 с</td>
+                    <td class="analysis-detections-td-class"><span class="analysis-detections-swatch" style="background:#117733"></span>BUZZ</td>
+                    <td class="analysis-detections-td-type">buzzing</td>
+                    <td><div class="analysis-detections-prob"><div class="analysis-detections-prob-fill is-mid" style="width:73%"></div></div></td>
+                    <td>12.4–14.2 кГц</td>
+                    <td class="analysis-detections-td-file">01 Just Passing Through.wav</td>
+                  </tr>
+                  <tr class="analysis-detections-row" style="--detection-swatch:#88CCEE">
+                    <td>05:10.0</td><td>05:16.2</td><td>6.2 с</td>
+                    <td class="analysis-detections-td-class"><span class="analysis-detections-swatch" style="background:#88CCEE"></span>PHS</td>
+                    <td class="analysis-detections-td-type">prey handling sounds</td>
+                    <td><div class="analysis-detections-prob"><div class="analysis-detections-prob-fill is-mid" style="width:62%"></div></div></td>
+                    <td>1.2–2.6 кГц</td>
+                    <td class="analysis-detections-td-file">01 Just Passing Through.wav</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <footer class="analysis-detections-footer">3 обнаруженных сигнала в сегменте · всего в файле 218 обнаруженных сигналов</footer>
+          </div>
+        </div>
+      </div>
+      </div>
+      <div class="dock">
+        <span>консоль · Лог и инспектор скрыты</span>
+        <span>Развернуть ▴</span>
+      </div>
+    </section>
+  </div>
+  <div class="src-note">from code · shared chrome · segment right · classes panel · charcoal thead</div>
+</body>
+</html>

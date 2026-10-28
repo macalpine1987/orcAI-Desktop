@@ -1,0 +1,49 @@
+---
+description: Эталонная сборка orcAI Desktop v0.1.12 — откат и сравнение с baseline
+alwaysApply: true
+---
+
+# orcAI Desktop v0.1.12 (previous baseline)
+
+Версия **v0.1.12** (2026-09-15) — предыдущий эталон (текущий: **v0.1.18**). При запросе «откатись на v0.1.12», «как в v0.1.12», «верни поведение v0.1.12» — ориентируйтесь на этот baseline.
+
+Предыдущий эталон **v0.1.11** сохранён отдельно (`orcai-baseline-v0.1.11.mdc`).
+
+## Артефакты
+
+- **.app:** `/tmp/orcAI-Desktop_0.1.12_aarch64.app` (и архив `/tmp/orcai-desktop-baseline-v0.1.12-app`)
+- **Исходники:** `/tmp/orcai-desktop-baseline-v0.1.12-src` (снимок `orcai-desktop` на момент релиза)
+- **Документация:** `docs/RELEASES.md`
+
+## Архитектура (зафиксирована)
+
+| Слой | Путь / роль |
+|------|-------------|
+| Shell | Tauri 2 + Rust (`src-tauri/`) — spawn sidecar, порты, hide-on-close |
+| UI | React + TS + Vite + Tailwind (`apps/ui/`) — только Lab |
+| Backend | Python 3.11 FastAPI sidecar (`apps/sidecar/`) + orcAI pip (**без форка**) |
+| Runtime | Динамический порт; `startAll` / `stopAll` / restart; bundled Python + AUTONOMY GATE |
+| Данные | SQLite (jobs/settings) + DuckDB; проекты = каталог orcAI на диске |
+| i18n | RU/EN; в UI `predict` → «распознавание»; **в таблице Задачи** — CLI-id (`predict`) |
+
+### Runtime (не ломать без явного запроса)
+
+- Старт приложения: прогресс **0%**, sidecar и движок **остановлены**
+- Запуск только кнопкой **«Запуск»** на Главной (`startAll`)
+- **Перезапуск:** `stopAll` → `startAll` с синхронным сбросом refs + live-check `invokeSidecarIsRunning` (фикс v0.1.9)
+- macOS: X / ⌘W — hide; ⌘Q — `stopEngine` + `stopSidecar`
+- Health / capabilities — только при `runtimeBase` сессии (не дефолт 8741)
+- `engineReady` / sidecar «готов» — только при `sidecarPhase === "running"`
+- Автономность / переносимость: `Python.framework` (incl. nested Python.app `@loader_path`) + vendored OpenSSL/sqlite/xz/mpdecimal; каждая сборка — **AUTONOMY GATE PASSED** (`orcai-autonomy-gate.mdc`)
+
+### UI (v0.1.12 snapshot)
+
+- Главная (ЭК-4 / m01): Runtime jewel-лампы, Current Project LCD-метрики, Quick Actions, Recent Jobs
+- Проекты (ЭК-5): studio-рамка; мастер создания; CLI-подсказки в карточках фокуса — зелёный LCD (`#7dffa3`)
+- **Распознавание · Параметры (ЭК-6 / m03):** две колонки «Параметры запуска» / «Очередь запуска» вровень снизу; общая прокрутка сетки справа; отдельный скролл только у таблицы WAV; CLI Copy + ETA; пресеты только на вкладке Параметры; Advanced (`-o`/`-v`); overwrite → повторный прогон готовых
+- Задачи (m16): шапка колонок charcoal, LED-индикаторы у CLI-команд
+- `PageHelpButton` — outlined «Справка» во всех основных разделах
+
+## Откат
+
+См. `docs/RELEASES.md` — `rsync` из `/tmp/orcai-desktop-baseline-v0.1.12-src` или пересборка `scripts/build-macos-release.sh`.

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "orcAI Desktop",
+  "version": "1.0.0",
+  "identifier": "ch.ethz.orcai.desktop",
+  "build": {
+    "beforeDevCommand": "bash scripts/ensure-bundled-python.sh && npm run dev --prefix ../apps/ui",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "bash scripts/prepare-production.sh",
+    "frontendDist": "../apps/ui/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "orcAI Desktop",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:1420 ipc: http://ipc.localhost; connect-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:1420 ipc: http://ipc.localhost; img-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:1420 data: blob:; media-src 'self' http://127.0.0.1:* http://localhost:* http://localhost:1420 blob:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "macOS": {
+      "entitlements": "entitlements.plist",
+      "hardenedRuntime": true,
+      "minimumSystemVersion": "12.0"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": {
+      "resources/python/": "python/",
+      "../LICENSE": "LICENSE",
+      "../NOTICE": "NOTICE",
+      "../THIRD_PARTY_LICENSES": "THIRD_PARTY_LICENSES",
+      "../docs/manual/": "docs/manual/"
+    },
+    "fileAssociations": [
+      {
+        "ext": [
+          "wav"
+        ],
+        "name": "WAV recording",
+        "description": "Open in orcAI Desktop (spectrogram, predict)",
+        "role": "Editor",
+        "mimeType": "audio/wav"
+      },
+      {
+        "ext": [
+          "csv"
+        ],
+        "name": "Recording table",
+        "description": "Open CSV in orcAI Desktop (recording table or predict)",
+        "role": "Editor",
+        "mimeType": "text/csv"
+      },
+      {
+        "ext": [
+          "txt"
+        ],
+        "name": "orcAI labels",
+        "description": "orcAI prediction or annotation label file",
+        "role": "Viewer",
+        "mimeType": "text/plain"
+      }
+    ]
+  }
+}

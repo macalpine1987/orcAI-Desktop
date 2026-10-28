@@ -1,0 +1,10 @@
+[[permission]]
+identifier = "allow-window-chrome"
+description = "Fullscreen, close policy, and UI scale commands used by Settings and factory reset."
+commands.allow = [
+  "window_close_policy",
+  "window_set_fullscreen",
+  "window_is_fullscreen",
+  "ui_get_scale",
+  "ui_set_scale",
+]

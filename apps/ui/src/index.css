@@ -1,0 +1,139 @@
+@import "./styles/tokens.css";
+@import "./styles/studio.css";
+@import "./styles/instrument.css";
+@import "./styles/analysis-lab.css";
+@import "./styles/jobs-console.css";
+@import "./styles/settings-interface.css";
+@import "./styles/home.css";
+@import "./styles/projects-studio.css";
+@import "./styles/predict-params.css";
+@import "./styles/predict-filter.css";
+@import "./styles/results-studio.css";
+@import "./styles/help-studio.css";
+@import "./styles/pipeline-studio.css";
+@import "./styles/train-wizard.css";
+@import "./styles/train-monitor.css";
+@import "./styles/models-studio.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-[color:var(--border)];
+  }
+
+  html {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #root,
+  .app-shell-root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /*
+   * UI scale is CSS zoom on the shell. WebKit expands a zoomed box, so the
+   * shell lays out at 100%/zoom and paints back to the window. Blink does not
+   * expand it; applyUiScale then clears zoom and scales the root font instead,
+   * so the shell stays full-window and the page can scroll.
+   */
+  .app-shell-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: calc(100% / var(--ui-zoom, 1));
+    height: calc(100% / var(--ui-zoom, 1));
+  }
+
+  /* Fill the zoomed shell on resize/maximize/fullscreen (Tauri WKWebView). */
+  .app-viewport {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--mat-canvas, var(--mat-face));
+    container-type: size;
+    container-name: app-shell;
+    /* Expanded dock: ~38% of the shell, never taller than 17.5rem or shorter than 10rem. */
+    --m16-dock-h: clamp(10rem, 38cqh, 17.5rem);
+  }
+
+  button {
+    font-family: inherit;
+  }
+
+  input[type="range"].threshold-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 0.625rem;
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 9999px;
+    background: linear-gradient(
+      to right,
+      var(--accent) 0%,
+      var(--accent) var(--threshold-pct, 50%),
+      color-mix(in srgb, var(--muted) 85%, transparent) var(--threshold-pct, 50%),
+      color-mix(in srgb, var(--muted) 85%, transparent) 100%
+    );
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.15);
+    cursor: pointer;
+  }
+
+  input[type="range"].threshold-slider:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  input[type="range"].threshold-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-top: -0.3125rem;
+    border-radius: 9999px;
+    border: 2px solid var(--surface);
+    background: var(--accent);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  }
+
+  input[type="range"].threshold-slider::-moz-range-thumb {
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 9999px;
+    border: 2px solid var(--surface);
+    background: var(--accent);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  }
+
+  input[type="range"].threshold-slider::-webkit-slider-runnable-track {
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: transparent;
+  }
+
+  input[type="range"].threshold-slider::-moz-range-track {
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: transparent;
+  }
+}

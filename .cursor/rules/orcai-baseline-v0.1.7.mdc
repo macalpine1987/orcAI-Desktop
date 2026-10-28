@@ -1,0 +1,35 @@
+---
+description: Эталонная сборка orcAI Desktop v0.1.7 — откат и сравнение с baseline
+alwaysApply: false
+---
+
+# orcAI Desktop v0.1.7 (baseline)
+
+Версия **v0.1.7** (2026-07-22) — предыдущий эталон. Текущий baseline: **v0.1.9**. При запросе «откатись на v0.1.7» — ориентируйтесь на этот файл.
+
+Предыдущие эталоны **v0.1.6** … **v0.1.1** сохраняются отдельно (`orcai-baseline-v0.1.6.mdc`, …).
+
+## Артефакты
+
+- **.app:** `/tmp/orcAI-Desktop_0.1.7_aarch64.app` (и архив `/tmp/orcai-desktop-baseline-v0.1.7-app`)
+- **Исходники:** `/tmp/orcai-desktop-baseline-v0.1.7-src` (снимок `orcai-desktop` на момент релиза)
+- **Документация:** `docs/RELEASES.md`
+
+## Поведение runtime (не ломать без явного запроса)
+
+- При запуске приложения: прогресс **0%**, sidecar и движок **остановлены**
+- Запуск только по кнопке **«Запуск»** на главной (`startAll`)
+- macOS: красный крестик / ⌘W — **скрыть** окно (sidecar и движок продолжают работать); ⌘Q / Quit — остановка через `RunEvent::Exit`
+- `fetchSidecarHealth` / capabilities — **только** при привязанном порту сессии (`runtimeBase`), не дефолтный 8741
+- `engineReady` и статус sidecar «готов» — только при `sidecarPhase === "running"`
+- Индикатор готовности панели «Среда для анализа»: зелёная jewel-лампочка (`RuntimeReadyLamp`), не mono-accent
+
+## Спектрограмма (orcAI-aligned)
+
+- Ось Y: **0–16 кГц** (`freq_range` orcAI), не Nyquist 24 кГц
+- Тайлы: путь orcAI STFT (`calculate_spectrogram` + `preprocess`)
+- Геометрия оверлеев/курсора: **linear** Hz; без второго percentile-stretch при отрисовке
+
+## Откат
+
+См. `docs/RELEASES.md` — `rsync` из `/tmp/orcai-desktop-baseline-v0.1.7-src` или пересборка `scripts/build-macos-release.sh`.

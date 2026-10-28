@@ -1,0 +1,121 @@
+/*
+ * Global Studio theme (dark) — layered near-black + visible rim depth.
+ * Layer spec: docs/cursor-handoff/m16-layer-spec.md
+ * Palette sampled from mockups/m16|m26|m27 PNG.
+ */
+
+@layer components {
+  /* —— Primitives (PNG: 8px radius, rim highlight) —— */
+  .studio-panel {
+    overflow: hidden;
+    border: 1px solid var(--studio-rim, var(--border));
+    border-radius: var(--studio-radius, 8px);
+    background: var(--mat-face);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .studio-inset {
+    overflow: hidden;
+    border: 1px solid #0b0c0d;
+    border-radius: calc(var(--studio-radius, 8px) - 2px);
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-inset-well);
+  }
+
+  /* —— Dark shell chrome —— */
+  [data-theme="dark"] .app-viewport {
+    background: var(--mat-canvas);
+  }
+
+  [data-theme="dark"] .mat-shell-header {
+    background: var(--mat-canvas);
+    border-bottom: 1px solid var(--border);
+    box-shadow: none;
+  }
+
+  [data-theme="dark"] .mat-shell-sidebar {
+    background: var(--mat-sidebar);
+    border-right: 1px solid var(--border);
+    box-shadow: none;
+  }
+
+  [data-theme="dark"] .mat-shell-main {
+    background: var(--mat-canvas);
+    box-shadow: none;
+  }
+
+  [data-theme="dark"] .mat-dock {
+    background: var(--mat-canvas);
+    border-top: 1px solid var(--border);
+    box-shadow: none;
+  }
+
+  [data-theme="dark"] .mat-dock.lab-dock-root {
+    background: var(--mat-canvas);
+    box-shadow: none;
+  }
+
+  [data-theme="dark"] .predict-page-meta-frame,
+  [data-theme="dark"] .shell-meta-frame {
+    background: var(--mat-meta-fill, var(--mat-sidebar));
+    border-color: var(--mat-meta-border, var(--border));
+    box-shadow: none;
+  }
+
+  [data-theme="dark"] .mat-panel,
+  [data-theme="dark"] .mat-card {
+    border-color: var(--studio-rim, var(--border));
+    box-shadow: var(--shadow-panel);
+  }
+
+  [data-theme="dark"] .mat-inset,
+  [data-theme="dark"] .mat-card-inset {
+    border-color: #0b0c0d;
+    box-shadow: var(--shadow-inset-well);
+  }
+
+  /*
+   * Page-header Help — outlined ghost (m01 screenshot):
+   * circle-? + label, soft gray rim, dark fill.
+   */
+  .page-help-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ctrl-gap, 0.5rem);
+    box-sizing: border-box;
+    height: var(--ctrl-h, 2rem);
+    padding: 0 var(--ctrl-pad-x, 0.75rem);
+    border: 1px solid #6a6c70;
+    border-radius: var(--ctrl-radius, 8px);
+    background: #181a1b;
+    color: #c4c5c7;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      border-color 120ms ease,
+      color 120ms ease,
+      background-color 120ms ease;
+  }
+
+  .page-help-btn:hover {
+    border-color: #8a8c90;
+    color: #e2e2e4;
+    background: #1c1e20;
+  }
+
+  .page-help-btn:active {
+    border-color: #5a5c60;
+    background: #141516;
+  }
+
+  .page-help-btn-icon {
+    display: block;
+    flex-shrink: 0;
+  }
+}

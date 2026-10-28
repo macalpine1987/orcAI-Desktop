@@ -1,0 +1,27 @@
+{
+  "name": "orcai-desktop",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Desktop application for orcAI",
+  "scripts": {
+    "dev": "bash scripts/tauri-dev.sh",
+    "build": "tauri build",
+    "build:macos": "bash scripts/build-macos-release.sh",
+    "verify:autonomy": "bash scripts/verify-app-python.sh \"${ORCAI_APP:-/tmp/orcAI-Desktop_$(node -p \"require('./package.json').version\")_aarch64.app}\"",
+    "dmg:macos": "bash scripts/create-dmg.sh",
+    "prepare:sidecar": "bash scripts/bundle-python.sh",
+    "check:sidecar": "bash scripts/check-bundled-python.sh",
+    "lint:sidecar": "cd apps/sidecar && ruff check src tests",
+    "prepare:production": "bash scripts/prepare-production.sh",
+    "prepare:ui": "bash scripts/ensure-ui-deps.sh",
+    "tauri": "tauri",
+    "ui:dev": "npm run dev --prefix apps/ui",
+    "ui:build": "npm run build --prefix apps/ui",
+    "ui:test": "bash scripts/ensure-ui-deps.sh && npm run test --prefix apps/ui",
+    "sidecar:test": "bash scripts/run-sidecar-tests.sh",
+    "sidecar": "cd apps/sidecar && python -m orcai_desktop_sidecar"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.2.7"
+  }
+}

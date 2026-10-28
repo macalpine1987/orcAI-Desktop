@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-shell-helpers"
+description = "Reveal files in the system file manager and write text exports."
+commands.allow = ["shell_reveal_in_finder", "shell_open_url", "shell_write_text_file", "shell_ensure_dir", "shell_ensure_file", "shell_clear_orcai_spec_cache", "shell_reset_orcai_desktop_db", "shell_wipe_orcai_desktop_dir", "shell_delete_preferences_store", "shell_truncate_sidecar_log"]

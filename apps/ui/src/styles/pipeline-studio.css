@@ -1,0 +1,747 @@
+@layer components {
+  .app-viewport--pipeline-studio {
+    --m16-pad-main: 10px;
+    --m16-studio-gutter: var(--m16-pad-main);
+    --m16-gap-page: 10px;
+    --m16-chrome-border: var(--border);
+    --m16-table-rim-outer: #2a2c2f;
+    --st-panel: var(--mat-face);
+    --st-card: #191a1b;
+    --st-card-rim: #2a2c2f;
+    --pp-lcd: #7dffa3;
+    --settings-segment-track: var(--m16-btn-bg, #20262b);
+    --settings-segment-border: #3a3c40;
+  }
+
+  [data-theme="light"] .app-viewport--pipeline-studio {
+    --m16-table-rim-outer: var(--border-strong);
+    --st-panel: var(--mat-face);
+    --st-card: var(--mat-raised);
+    --st-card-rim: var(--border-strong);
+    --pp-lcd: #147a3c;
+    --settings-segment-track: var(--mat-recess);
+    --settings-segment-border: var(--border-strong);
+  }
+
+  .app-viewport--pipeline-studio .mat-shell-main--pipeline-studio {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 0 var(--m16-studio-gutter);
+    background: var(--mat-canvas);
+    scrollbar-gutter: auto;
+  }
+
+  .app-viewport--pipeline-studio .lab-dock-root {
+    box-sizing: border-box;
+    flex-shrink: 0;
+    padding: 6px var(--m16-studio-gutter) 6px;
+  }
+
+  .app-viewport--pipeline-studio .pp-work-panel.studio-panel {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    background: var(--st-panel, var(--mat-face));
+    border: 1px solid var(--m16-chrome-border, var(--border));
+    border-radius: var(--studio-radius, 8px);
+    box-shadow:
+      inset 0 1px 0 var(--m16-panel-top-hi, #3d3e40),
+      0 0 0 1px var(--m16-chrome-border, var(--border));
+  }
+
+  .pp-page {
+    display: flex;
+    width: 100%;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pp-work-panel {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+    gap: var(--m16-gap-page, 10px);
+    container-type: size;
+    container-name: studio-work;
+  }
+
+  .pp-work-panel .pp-page-header {
+    flex: 0 0 auto;
+    padding: var(--m16-pad-main, 10px) var(--m16-pad-main, 10px) 0;
+  }
+
+  .pp-toolbar {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.75rem;
+    padding: 0 var(--m16-pad-main, 10px);
+  }
+
+  .pp-toolbar-hint {
+    min-width: 0;
+    flex: 1 1 12rem;
+    font-size: 0.75rem;
+    color: var(--foreground-muted, var(--text-muted));
+  }
+
+  .pp-refresh-wrap {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+
+  .pp-refresh-spin {
+    animation: pp-refresh-rotate 0.8s linear infinite;
+  }
+
+  @keyframes pp-refresh-rotate {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .pp-toolbar .predict-tab svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .pp-soon {
+    flex: 0 0 auto;
+    margin: 0 var(--m16-pad-main, 10px);
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--st-card-rim);
+    border-radius: 8px;
+    background: var(--st-card);
+    font-size: 0.8rem;
+    color: var(--foreground-muted, var(--text-muted));
+  }
+
+  /*
+   * Shared vertical scroll for readiness + pipeline board (like .pp-params-scroll).
+   * Always on — when the lab dock expands, last steps stay reachable; no dual-mode.
+   */
+  .pp-body {
+    display: grid;
+    grid-template-columns: minmax(15.5rem, 20rem) minmax(0, 1fr);
+    grid-template-rows: minmax(min-content, 100%);
+    gap: 10px;
+    min-height: 0;
+    flex: 1 1 0;
+    padding: 0 var(--m16-pad-main, 10px) var(--m16-pad-main, 10px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    align-items: stretch;
+    align-content: start;
+    scrollbar-gutter: stable;
+  }
+
+  .pp-col-side {
+    gap: 0;
+  }
+
+  .pp-col-board {
+    overflow: visible;
+  }
+
+  .pp-left-united {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 100%;
+    height: auto;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .pp-left-pane {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .pp-split-rule {
+    position: relative;
+    flex: 0 0 auto;
+    height: 14px;
+    margin: 0.35rem 0 0.45rem;
+  }
+
+  .pp-split-rule::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    right: 4px;
+    height: 1px;
+    margin-top: -1px;
+    background: linear-gradient(
+      90deg,
+      rgb(74 76 80 / 0) 0%,
+      #6a6c70 16%,
+      #3d3e42 50%,
+      #6a6c70 84%,
+      rgb(74 76 80 / 0) 100%
+    );
+    box-shadow: 0 1px 0 rgb(0 0 0 / 0.45);
+  }
+
+  [data-theme="light"] .pp-split-rule::before {
+    background: linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0) 0%,
+      #9a9b9e 16%,
+      #7a7b7e 50%,
+      #9a9b9e 84%,
+      rgb(0 0 0 / 0) 100%
+    );
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.45);
+  }
+
+  .pp-card-kicker {
+    margin: 0 0 0.45rem;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--foreground-muted, var(--text-muted));
+  }
+
+  .pp-ready-row {
+    display: grid;
+    grid-template-columns: 1.125rem minmax(0, 1fr);
+    gap: 0.5rem;
+    align-items: start;
+    padding: 0.22rem 0;
+  }
+
+  .pp-ready-row .runtime-row-lamp {
+    margin-top: 0.12rem;
+  }
+
+  .pp-ready-row .runtime-row-lamp.is-active .runtime-row-lamp-jewel {
+    animation: none;
+    opacity: 1;
+  }
+
+  .pp-jewel {
+    position: relative;
+    display: block;
+    width: 12px;
+    height: 12px;
+    margin-top: 0.2rem;
+    border-radius: 9999px;
+  }
+
+  .pp-jewel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0.28;
+    background: currentColor;
+  }
+
+  .pp-jewel::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: inherit;
+    transform: translate(-50%, -50%);
+    background: currentColor;
+    box-shadow: 0 0 5px currentColor;
+  }
+
+  .pp-jewel.is-ok {
+    color: #3ee07a;
+  }
+  .pp-jewel.is-warn {
+    color: #e0b03e;
+  }
+  .pp-jewel.is-off {
+    color: #6b6e72;
+  }
+  .pp-jewel.is-info {
+    color: #4ea3f0;
+  }
+  .pp-jewel.is-err {
+    color: #e05252;
+  }
+
+  .pp-ready-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--foreground, var(--text));
+  }
+
+  .pp-ready-sub {
+    margin-top: 0.1rem;
+    font-size: 0.7rem;
+    color: var(--foreground-muted, var(--text-muted));
+  }
+
+  .pp-params {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.28rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .pp-params dt {
+    color: var(--foreground-muted, var(--text-muted));
+  }
+
+  .pp-params dd {
+    margin: 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    color: var(--pp-lcd);
+    text-align: right;
+    letter-spacing: 0.02em;
+  }
+
+  .pp-param-file {
+    margin: 0.55rem 0 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.68rem;
+    color: var(--foreground-muted, var(--text-muted));
+  }
+
+  .pp-param-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.65rem;
+  }
+
+  .pp-param-actions .settings-path-btn {
+    min-width: 6.5rem;
+  }
+
+  .app-viewport--pipeline-studio .pp-col-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex: 0 0 auto;
+  }
+
+  .app-viewport--pipeline-studio .pp-col-head h2 {
+    margin: 0;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--foreground-muted, var(--text-muted));
+  }
+
+  .pp-col-note {
+    font-size: 0.68rem;
+    color: var(--foreground-muted, var(--text-muted));
+  }
+
+  .pp-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: visible;
+    --jobs-status-dot-size: 6px;
+    --jobs-status-dot-well: 12px;
+    --m16-fs-10: 10px;
+  }
+
+  .pp-step {
+    display: grid;
+    grid-template-columns: 1.15rem minmax(7.5rem, 1.15fr) minmax(10rem, 1.4fr) auto auto;
+    gap: 0.35rem 0.75rem;
+    align-items: center;
+    border: 1px solid var(--st-card-rim);
+    border-radius: 8px;
+    background: var(--st-card);
+    box-shadow: none;
+    padding: 0.48rem 0.85rem;
+    min-height: 3.15rem;
+    /* Grow into spare height; never shrink below content (parent .pp-body scrolls). */
+    flex: 1 0 auto;
+  }
+
+  .pp-step-num {
+    font-size: 0.75rem;
+    color: var(--foreground-muted, var(--text-muted));
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .pp-step-title {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--foreground, var(--text));
+    line-height: 1.25;
+  }
+
+  .pp-step-cmd {
+    margin-top: 0.1rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.68rem;
+    color: var(--foreground-muted, var(--text-muted));
+    line-height: 1.25;
+  }
+
+  .pp-step-meta {
+    min-width: 9rem;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: var(--foreground-muted, var(--text-muted));
+  }
+
+  .pp-step-meta-primary {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pp-step-meta-stamp {
+    margin-top: 0.1rem;
+    opacity: 0.88;
+  }
+
+  .pp-step-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 7.6rem;
+  }
+
+  .pp-step-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    justify-content: flex-end;
+  }
+
+  .pp-more {
+    position: relative;
+  }
+
+  .pp-more-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 5;
+    min-width: 9rem;
+    border: 1px solid var(--st-card-rim);
+    border-radius: 8px;
+    background: var(--mat-face);
+    padding: 0.25rem;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  }
+
+  .pp-more-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.35rem 0.5rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 0.75rem;
+    border-radius: 6px;
+  }
+
+  .pp-more-menu button:hover {
+    background: color-mix(in srgb, var(--foreground, #fff) 8%, transparent);
+  }
+
+  .app-viewport--pipeline-studio .pp-empty {
+    margin: 0 var(--m16-pad-main, 10px) var(--m16-pad-main, 10px);
+    padding: 1.25rem;
+    border: 1px solid var(--st-card-rim);
+    border-radius: 8px;
+    background: var(--st-card);
+    color: var(--foreground-muted, var(--text-muted));
+    font-size: 0.85rem;
+  }
+
+  .pp-error {
+    flex: 0 0 auto;
+    margin: 0 var(--m16-pad-main, 10px);
+    font-size: 0.8rem;
+    color: #e05252;
+  }
+
+  .pp-notice {
+    flex: 0 0 auto;
+    margin: 0 var(--m16-pad-main, 10px);
+    font-size: 0.8rem;
+    color: var(--pp-lcd, #7dffa3);
+  }
+
+  .pp-plan-banner {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    margin: 0 var(--m16-pad-main, 10px) 0.55rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #2f5a3f;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #152018 0%, #101612 100%);
+    box-shadow: inset 0 1px 0 rgb(125 255 163 / 0.08);
+  }
+
+  .pp-plan-banner-text {
+    min-width: 0;
+  }
+
+  .pp-plan-banner-title {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--pp-lcd, #7dffa3);
+  }
+
+  .pp-plan-banner-body {
+    margin: 0.2rem 0 0;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: #9aa39c;
+  }
+
+  .pp-step-waiting {
+    font-size: 0.72rem;
+    color: #8b9198;
+    white-space: nowrap;
+  }
+
+  .pp-step-outside {
+    color: #6e747a;
+    font-style: italic;
+  }
+
+  .pp-step--outside-plan {
+    opacity: 0.72;
+  }
+
+  @media (max-width: 52rem) {
+    .pp-body {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pp-step {
+      grid-template-columns: 1.2rem minmax(0, 1fr);
+    }
+
+    .pp-step-meta,
+    .pp-step-status,
+    .pp-step-actions {
+      grid-column: 2;
+      justify-content: flex-start;
+    }
+  }
+}
+
+/* Unlayered so this beats .predict-tabs-m03 { flex: 1 1 auto } (Predict CSS is unlayered). */
+.pp-work-panel .pp-toolbar .predict-tabs-m03 {
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/*
+ * Predict Parameters uses unlayered `.pp-col` as a card. Pipeline columns share
+ * that class name historically and inherited a second rim. Scope + reset here.
+ */
+.app-viewport--pipeline-studio .pp-col-side,
+.app-viewport--pipeline-studio .pp-col-board {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 100%;
+  height: auto;
+  align-self: stretch;
+  overflow: visible;
+  color: var(--foreground, var(--text));
+}
+
+.app-viewport--pipeline-studio .pp-col-side {
+  gap: 0;
+  padding: 0.7rem 0.85rem 0.75rem;
+  border: 1px solid #2a2c2f;
+  border-radius: 8px;
+  background: #191a1b;
+}
+
+.app-viewport--pipeline-studio .pp-col-board {
+  gap: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-theme="light"] .app-viewport--pipeline-studio .pp-col-side {
+  background: var(--mat-raised, #f7f7f7);
+  border-color: var(--border-strong);
+}
+
+[data-theme="light"] .app-viewport--pipeline-studio .pp-col-board {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.app-viewport--pipeline-studio .pp-step {
+  border: 1px solid #2a2c2f;
+  border-radius: 8px;
+  background: #191a1b;
+  box-shadow: none;
+}
+
+[data-theme="light"] .app-viewport--pipeline-studio .pp-step {
+  border-color: var(--border-strong);
+  background: var(--mat-raised, #f7f7f7);
+}
+
+/* Safari 13 build flattens @layer; keep pipeline .pp-btn scoped so Predict footer stays. */
+.app-viewport--pipeline-studio .pp-step-actions .pp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.95rem;
+  border: 1px solid #3a3c40;
+  border-radius: 9999px;
+  background: #1c1e20;
+  color: #e8e8ea;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  cursor: pointer;
+}
+
+.app-viewport--pipeline-studio .pp-step-actions .pp-btn:hover:not(:disabled) {
+  border-color: #5a5c60;
+  background: #25272a;
+}
+
+.app-viewport--pipeline-studio .pp-step-actions .pp-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.app-viewport--pipeline-studio .pp-step-actions .pp-btn--hint,
+.app-viewport--pipeline-studio .pp-more-menu button.pp-btn--hint {
+  border-color: #c9a227;
+  background: linear-gradient(180deg, #3d3418 0%, #2a2410 100%);
+  color: #f5de8a;
+  box-shadow:
+    inset 0 1px 0 rgb(255 220 120 / 0.18),
+    0 0 0 1px rgb(230 180 34 / 0.45),
+    0 0 12px rgb(230 180 34 / 0.28);
+  animation: pp-btn-hint-pulse 1.8s ease-in-out infinite;
+}
+
+.app-viewport--pipeline-studio .pp-step-actions .pp-btn--hint:hover:not(:disabled) {
+  border-color: #e6b422;
+  background: linear-gradient(180deg, #4a3f1c 0%, #322b12 100%);
+  color: #ffe9a0;
+}
+
+.app-viewport--pipeline-studio .pp-step--hint {
+  box-shadow: inset 3px 0 0 #e6b422;
+}
+
+@keyframes pp-btn-hint-pulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgb(255 220 120 / 0.18),
+      0 0 0 1px rgb(230 180 34 / 0.45),
+      0 0 10px rgb(230 180 34 / 0.22);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgb(255 220 120 / 0.22),
+      0 0 0 1px rgb(230 180 34 / 0.7),
+      0 0 16px rgb(230 180 34 / 0.4);
+  }
+}
+
+/* Portaled to body — unique class, not nested under .app-viewport--pipeline-studio. */
+.pp-params-modal {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: min(52rem, 100%);
+  max-height: min(40rem, calc(100vh - 3rem));
+  padding: 0.95rem 1.05rem 1rem;
+  overflow: hidden;
+  border: 1px solid var(--border, #111213);
+  border-radius: 8px;
+  background: var(--mat-face, #0e0f10);
+  box-shadow:
+    inset 0 1px 0 var(--m16-panel-top-hi, #3d3e40),
+    0 0 0 1px var(--border, #111213),
+    0 18px 48px rgb(0 0 0 / 0.45);
+  color: var(--foreground, var(--text));
+}
+
+.pp-params-modal-head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.7rem;
+}
+
+.pp-params-modal-head h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground, var(--text));
+}
+
+.pp-params-modal-error {
+  flex: 0 0 auto;
+  margin: 0 0 0.55rem;
+  font-size: 0.8rem;
+  color: #e05252;
+}
+
+.pp-params-modal-body {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pp-params-modal-body > div {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.pp-params-modal-body .ps-params-editor {
+  min-height: 16rem;
+  flex: 1 1 auto;
+  resize: none;
+}

@@ -1,0 +1,48 @@
+---
+description: AUTONOMY GATE — каждая .app полностью автономна и переносима
+alwaysApply: true
+---
+
+# AUTONOMY GATE (обязательно)
+
+Каждая **сборка `.app`** (release / stamp / baseline / USB-копия) должна быть **полностью автономной и переносимой**: запуск на «чистом» Mac **без** системного Python, **без** Homebrew и **без** путей build-машины.
+
+Критерий успеха: скопировал `.app` на другой Mac (флешка/внешний диск) → Sidecar + orcAI стартуют без доустановки Python/Homebrew.
+
+## Обязательный pipeline после `tauri build`
+
+1. `embed-python-in-built-app.sh` → `embed-python-framework.sh` + `vendor-python-dylibs.sh`
+2. `verify-app-python.sh` на stamp (обычно `/tmp/orcAI-Desktop_<ver>_aarch64.app`)
+
+Без **`AUTONOMY GATE PASSED`** артефакт **не отдавать** пользователю.
+
+## Что обязано быть внутри `.app`
+
+| Путь | Зачем |
+|------|--------|
+| `Contents/Resources/python/venv/bin/python3.11` | Интерпретатор sidecar |
+| `Contents/Resources/python/Python.framework` | Embedded CPython (не symlink на Homebrew) |
+| `…/Python.framework/.../Resources/Python.app/.../Python` | Реальный бинарь: Homebrew-stub в `venv/bin` делает `posix_spawn` сюда |
+| `Contents/Resources/python/dylibs/` | OpenSSL, sqlite, xz, mpdecimal |
+
+## Критический pitfall (не повторять)
+
+Проверять **только** `venv/bin/python3.11` **недостаточно**. Stub на build-Mac «зелёный», а nested **Python.app** может всё ещё грузить:
+
+`/opt/homebrew/Cellar/python@3.11/.../Python`
+
+На чистом Mac → `Library not loaded` / «missing orcAI packages».
+
+`embed-python-framework.sh` обязан перелинковать **все** framework Mach-O (включая Python.app) на `@loader_path/…`.  
+`verify-app-python.sh` обязан сканировать Python.app и падать на любой `/opt/homebrew` / `/usr/local/Cellar` / `/usr/local/opt` в load paths.
+
+## Агент: после любой сборки
+
+- Запускать / подтверждать `bash scripts/verify-app-python.sh "<stamp.app>"`
+- Явно проверить nested Python.app: `otool -L …/Resources/Python.app/Contents/MacOS/Python` → `@loader_path/…`, **не** Cellar
+- Не ослаблять gate, не пропускать embed/vendor, не «чинить» только на build-Mac
+- Не считать gate пройденным, если import работает лишь потому что на машине сборки есть Homebrew
+
+## Документация / скрипты
+
+`docs/BUNDLED_PYTHON.md`, `scripts/embed-python-framework.sh`, `scripts/vendor-python-dylibs.sh`, `scripts/verify-app-python.sh`, `scripts/embed-python-in-built-app.sh`

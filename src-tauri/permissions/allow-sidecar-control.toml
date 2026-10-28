@@ -1,0 +1,10 @@
+[[permission]]
+identifier = "allow-sidecar-control"
+description = "Start and stop the orcAI Python sidecar process."
+commands.allow = [
+  "sidecar_start",
+  "sidecar_stop",
+  "sidecar_is_running",
+  "sidecar_get_port",
+  "sidecar_engine_start",
+]

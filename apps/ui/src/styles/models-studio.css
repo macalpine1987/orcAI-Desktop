@@ -1,0 +1,569 @@
+/*
+ * Models studio (m15).
+ * Host fills leftover column; table + card are the heroes.
+ */
+
+.app-viewport--models-studio {
+  --m16-fs-10: 10px;
+  --m16-fs-11: 11px;
+  --m16-pad-main: 10px;
+  --m16-studio-gutter: var(--m16-pad-main);
+  --m16-row-h: 34px;
+  --m16-th-pad-y: 6px;
+  --m16-td-pad-y: 9px;
+  --m16-cell-pad-x: 12px;
+  --m16-chrome-border: var(--border);
+  --m16-panel-top-hi: #3d3e40;
+  --m16-table-well: #131415;
+  --m16-table-head: #212224;
+  --m16-table-head-top: #232426;
+  --m16-table-head-bot: #1e1f21;
+  --m16-table-row-a: #101112;
+  --m16-table-row-b: #0f1011;
+  --m16-table-row-hover: #141516;
+  --m16-table-rim: #1c1e20;
+  --m16-table-rim-outer: #2a2c2f;
+  --m16-thead-text: #757578;
+  --ms-lcd: #7dffa3;
+  --ms-rim: #2a2c2f;
+  --ms-ok: #49c578;
+  --ms-mid: #c9a227;
+  --ms-low: #c45c5c;
+}
+
+.app-viewport--models-studio .mat-shell-main--models-studio {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0 var(--m16-studio-gutter);
+  background: var(--mat-canvas);
+  scrollbar-gutter: auto;
+}
+
+.app-viewport--models-studio .lab-dock-root {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  padding: 6px var(--m16-studio-gutter) 6px;
+}
+
+.models-page {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-viewport--models-studio .models-work-panel.studio-panel {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  container-type: size;
+  container-name: studio-work;
+  background: var(--mat-face);
+  border: 1px solid var(--m16-chrome-border);
+  border-radius: var(--studio-radius, 8px);
+  box-shadow:
+    inset 0 1px 0 var(--m16-panel-top-hi, #3d3e40),
+    0 0 0 1px var(--m16-chrome-border);
+}
+
+.models-page-header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 10px;
+}
+
+.models-page-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.models-page-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.models-page-subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--foreground-muted);
+}
+
+.models-page-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.models-page-toolbar-actions {
+  display: flex;
+  flex-shrink: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.models-page-toolbar-actions.predict-tabs-m03 {
+  flex: 0 0 auto;
+}
+
+.models-page-toolbar-actions .predict-tab svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.models-page-toolbar-note {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: right;
+  color: var(--text-faint, #5f5f64);
+}
+
+.models-error {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 8px 14px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--ms-low) 18%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+
+.models-body {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: 0;
+  /* QA-L3: allow outer scroll when the table and description exceed the work area. */
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.models-main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+/* m16 table chrome — same inset well / charcoal thead as Задачи.
+ * Height caps at thead + 5 rows; more models → vertical scroll.
+ * flex-grow off so «Описание» sits directly under the table (m15). */
+.models-main .jobs-table-body.models-table-body {
+  --models-table-visible-rows: 5;
+  --models-table-head-h: calc(var(--m16-th-pad-y, 6px) * 2 + 14px);
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: calc(
+    var(--models-table-head-h) +
+      var(--m16-row-h, 34px) * var(--models-table-visible-rows)
+  );
+  overflow: auto;
+  margin: 10px 12px 0;
+  border: 1px solid var(--m16-table-rim-outer, #2a2c2f);
+  border-radius: calc(var(--studio-radius, 8px) - 2px);
+  background: var(--m16-table-well);
+  box-shadow:
+    inset 0 1px 0 var(--m16-panel-top-hi),
+    inset 0 2px 8px rgb(0 0 0 / 0.55);
+}
+
+.models-table-body .jobs-table {
+  min-width: 42rem;
+}
+
+.models-col-name {
+  width: auto;
+}
+
+.models-col-kind {
+  width: 7.5rem;
+}
+
+.models-col-classes {
+  width: 5rem;
+}
+
+.models-col-mba {
+  width: 5.5rem;
+}
+
+.models-col-trained {
+  width: 7.5rem;
+}
+
+.models-col-size {
+  width: 5.5rem;
+}
+
+.models-table-body .models-name {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.models-table-body .models-cell-metric {
+  font-variant-numeric: tabular-nums;
+  color: var(--ms-lcd);
+}
+
+.models-table-body .models-row-active .models-name {
+  color: var(--ms-lcd);
+}
+
+/* Reset button chrome so Select matches Jobs action links */
+.models-table-body button.jobs-action-link {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.models-desc-panel {
+  flex: 0 1 auto;
+  min-height: 0;
+  /* Tall enough for m15: 3 overview paragraphs + warning; scroll if longer. */
+  max-height: min(22rem, 58cqh);
+  margin: 10px 12px 12px;
+  padding: 0.95rem 1rem;
+  overflow: auto;
+  /* Same card palette as Predict «Параметры запуска» / «Очередь» (.pp-col). */
+  border: 1px solid #2a2c2f;
+  border-radius: 0.65rem;
+  background: #191a1b;
+  color: var(--text);
+  box-shadow: none;
+}
+
+.models-panel-kicker {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.models-desc-body {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.models-desc-body + .models-desc-body {
+  margin-top: 0.65rem;
+}
+
+.models-compat-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid #2a2c2f;
+}
+
+.models-compat-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #e8a23a;
+}
+
+.models-compat-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.models-compat-text {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.models-compat-sub {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-faint, #5f5f64);
+}
+
+.models-card {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 12px 12px 10px;
+  padding: 0.95rem 1rem;
+  overflow: auto;
+  align-self: stretch;
+  border: 1px solid #2a2c2f;
+  border-radius: 0.65rem;
+  background: #191a1b;
+  color: var(--text);
+  box-shadow: none;
+}
+
+.models-card-empty,
+.models-card-muted {
+  margin: 0;
+  font-size: 12px;
+  color: var(--foreground-muted);
+}
+
+.models-card-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.models-card-path {
+  margin-top: 2px;
+  overflow: hidden;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--text-muted, #8a8b8e);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.models-card-section-title {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.models-file-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--foreground-muted);
+}
+
+.models-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.models-card-actions .ps-btn {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0 0.65rem;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.15;
+}
+
+.models-test-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.models-test-head .models-card-section-title {
+  margin: 0;
+}
+
+.models-test-source {
+  overflow: hidden;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  color: var(--text-faint, #5f5f64);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.models-notice {
+  margin: 0 14px 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--ms-ok) 90%, var(--foreground));
+  background: color-mix(in srgb, var(--ms-ok) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ms-ok) 35%, transparent);
+  border-radius: 6px;
+}
+
+.models-meta-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.models-meta-row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 7.5rem) minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.models-meta-row dt {
+  margin: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--m16-thead-text);
+}
+
+.models-meta-row dd {
+  margin: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--foreground-muted);
+  overflow-wrap: anywhere;
+}
+
+.models-compat-block,
+.models-compat-unchecked {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: color-mix(in srgb, #e8a23a 95%, var(--foreground));
+  background: color-mix(in srgb, #e8a23a 12%, transparent);
+  border: 1px solid color-mix(in srgb, #e8a23a 35%, transparent);
+  border-radius: 6px;
+}
+
+.models-test-kpi {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.models-test-kpi-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: color-mix(in srgb, #000 25%, transparent);
+  border: 1px solid var(--ms-rim);
+  border-radius: 6px;
+}
+
+.models-test-kpi-label {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--m16-thead-text);
+}
+
+.models-test-kpi-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ms-lcd);
+}
+
+.models-class-bars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.models-class-bar-row {
+  display: grid;
+  grid-template-columns: 0.55rem minmax(3.5rem, 5rem) minmax(0, 1fr) 2.4rem;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.models-class-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+}
+
+.models-class-label {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--foreground-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.models-class-track {
+  height: 0.45rem;
+  overflow: hidden;
+  background: color-mix(in srgb, #000 35%, transparent);
+  border-radius: 999px;
+}
+
+.models-class-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ms-ok);
+}
+
+.models-class-fill.is-mid {
+  background: var(--ms-mid);
+}
+
+.models-class-fill.is-low {
+  background: var(--ms-low);
+}
+
+.models-class-f1 {
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  text-align: right;
+  color: var(--foreground-muted);
+}
+
+
+@media (max-width: 960px) {
+  .models-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(14rem, 40%);
+  }
+
+  .models-main {
+    border-bottom: 1px solid var(--border);
+  }
+}

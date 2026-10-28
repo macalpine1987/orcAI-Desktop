@@ -1,0 +1,484 @@
+/* Instrument / DAW monochrome primitives — theme via tokens.css */
+
+@layer components {
+  .mat-panel {
+    background: var(--mat-face-gradient);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-out);
+  }
+
+  .mat-inset {
+    background: var(--mat-recess);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-in);
+  }
+
+  .mat-raised {
+    background: var(--mat-raised-gradient);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-out);
+  }
+
+  .mat-bezel {
+    background: var(--mat-recess);
+    border: 1px solid var(--bezel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-in), 0 0 0 1px color-mix(in srgb, var(--bezel) 40%, transparent);
+  }
+
+  .mat-lcd {
+    background: var(--lcd-bg);
+    color: var(--lcd-fg);
+    border: 1px solid var(--border-strong);
+    border-radius: calc(var(--radius) - 1px);
+    box-shadow: var(--shadow-in);
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  .mat-rail {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 1px;
+    padding: 2px;
+    background: var(--mat-recess);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-in);
+  }
+
+  .mat-rail > button,
+  .mat-rail > .mat-rail-item {
+    border: none;
+    border-radius: calc(var(--radius) - 2px);
+    background: transparent;
+    color: var(--text-muted);
+    box-shadow: none;
+  }
+
+  .mat-rail > button[aria-pressed="true"],
+  .mat-rail > button.is-active,
+  .mat-rail > .mat-rail-item.is-active {
+    background: var(--mat-raised-gradient);
+    color: var(--text);
+    box-shadow: var(--shadow-out);
+  }
+
+  .mat-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ctrl-gap, 0.5rem);
+    box-sizing: border-box;
+    height: var(--ctrl-h, 2rem);
+    padding: 0 var(--ctrl-pad-x, 0.75rem);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--text);
+    background: var(--mat-raised-gradient);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--ctrl-radius, 8px);
+    box-shadow: var(--shadow-out);
+    cursor: pointer;
+    transition: filter 150ms ease, box-shadow 150ms ease;
+  }
+
+  .mat-btn:hover:not(:disabled) {
+    filter: brightness(1.04);
+  }
+
+  .mat-btn:active:not(:disabled) {
+    box-shadow: var(--shadow-in);
+    filter: brightness(0.98);
+  }
+
+  .mat-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .mat-btn > svg {
+    display: block;
+    flex: 0 0 auto;
+  }
+
+  .mat-btn-primary {
+    color: var(--accent-fg);
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset,
+      0 1px 2px rgb(0 0 0 / 0.12);
+  }
+
+  [data-theme="dark"] .mat-btn-primary {
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.16) inset,
+      0 1px 2px rgb(0 0 0 / 0.22);
+  }
+
+  .mat-btn-primary:active:not(:disabled) {
+    box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.35);
+  }
+
+  .mat-btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .mat-btn-ghost:hover:not(:disabled) {
+    background: var(--bg-muted);
+    border-color: var(--border);
+  }
+
+  .mat-input {
+    box-sizing: border-box;
+    height: var(--ctrl-h, 2rem);
+    padding: 0 var(--ctrl-pad-x, 0.75rem);
+    font-size: 0.8125rem;
+    line-height: 1;
+    color: var(--text);
+    background: var(--mat-recess);
+    border: 1px solid var(--border);
+    border-radius: var(--ctrl-radius, 8px);
+    box-shadow: var(--shadow-in);
+    outline: none;
+  }
+
+  .mat-input:focus {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-in), 0 0 0 1px var(--border-strong);
+  }
+
+  .mat-table-wrap {
+    overflow: auto;
+    background: var(--mat-recess);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-in);
+  }
+
+  .mat-table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .mat-table-wrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--mat-raised-gradient);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 0 var(--edge-hi) inset;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+
+  .mat-table-wrap tbody tr:nth-child(even) {
+    background: color-mix(in srgb, var(--mat-face) 55%, transparent);
+  }
+
+  .mat-table-wrap tbody tr:hover {
+    background: color-mix(in srgb, var(--bg-muted) 70%, transparent);
+  }
+
+  .mat-modal-backdrop {
+    background: var(--scrim);
+  }
+
+  .mat-modal {
+    background: var(--mat-face-gradient);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-out), 0 12px 40px rgb(0 0 0 / 0.25);
+  }
+
+  .mat-nav-item {
+    border-radius: 9999px;
+    box-shadow: none;
+  }
+
+  .mat-nav-item.is-active,
+  .mat-nav-item[aria-current="page"] {
+    background: var(--accent);
+    color: var(--accent-fg);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.1) inset,
+      0 1px 2px rgb(0 0 0 / 0.15);
+  }
+
+  /* Lab sidebar nav — m16 Jobs reference (all sections) */
+  [data-layout="lab"] .mat-nav-item {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    font-size: var(--m16-fs-nav, 11px);
+    line-height: 1.25;
+    border-radius: var(--m16-radius-chip, 4px);
+    box-shadow: none;
+  }
+
+  [data-layout="lab"] .mat-nav-item.is-active,
+  [data-layout="lab"] .mat-nav-item[aria-current="page"] {
+    background: var(--m16-nav-active);
+    color: var(--m16-nav-active-fg);
+    box-shadow: var(--shadow-nav-active);
+  }
+
+  [data-layout="lab"] .mat-shell-sidebar {
+    box-shadow: none;
+  }
+
+  [data-layout="lab"] .mat-shell-sidebar-grip {
+    border-left-color: var(--border);
+    box-shadow: none;
+  }
+
+  .mat-shell-header {
+    background: var(--mat-face-gradient);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 0 var(--edge-hi) inset, 0 1px 2px rgb(0 0 0 / 0.06);
+  }
+
+  .mat-shell-sidebar {
+    background: var(--mat-face-gradient);
+    border-right: 1px solid var(--border);
+    box-shadow: 1px 0 0 var(--edge-hi) inset;
+  }
+
+  /* Variant C: right-edge collapse grip */
+  .mat-shell-sidebar-grip {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    width: 0.375rem;
+    cursor: col-resize;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-left: 1px solid var(--border);
+    background: var(--mat-recess);
+    padding: 0;
+    color: inherit;
+  }
+
+  .mat-shell-sidebar-grip:hover,
+  .mat-shell-sidebar-grip:focus-visible {
+    background: color-mix(in srgb, var(--mat-recess) 70%, var(--mat-raised));
+  }
+
+  .mat-shell-sidebar-grip:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  .mat-shell-sidebar-grip-bar {
+    display: block;
+    width: 2px;
+    height: 1.75rem;
+    border-radius: 1px;
+    background: var(--border-strong);
+    opacity: 0.55;
+  }
+
+  .mat-shell-sidebar-grip:hover .mat-shell-sidebar-grip-bar,
+  .mat-shell-sidebar-grip:focus-visible .mat-shell-sidebar-grip-bar {
+    opacity: 0.9;
+  }
+
+  .mat-shell-sidebar[data-collapsed="true"] .mat-shell-sidebar-grip {
+    border-left-color: transparent;
+  }
+
+  .mat-shell-main {
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-in);
+  }
+
+  .mat-dock {
+    background: var(--mat-face-gradient);
+    border-top: 1px solid var(--bezel);
+    box-shadow: 0 -1px 0 var(--edge-hi) inset, 0 -2px 6px rgb(0 0 0 / 0.08);
+  }
+
+  .mat-dock.lab-dock-root {
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-in);
+  }
+
+  /* Status-strip control for expand/collapse (variant 5) */
+  .mat-dock-status-chevron {
+    background: var(--mat-recess);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-in);
+    color: var(--foreground);
+  }
+
+  .mat-dock-section {
+    background: var(--mat-recess);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-in);
+  }
+
+  .mat-card {
+    background: var(--mat-face-gradient);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-out);
+  }
+
+  .mat-card-inset {
+    background: var(--mat-recess);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-in);
+  }
+
+  /* Jewel-well pilot lamp — analysis environment ready */
+  .runtime-ready-lamp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .runtime-ready-lamp-well {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 999px;
+    background: var(--mat-recess);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-in);
+  }
+
+  .runtime-ready-lamp-jewel {
+    position: relative;
+    display: block;
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 999px;
+    background: var(--status-idle);
+    border: 1px solid var(--status-idle-ring);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+    transition:
+      background-color 280ms ease,
+      border-color 280ms ease,
+      box-shadow 280ms ease;
+  }
+
+  .runtime-ready-lamp.is-on .runtime-ready-lamp-jewel {
+    background: var(--status-ready);
+    border-color: var(--status-ready-ring);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.35),
+      0 0 0 1px color-mix(in srgb, var(--status-ready) 25%, transparent),
+      0 0 8px color-mix(in srgb, var(--status-ready) 55%, transparent);
+  }
+
+  .runtime-ready-lamp.is-on .runtime-ready-lamp-jewel::after {
+    content: "";
+    position: absolute;
+    top: 15%;
+    left: 18%;
+    width: 38%;
+    height: 38%;
+    border-radius: 999px;
+    background: var(--status-ready-core);
+    opacity: 0.95;
+  }
+
+  /* Loading / stopping: amber pulse until Sidecar + engine are ready */
+  .runtime-ready-lamp.is-loading .runtime-ready-lamp-jewel {
+    background: var(--status-busy);
+    border-color: var(--status-busy-ring);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.35),
+      0 0 0 1px color-mix(in srgb, var(--status-busy) 25%, transparent),
+      0 0 8px color-mix(in srgb, var(--status-busy) 55%, transparent);
+    animation: runtime-ready-lamp-pulse 1.35s ease-in-out infinite;
+  }
+
+  .runtime-ready-lamp.is-loading .runtime-ready-lamp-jewel::after {
+    content: "";
+    position: absolute;
+    top: 15%;
+    left: 18%;
+    width: 38%;
+    height: 38%;
+    border-radius: 999px;
+    background: var(--status-busy-core);
+    opacity: 0.95;
+  }
+
+  @keyframes runtime-ready-lamp-pulse {
+    0%,
+    100% {
+      opacity: 0.55;
+      box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.25),
+        0 0 4px color-mix(in srgb, var(--status-busy) 35%, transparent);
+    }
+    50% {
+      opacity: 1;
+      box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.4),
+        0 0 10px color-mix(in srgb, var(--status-busy) 70%, transparent);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .runtime-ready-lamp.is-loading .runtime-ready-lamp-jewel {
+      animation: none;
+      opacity: 0.85;
+    }
+  }
+}
+
+/* Shared dismiss control for dialogs and modals (same as the training monitor). */
+.modal-close {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--ctrl-h, 2rem);
+  height: var(--ctrl-h, 2rem);
+  padding: 0;
+  border: 1px solid #8e2424;
+  border-radius: 8px;
+  background: #c43131;
+  color: #fff;
+  cursor: pointer;
+}
+
+.modal-close:hover:not(:disabled) {
+  background: #d64545;
+  border-color: #a32e2e;
+}
+
+.modal-close:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.modal-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.modal-dialog-head > :first-child {
+  min-width: 0;
+}

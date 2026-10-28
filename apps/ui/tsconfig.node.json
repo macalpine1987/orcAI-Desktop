@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "types": ["node"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "/tmp/orcai-ui-test-deps/node_modules/@types"
+    ],
+    "tsBuildInfoFile": "/tmp/orcai-ui-tsbuild/tsconfig.node.tsbuildinfo"
+  },
+  "include": ["vite.config.ts", "vitest.config.mjs", "vitest-happy-dom.mjs"]
+}

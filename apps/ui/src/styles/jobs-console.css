@@ -1,0 +1,1605 @@
+@layer components {
+  /*
+   * m16 scale tokens (mockup 1280×800, sampled px → CSS).
+   * Scoped to /jobs via .app-viewport--jobs-studio on AppShell.
+   */
+  .app-viewport--jobs-studio {
+    --m16-fs-10: 10px;
+    --m16-fs-11: 11px;
+    --m16-fs-12: 12px;
+    --m16-fs-18: 18px;
+    --m16-pad-main: 10px;
+    --m16-studio-gutter: var(--m16-pad-main);
+    --m16-gap-page: 10px;
+    --m16-gap-toolbar-table: 6px;
+    --m16-row-h: 34px;
+    --m16-th-pad-y: 6px;
+    --m16-td-pad-y: 9px;
+    --m16-cell-pad-x: 12px;
+    /* Dock height comes from .app-viewport --m16-dock-h (clamp vs shell cqh). */
+    --m16-chrome-border: var(--border);
+    --m16-filter-bg: var(--m16-btn-bg);
+    --m16-filter-active-bg: var(--m16-filter-active);
+    --m16-filter-active-border: var(--m16-btn-bg);
+    --m16-toolbar-face: var(--m16-btn-face);
+    --m16-toolbar-primary: var(--m16-btn-primary);
+    /* m16 table inset (v11) — contrast vs work panel #0e0f10 */
+    --m16-table-well: #131415;
+    /* m16 screenshot: header bar lighter charcoal than the well */
+    --m16-table-head: #212224;
+    --m16-table-head-top: #232426;
+    --m16-table-head-bot: #1e1f21;
+    --m16-table-row-a: #101112;
+    --m16-table-row-b: #0f1011;
+    --m16-table-row-hover: #141516;
+    --m16-table-rim: #1c1e20;
+    --m16-table-rim-outer: #2a2c2f;
+    --m16-thead-text: #757578;
+  }
+
+  /* Shell header = same single row as Home / other sections (no jobs titlebar) */
+  .app-viewport--jobs-studio .mat-shell-header--meta-studio {
+    --meta-studio-main-pad: var(--m16-pad-main);
+    --meta-studio-panel-inset: var(--m16-pad-main);
+  }
+
+  .app-viewport--jobs-studio .studio-panel {
+    background: var(--mat-face);
+    border: 1px solid var(--m16-chrome-border);
+    box-shadow:
+      inset 0 1px 0 var(--m16-panel-top-hi),
+      0 0 0 1px var(--m16-chrome-border);
+  }
+
+  .app-viewport--jobs-studio .mat-shell-main--jobs-studio,
+  .app-viewport--settings-studio .mat-shell-main--settings-studio {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 0 var(--m16-studio-gutter);
+    background: var(--mat-canvas);
+    scrollbar-gutter: auto;
+  }
+
+  /* Work panel + dock share one horizontal track (aligned outer rims). */
+  .app-viewport--jobs-studio .jobs-work-panel.studio-panel,
+  .app-viewport--jobs-studio .lab-dock-frame.studio-panel,
+  .app-viewport--jobs-studio .lab-dock-status-strip {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .app-viewport--jobs-studio .lab-dock-root {
+    box-sizing: border-box;
+    flex-shrink: 0;
+    padding: 6px var(--m16-studio-gutter) 6px;
+  }
+
+  /* —— Jobs studio page layout (m16) —— */
+  .mat-shell-main--jobs-studio {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+
+  .jobs-page.m16-jobs-studio {
+    display: flex;
+    width: 100%;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* m16 · upper work block — one raised panel (title + toolbar + table) */
+  .jobs-work-panel {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+    gap: var(--m16-gap-page, 10px);
+    container-type: size;
+    container-name: studio-work;
+  }
+
+  .jobs-work-panel .jobs-page-header {
+    flex-shrink: 0;
+    padding: var(--m16-pad-main, 10px) var(--m16-pad-main, 10px) 0;
+    margin-bottom: 0.375rem;
+  }
+
+  .jobs-work-panel-notice {
+    flex-shrink: 0;
+    margin: 0 var(--m16-pad-main, 10px);
+  }
+
+  .jobs-work-panel .jobs-toolbar {
+    flex-shrink: 0;
+    margin-bottom: calc(
+      var(--m16-gap-toolbar-table, 6px) - var(--m16-gap-page, 10px)
+    );
+    padding: 0 var(--m16-pad-main, 10px);
+  }
+
+  .jobs-work-panel .jobs-table-body {
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
+    margin: 0 var(--m16-pad-main, 10px) var(--m16-pad-main, 10px);
+    border: 1px solid var(--m16-table-rim-outer, #2a2c2f);
+    border-radius: calc(var(--studio-radius, 8px) - 2px);
+    background: var(--m16-table-well);
+    box-shadow:
+      inset 0 1px 0 var(--m16-panel-top-hi),
+      inset 0 2px 8px rgb(0 0 0 / 0.55);
+  }
+
+  /* Home · recent jobs table (same m16 table chrome as /jobs) */
+  .home-recent-jobs {
+    min-width: 0;
+    min-height: 0;
+    --jobs-status-dot-size: 6px;
+    --jobs-status-dot-well: 12px;
+    --m16-fs-10: 10px;
+    --m16-fs-11: 11px;
+    --m16-th-pad-y: 6px;
+    --m16-td-pad-y: 9px;
+    --m16-cell-pad-x: 12px;
+    --m16-row-h: 34px;
+    --m16-table-well: #131415;
+    /* m01 / m16 screenshot: header bar is lighter charcoal than the well. */
+    --m16-table-head: #212224;
+    --m16-table-head-top: #232426;
+    --m16-table-head-bot: #1e1f21;
+    --m16-table-row-a: #101112;
+    --m16-table-row-b: #0f1011;
+    --m16-table-row-hover: #141516;
+    --m16-table-rim: #1c1e20;
+    --m16-thead-text: #757578;
+    --m16-chrome-border: var(--border);
+    --m16-table-rim-outer: #2a2c2f;
+    --m16-panel-top-hi: #3d3e40;
+  }
+
+  .home-recent-jobs .jobs-table-body,
+  .home-recent-jobs .home-recent-jobs-panel {
+    overflow: auto;
+    /* Visible inset frame (sides + bottom), not near-invisible --border. */
+    border: 1px solid var(--m16-table-rim-outer, #2a2c2f);
+    border-radius: calc(var(--studio-radius, 8px) - 2px);
+    background: var(--m16-table-well);
+    box-shadow:
+      inset 0 1px 0 var(--m16-panel-top-hi),
+      inset 0 2px 8px rgb(0 0 0 / 0.55);
+  }
+
+  .home-recent-jobs .jobs-table thead tr,
+  .home-recent-jobs .jobs-table th {
+    background: linear-gradient(
+      180deg,
+      var(--m16-table-head-top, var(--m16-table-head)) 0%,
+      var(--m16-table-head-bot, var(--m16-table-head)) 100%
+    );
+    color: var(--m16-thead-text);
+  }
+
+  .home-recent-jobs .jobs-table-col-finished {
+    width: 5.5rem;
+    white-space: nowrap;
+  }
+
+  .home-recent-jobs .jobs-table-row--static {
+    cursor: default;
+  }
+
+  .home-recent-jobs .jobs-table-row--static:hover {
+    background: var(--m16-table-row-a);
+  }
+
+  .home-recent-jobs .jobs-table-row--static:nth-child(even):hover {
+    background: var(--m16-table-row-b);
+  }
+
+  .home-recent-jobs .jobs-action-link {
+    text-decoration: none;
+  }
+
+  .home-recent-jobs .jobs-action-link:hover {
+    text-decoration: underline;
+  }
+
+  .jobs-page.m16-jobs-studio .jobs-table-body {
+    min-height: 0;
+    flex: 1;
+  }
+
+  .jobs-table-placeholder {
+    padding: var(--m16-td-pad-y, 9px) var(--m16-cell-pad-x, 12px);
+    font-size: var(--m16-fs-11, 11px);
+    color: var(--text-muted);
+  }
+
+  /* m16 · shell header meta (Project · Model · Engine) */
+  .shell-meta-frames {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+    min-width: 0;
+    max-width: min(40rem, 62vw);
+    margin-left: auto;
+  }
+
+  .shell-meta-frames .predict-page-meta-frames {
+    margin-left: 0;
+    max-width: none;
+  }
+
+  .shell-meta-frame {
+    flex: 0 1 auto;
+    width: fit-content;
+    min-width: 0;
+    max-width: min(13rem, 36vw);
+  }
+
+  .shell-meta-frame-wrap {
+    position: relative;
+    flex: 0 1 auto;
+    width: fit-content;
+    min-width: 0;
+    max-width: min(13rem, 36vw);
+  }
+
+  .shell-meta-frame-wrap .shell-meta-frame {
+    width: 100%;
+    max-width: none;
+  }
+
+  .shell-meta-frame--button {
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .shell-meta-frame--button:hover:not(:disabled) {
+    filter: brightness(1.04);
+  }
+
+  .shell-meta-frame--button.is-open {
+    border-color: var(--border-strong);
+  }
+
+  .shell-meta-frame--button.is-disabled,
+  .shell-meta-frame--button:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+  }
+
+  .shell-meta-popover {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    z-index: 60;
+    min-width: 100%;
+    width: max(100%, 14rem);
+    max-width: min(20rem, 70vw);
+    max-height: min(18rem, calc(100vh - 3rem));
+    overflow: auto;
+    padding: 0.35rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--mat-raised, var(--surface)) 78%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+      var(--shadow-out, 0 1px 2px rgb(0 0 0 / 0.12)),
+      0 8px 24px rgb(0 0 0 / 0.18);
+  }
+
+  .shell-meta-popover-empty {
+    margin: 0;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.6875rem;
+    line-height: 1.35;
+    color: var(--text-muted);
+  }
+
+  .shell-meta-popover-section + .shell-meta-popover-section {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  }
+
+  .shell-meta-popover-section-label {
+    padding: 0.2rem 0.5rem 0.3rem;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .shell-meta-popover-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .shell-meta-popover-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    border: none;
+    border-radius: 0.3rem;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .shell-meta-popover-item:hover {
+    background: color-mix(in srgb, var(--mat-recess, var(--bg-muted)) 80%, transparent);
+  }
+
+  .shell-meta-popover-item.is-selected {
+    background: color-mix(in srgb, var(--accent, #000) 12%, transparent);
+  }
+
+  .shell-meta-popover-item-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .shell-meta-popover-item-badge {
+    flex-shrink: 0;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  [data-theme="dark"] .app-viewport--jobs-studio .predict-page-meta-frame,
+  [data-theme="dark"] .app-viewport--jobs-studio .shell-meta-frame {
+    background: var(--mat-sidebar);
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
+  /* m16 · Jobs page header (typography via shared page classes in JobsPage) */
+  .jobs-page-header {
+    flex-shrink: 0;
+  }
+
+  .jobs-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .jobs-toolbar-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .jobs-toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  /* —— Lab dock · m04 collapsed / m16·m26·m27 expanded —— */
+
+  .jobs-errors-hint {
+    font-size: var(--m16-fs-11, 11px);
+    color: rgb(248 113 113 / 0.92);
+    align-self: center;
+    margin-left: 0.25rem;
+  }
+
+  /* m16 · table inside work panel */
+  .jobs-table-body .jobs-table {
+    width: 100%;
+    min-width: 52rem;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .jobs-table-body .jobs-table thead tr {
+    border-bottom: 1px solid var(--m16-table-rim);
+    background: var(--m16-table-head);
+    box-shadow: none;
+  }
+
+  .jobs-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: var(--m16-th-pad-y, 6px) var(--m16-cell-pad-x, 12px);
+    font-size: var(--m16-fs-10, 10px);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--m16-thead-text);
+    vertical-align: middle;
+    text-align: left;
+    border: none;
+    background: linear-gradient(
+      180deg,
+      var(--m16-table-head-top, var(--m16-table-head)) 0%,
+      var(--m16-table-head-bot, var(--m16-table-head)) 100%
+    );
+    box-shadow: 0 1px 0 var(--m16-table-rim);
+  }
+
+  /* Rounded top of header bar (matches table-body radius) */
+  .jobs-table-body .jobs-table thead tr:first-child th:first-child {
+    border-top-left-radius: calc(var(--studio-radius, 8px) - 3px);
+  }
+
+  .jobs-table-body .jobs-table thead tr:first-child th:last-child {
+    border-top-right-radius: calc(var(--studio-radius, 8px) - 3px);
+  }
+
+  .jobs-table th.jobs-table-actions-col {
+    text-align: right;
+  }
+
+  .jobs-table-col-command {
+    width: 8.5rem;
+  }
+
+  .jobs-table-col-target {
+    width: 12rem;
+  }
+
+  .jobs-table-col-status {
+    width: 8.75rem;
+  }
+
+  .jobs-table-col-progress {
+    width: 11rem;
+    min-width: 11rem;
+  }
+
+  .jobs-table-col-started {
+    width: 5.5rem;
+  }
+
+  .jobs-table-col-duration {
+    width: 8.5rem;
+    min-width: 8.5rem;
+    white-space: nowrap;
+  }
+
+  .jobs-table-row {
+    cursor: pointer;
+    box-sizing: border-box;
+    min-height: var(--m16-row-h, 34px);
+    transition: background-color 150ms;
+    background: var(--m16-table-row-a);
+  }
+
+  .jobs-table tbody tr + tr {
+    border-top: 1px solid var(--m16-table-rim);
+  }
+
+  .jobs-table-row:nth-child(even) {
+    background: var(--m16-table-row-b);
+  }
+
+  .jobs-table-row:hover {
+    background: var(--m16-table-row-hover);
+  }
+
+  .jobs-table-row-selected {
+    background: var(--mat-row-selected) !important;
+  }
+
+  .jobs-table-row-selected:hover {
+    background: var(--mat-row-selected) !important;
+  }
+
+  .jobs-table td {
+    padding: var(--m16-td-pad-y, 9px) var(--m16-cell-pad-x, 12px);
+    vertical-align: middle;
+    font-size: var(--m16-fs-11, 11px);
+    color: #d4d4d4;
+  }
+
+  .jobs-table td.text-foreground-muted {
+    color: var(--text-muted);
+  }
+
+  .jobs-table-actions-col {
+    width: 6rem;
+    text-align: right;
+    padding-right: 0.875rem !important;
+  }
+
+  .jobs-command-cell {
+    display: inline-flex;
+    min-width: 0;
+    max-width: 100%;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: var(--jobs-status-dot-well, 12px);
+  }
+
+  .jobs-command-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: var(--m16-fs-11, 11px);
+    letter-spacing: 0.01em;
+  }
+
+  /*
+   * m16 command LED — soft halo well + bright jewel core
+   * (blue running · gray pending · green done · red failed).
+   */
+  .jobs-work-panel,
+  .home-recent-jobs,
+  .pp-steps {
+    --jobs-status-dot-size: 6px;
+    --jobs-status-dot-well: 12px;
+  }
+
+  .jobs-work-panel .jobs-status-dot,
+  .home-recent-jobs .jobs-status-dot,
+  .pp-steps .jobs-status-dot {
+    position: relative;
+    display: block;
+    width: var(--jobs-status-dot-well);
+    height: var(--jobs-status-dot-well);
+    min-width: var(--jobs-status-dot-well);
+    min-height: var(--jobs-status-dot-well);
+    flex: 0 0 var(--jobs-status-dot-well);
+    border-radius: 9999px;
+    box-sizing: border-box;
+    line-height: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .jobs-work-panel .jobs-status-dot::before,
+  .home-recent-jobs .jobs-status-dot::before,
+  .pp-steps .jobs-status-dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0.28;
+  }
+
+  .jobs-work-panel .jobs-status-dot::after,
+  .home-recent-jobs .jobs-status-dot::after,
+  .pp-steps .jobs-status-dot::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--jobs-status-dot-size);
+    height: var(--jobs-status-dot-size);
+    border-radius: inherit;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 5px currentColor;
+  }
+
+  .jobs-work-panel .jobs-status-dot--running,
+  .home-recent-jobs .jobs-status-dot--running,
+  .pp-steps .jobs-status-dot--running {
+    color: #65aaf0;
+  }
+
+  .jobs-work-panel .jobs-status-dot--running::before,
+  .home-recent-jobs .jobs-status-dot--running::before,
+  .pp-steps .jobs-status-dot--running::before {
+    background: radial-gradient(circle, #65aaf0 0%, transparent 70%);
+    opacity: 0.4;
+  }
+
+  .jobs-work-panel .jobs-status-dot--running::after,
+  .home-recent-jobs .jobs-status-dot--running::after,
+  .pp-steps .jobs-status-dot--running::after {
+    background: radial-gradient(circle at 35% 30%, #c8e4ff 0%, #65aaf0 55%, #3a7ec4 100%);
+    box-shadow:
+      0 0 0 1px rgb(101 170 238 / 0.35),
+      0 0 7px rgb(101 170 238 / 0.75);
+  }
+
+  .jobs-work-panel .jobs-status-dot--pending,
+  .jobs-work-panel .jobs-status-dot--cancelled,
+  .home-recent-jobs .jobs-status-dot--pending,
+  .home-recent-jobs .jobs-status-dot--cancelled,
+  .pp-steps .jobs-status-dot--pending,
+  .pp-steps .jobs-status-dot--cancelled {
+    color: #6e7074;
+  }
+
+  .jobs-work-panel .jobs-status-dot--pending::before,
+  .jobs-work-panel .jobs-status-dot--cancelled::before,
+  .home-recent-jobs .jobs-status-dot--pending::before,
+  .home-recent-jobs .jobs-status-dot--cancelled::before,
+  .pp-steps .jobs-status-dot--pending::before,
+  .pp-steps .jobs-status-dot--cancelled::before {
+    background: radial-gradient(circle, #848588 0%, transparent 70%);
+    opacity: 0.22;
+  }
+
+  .jobs-work-panel .jobs-status-dot--pending::after,
+  .jobs-work-panel .jobs-status-dot--cancelled::after,
+  .home-recent-jobs .jobs-status-dot--pending::after,
+  .home-recent-jobs .jobs-status-dot--cancelled::after,
+  .pp-steps .jobs-status-dot--pending::after,
+  .pp-steps .jobs-status-dot--cancelled::after {
+    background: radial-gradient(circle at 35% 30%, #a0a2a6 0%, #6e7074 60%, #3a3c40 100%);
+    box-shadow: 0 0 4px rgb(110 112 116 / 0.35);
+  }
+
+  .pp-steps .jobs-status-dot--stale {
+    color: #e6b422;
+  }
+
+  .pp-steps .jobs-status-dot--stale::before {
+    background: radial-gradient(circle, #e6b422 0%, transparent 70%);
+    opacity: 0.35;
+  }
+
+  .pp-steps .jobs-status-dot--stale::after {
+    background: radial-gradient(circle at 35% 30%, #ffe566 0%, #e6b422 55%, #b8860b 100%);
+    box-shadow:
+      0 0 0 1px rgb(230 180 34 / 0.3),
+      0 0 7px rgb(230 180 34 / 0.55);
+  }
+
+  .jobs-work-panel .jobs-status-dot--completed,
+  .home-recent-jobs .jobs-status-dot--completed,
+  .pp-steps .jobs-status-dot--completed {
+    color: #49c578;
+  }
+
+  .jobs-work-panel .jobs-status-dot--completed::before,
+  .home-recent-jobs .jobs-status-dot--completed::before,
+  .pp-steps .jobs-status-dot--completed::before {
+    background: radial-gradient(circle, #49c578 0%, transparent 70%);
+    opacity: 0.35;
+  }
+
+  .jobs-work-panel .jobs-status-dot--completed::after,
+  .home-recent-jobs .jobs-status-dot--completed::after,
+  .pp-steps .jobs-status-dot--completed::after {
+    background: radial-gradient(circle at 35% 30%, #b8f0d0 0%, #49c578 55%, #2f9a58 100%);
+    box-shadow:
+      0 0 0 1px rgb(73 197 120 / 0.3),
+      0 0 7px rgb(73 197 120 / 0.65);
+  }
+
+  .jobs-work-panel .jobs-status-dot--failed,
+  .home-recent-jobs .jobs-status-dot--failed,
+  .pp-steps .jobs-status-dot--failed {
+    color: #f07171;
+  }
+
+  .jobs-work-panel .jobs-status-dot--failed::before,
+  .home-recent-jobs .jobs-status-dot--failed::before,
+  .pp-steps .jobs-status-dot--failed::before {
+    background: radial-gradient(circle, #f07171 0%, transparent 70%);
+    opacity: 0.35;
+  }
+
+  .jobs-work-panel .jobs-status-dot--failed::after,
+  .home-recent-jobs .jobs-status-dot--failed::after,
+  .pp-steps .jobs-status-dot--failed::after {
+    background: radial-gradient(circle at 35% 30%, #ffc0c0 0%, #f07171 55%, #b83a3a 100%);
+    box-shadow:
+      0 0 0 1px rgb(240 113 113 / 0.35),
+      0 0 7px rgb(240 113 113 / 0.6);
+  }
+
+  /* Pills keep a compact solid core (no outer halo well). */
+  .jobs-work-panel .job-status-pill .jobs-status-dot,
+  .home-recent-jobs .job-status-pill .jobs-status-dot,
+  .pp-steps .job-status-pill .jobs-status-dot {
+    width: var(--jobs-status-dot-size);
+    height: var(--jobs-status-dot-size);
+    min-width: var(--jobs-status-dot-size);
+    min-height: var(--jobs-status-dot-size);
+    flex-basis: var(--jobs-status-dot-size);
+  }
+
+  .jobs-work-panel .job-status-pill .jobs-status-dot::before,
+  .home-recent-jobs .job-status-pill .jobs-status-dot::before,
+  .pp-steps .job-status-pill .jobs-status-dot::before {
+    display: none;
+  }
+
+  .jobs-work-panel .job-status-pill .jobs-status-dot::after,
+  .home-recent-jobs .job-status-pill .jobs-status-dot::after,
+  .pp-steps .job-status-pill .jobs-status-dot::after {
+    box-shadow: none;
+  }
+
+  /* m16 · status pills — gray rim, colored fill (v11 mockup) */
+  .jobs-work-panel .job-status-pill,
+  .home-recent-jobs .job-status-pill,
+  .pp-steps .job-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    box-sizing: border-box;
+    height: 1.125rem;
+    border: 1px solid #3a3c40;
+    border-radius: 9999px;
+    padding: 0 0.5rem;
+    font-size: var(--m16-fs-10, 10px);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  }
+
+  .jobs-work-panel .job-status-pill--running,
+  .home-recent-jobs .job-status-pill--running,
+  .pp-steps .job-status-pill--running {
+    color: rgb(125 211 252);
+    background: rgb(14 28 42);
+  }
+
+  .jobs-work-panel .job-status-pill--pending,
+  .jobs-work-panel .job-status-pill--cancelled,
+  .home-recent-jobs .job-status-pill--pending,
+  .home-recent-jobs .job-status-pill--cancelled,
+  .pp-steps .job-status-pill--pending,
+  .pp-steps .job-status-pill--cancelled {
+    color: #b0b1b3;
+    background: #181a1c;
+  }
+
+  .jobs-work-panel .job-status-pill--completed,
+  .home-recent-jobs .job-status-pill--completed,
+  .pp-steps .job-status-pill--completed {
+    color: rgb(134 239 172);
+    background: rgb(12 30 22);
+  }
+
+  .jobs-work-panel .job-status-pill--failed,
+  .home-recent-jobs .job-status-pill--failed,
+  .pp-steps .job-status-pill--failed {
+    color: rgb(252 165 165);
+    background: rgb(34 14 14);
+  }
+
+  .pp-steps .job-status-pill--stale {
+    color: #e6b422;
+    background: rgb(36 28 8);
+  }
+
+  .jobs-action-link {
+    font-size: var(--m16-fs-11, 11px);
+    font-weight: 500;
+    color: var(--m16-action-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .jobs-action-link:hover {
+    color: #7eb3ea;
+  }
+
+  .jobs-action-link--disabled,
+  .jobs-action-link--disabled:hover {
+    color: var(--text-faint, #6e7074);
+    text-decoration: none;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* m16 · progress (bar only — no % label in design) */
+  .job-progress-cell {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+  }
+
+  .job-progress-track {
+    height: 10px;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: #0c0d0e;
+    border: 1px solid #25272a;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
+  }
+
+  .job-progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 200ms ease;
+  }
+
+  .job-progress-fill--running {
+    background: linear-gradient(90deg, rgb(37 99 235 / 0.9), rgb(56 189 248 / 0.95));
+  }
+
+  .job-progress-fill--completed {
+    background: rgb(73 197 120 / 0.85);
+  }
+
+  .job-progress-fill--failed {
+    background: rgb(248 113 113 / 0.85);
+  }
+
+  .job-progress-fill--pending {
+    background: var(--text-muted);
+  }
+
+  /* Indeterminate progress — running job without numeric progress (e.g. predict). */
+  .job-progress-track.progress-track--indeterminate,
+  .lab-dock-status-progress-track.progress-track--indeterminate {
+    overflow: hidden;
+  }
+
+  .progress-fill--indeterminate {
+    width: 38% !important;
+    min-width: 2.25rem;
+    will-change: transform;
+    animation: orcai-progress-indeterminate 1.35s ease-in-out infinite;
+  }
+
+  @keyframes orcai-progress-indeterminate {
+    0% {
+      transform: translateX(-115%);
+    }
+    100% {
+      transform: translateX(310%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .progress-fill--indeterminate {
+      animation: none;
+      width: 40% !important;
+      transform: translateX(75%);
+    }
+  }
+
+  .app-viewport--jobs-studio .lab-dock-panel-m16 {
+    flex-shrink: 0;
+    height: var(--m16-dock-h);
+    min-height: var(--m16-dock-h);
+    max-height: var(--m16-dock-h);
+  }
+
+  /* Lab dock · m04 collapsed / m16·m26·m27 expanded */
+  .lab-dock-root {
+    padding: 6px var(--m16-pad-main, 10px) 6px;
+    background: var(--mat-canvas, var(--mat-recess));
+    box-shadow: none;
+  }
+
+  .lab-dock-expanded-wrap {
+    padding-bottom: 0;
+  }
+
+  .lab-dock-header {
+    display: flex;
+    shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--mat-face);
+    padding: 0.375rem 0.625rem 0.25rem;
+    box-shadow: inset 0 1px 0 var(--m16-panel-top-hi);
+  }
+
+  /* Tab pills sit slightly lower than toolbar actions (all sections). */
+  .lab-dock-tab-row {
+    margin-top: 3px;
+  }
+
+  .lab-dock-toolbar-actions {
+    display: flex;
+    shrink: 0;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .lab-dock-frame.lab-dock-panel-m16 {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .lab-dock-body {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    gap: 0.375rem;
+    padding: 0.5rem 0.625rem 0.625rem;
+    background: var(--mat-face);
+    overflow: hidden;
+  }
+
+  .lab-dock-inner-pane {
+    display: flex;
+    min-height: 0;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #0b0c0d;
+    border-radius: calc(var(--studio-radius, 8px) - 2px);
+    background: var(--mat-log-well);
+    box-shadow: var(--shadow-inset-well);
+  }
+
+  .lab-dock-pane-inspector.lab-dock-inner-pane {
+    background: var(--mat-inspector-well);
+  }
+
+  .lab-dock-pane {
+    display: flex;
+    min-height: 0;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .lab-dock-pane-log {
+    flex: 1 1 auto;
+  }
+
+  .lab-dock-pane-inspector {
+    flex-shrink: 0;
+    border-left: none;
+  }
+
+  .lab-dock-pane-full {
+    flex: 1 1 auto;
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    border: 1px solid #0b0c0d;
+    border-radius: calc(var(--studio-radius, 8px) - 2px);
+    background: var(--mat-log-well);
+    box-shadow: var(--shadow-inset-well);
+  }
+
+  .lab-dock-pane-scroll {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+    background: transparent;
+  }
+
+  .lab-dock-log-pre {
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
+    margin: 0;
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: var(--m16-fs-11, 11px);
+    line-height: 1.45;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    background: transparent;
+  }
+
+  .lab-dock-log-line {
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .lab-dock-log-line--success,
+  .lab-dock-log-line--path {
+    color: rgb(73 197 120 / 0.95);
+  }
+
+  .lab-dock-log-line--error {
+    color: rgb(248 113 113 / 0.95);
+  }
+
+  .lab-dock-log-line--warn {
+    color: rgb(250 204 21 / 0.92);
+  }
+
+  .lab-dock-inspector-json {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+    font-size: var(--m16-fs-10, 10px);
+    line-height: 1.45;
+    color: #e5e5e5;
+  }
+
+  .lab-json-key {
+    color: #f0abfc;
+  }
+
+  .lab-json-string {
+    color: #fcd34d;
+  }
+
+  .lab-json-number,
+  .lab-json-literal {
+    color: #f5f5f5;
+  }
+
+  .lab-dock-split-handle {
+    position: relative;
+    z-index: 10;
+    flex-shrink: 0;
+    touch-action: none;
+    user-select: none;
+    cursor: col-resize;
+    background: transparent;
+    transition: background-color 120ms ease;
+  }
+
+  .lab-dock-split-handle::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    transform: translateX(-50%);
+    background: var(--border);
+    pointer-events: none;
+  }
+
+  .lab-dock-split-handle:hover::before,
+  .lab-dock-split-handle:focus-visible::before {
+    background: color-mix(in srgb, var(--accent) 35%, var(--border));
+  }
+
+  .lab-dock-split-handle-active::before {
+    background: color-mix(in srgb, var(--accent) 50%, var(--border));
+  }
+
+  .lab-dock-split-handle:focus-visible {
+    outline: none;
+  }
+
+  .lab-dock-split-handle:focus-visible::before {
+    background: color-mix(in srgb, var(--accent) 35%, var(--border));
+  }
+
+  .lab-dock-panel-m16 {
+    flex-shrink: 0;
+    height: var(--m16-dock-h, 17.5rem);
+    min-height: var(--m16-dock-h, 17.5rem);
+    max-height: var(--m16-dock-h, 17.5rem);
+  }
+
+  .lab-dock-tab {
+    position: relative;
+    border: 1px solid transparent;
+    border-radius: var(--m16-radius-pill);
+    padding: 4px 10px;
+    font-family: var(--font-sans);
+    font-size: var(--m16-fs-11, 11px);
+    font-weight: 500;
+    line-height: 1.2;
+    transition:
+      color 150ms ease,
+      border-color 150ms ease,
+      background-color 150ms ease,
+      box-shadow 150ms ease;
+    color: var(--text-muted);
+    background: transparent;
+    box-shadow: none;
+    cursor: pointer;
+  }
+
+  .lab-dock-tab:hover:not(.lab-dock-tab-active) {
+    background: color-mix(in srgb, var(--mat-row-hover) 75%, transparent);
+    color: var(--text);
+  }
+
+  .lab-dock-tab-active {
+    background: var(--m16-nav-active);
+    color: var(--m16-nav-active-fg);
+    box-shadow: var(--shadow-nav-active);
+  }
+
+  .lab-dock-tab-error-badge {
+    position: absolute;
+    top: 0.1875rem;
+    right: 0.125rem;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 9999px;
+    background: rgb(184 91 92 / 0.98);
+    box-shadow: 0 0 4px rgb(248 113 113 / 0.45);
+  }
+
+  .lab-dock-inspector-heading {
+    flex-shrink: 0;
+    border-bottom: 1px solid #1c1e20;
+    background: var(--mat-inspector-head);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+    padding: 4px 10px;
+    font-family: var(--font-sans);
+    font-size: var(--m16-fs-10, 10px);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .lab-console-heading {
+    font-family: var(--font-sans);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .lab-errors-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.75rem;
+    min-height: 0;
+    height: 100%;
+  }
+
+  @media (max-width: 640px) {
+    .lab-errors-split {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .lab-errors-list-item {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    border: none;
+    border-radius: 0;
+    padding: 0.375rem 0;
+    text-align: left;
+    background: transparent;
+    cursor: pointer;
+    transition: opacity 150ms;
+  }
+
+  .lab-errors-list-item:hover {
+    opacity: 0.88;
+  }
+
+  .lab-errors-list-item-selected {
+    opacity: 1;
+  }
+
+  .lab-error-dot {
+    margin-top: 0.2rem;
+    height: 0.4375rem;
+    width: 0.4375rem;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background: rgb(248 113 113 / 0.95);
+    box-shadow: 0 0 6px rgb(248 113 113 / 0.45);
+  }
+
+  .lab-error-dot--warning {
+    background: rgb(250 204 21 / 0.95);
+    box-shadow: 0 0 6px rgb(250 204 21 / 0.4);
+  }
+
+  .lab-errors-detail-title {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text);
+  }
+
+  .lab-errors-detail-stage {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: rgb(248 113 113 / 0.95);
+  }
+
+  .lab-errors-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  .lab-errors-action-primary {
+    display: inline-flex;
+    align-items: center;
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--border-strong);
+    padding: 0.25rem 0.5625rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--mat-toolbar, var(--mat-raised));
+    box-shadow: var(--shadow-panel);
+    cursor: pointer;
+    transition: background-color 120ms ease, transform 100ms ease;
+  }
+
+  .lab-errors-action-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--mat-toolbar, var(--mat-raised)) 88%, #fff);
+  }
+
+  .lab-errors-action-primary:active:not(:disabled) {
+    transform: translateY(1px);
+    opacity: 0.9;
+  }
+
+  .lab-errors-action-secondary {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 0.3125rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: transparent;
+    cursor: pointer;
+    transition: color 150ms ease, transform 100ms ease;
+  }
+
+  .lab-errors-action-secondary:hover:not(:disabled) {
+    color: var(--text);
+  }
+
+  .lab-errors-action-secondary:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .lab-command-pane {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .lab-command-pre {
+    flex: 1;
+    min-height: 6rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    border-radius: calc(var(--radius) - 2px);
+    padding: 0.625rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.45;
+    color: rgb(134 239 172 / 0.92);
+    background: var(--mat-recess);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-inset-well);
+  }
+
+  .lab-command-copy-btn {
+    display: inline-flex;
+    shrink: 0;
+    align-items: center;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.4375rem 1.125rem;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--bg);
+    background: var(--text);
+    box-shadow: none;
+    cursor: pointer;
+    transition: opacity 120ms ease, transform 100ms ease;
+  }
+
+  .lab-command-copy-btn:hover:not(:disabled) {
+    opacity: 0.92;
+  }
+
+  .lab-command-copy-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    opacity: 0.85;
+  }
+
+  .lab-command-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .app-viewport--jobs-studio .lab-dock-tab-subtitle {
+    display: inline;
+  }
+
+  .app-viewport--jobs-studio .lab-dock-toolbar-btn--collapse svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .lab-dock-tab-subtitle {
+    margin-top: 3px; /* match .lab-dock-tab-row offset vs toolbar */
+    font-family: var(--font-sans);
+    font-size: var(--m16-fs-11, 11px);
+    line-height: 1.2;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: min(28rem, 42vw);
+  }
+
+  .lab-dock-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    border: none;
+    border-radius: var(--radius);
+    padding: 2px 6px;
+    font-family: var(--font-sans);
+    font-size: var(--m16-fs-11, 11px);
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--text-muted);
+    background: transparent;
+    box-shadow: none;
+    cursor: pointer;
+    transition:
+      color 150ms ease,
+      transform 100ms ease,
+      opacity 120ms ease;
+  }
+
+  .lab-dock-toolbar-btn:hover:not(:disabled) {
+    color: var(--text);
+  }
+
+  .lab-dock-toolbar-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    opacity: 0.82;
+  }
+
+  .lab-dock-toolbar-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .lab-dock-grip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 1px solid var(--border-strong);
+    border-radius: calc(var(--radius) - 2px);
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-inset-well);
+    color: var(--text-muted);
+  }
+
+  /* m04 · collapsed status strip (single row) */
+  .lab-dock-status-strip {
+    display: flex;
+    align-items: center;
+    gap: var(--ctrl-gap, 0.5rem);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--mat-face-gradient);
+    box-shadow: var(--shadow-panel);
+    padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  }
+
+  .lab-dock-status-strip--collapsed {
+    min-height: 2.5rem;
+  }
+
+  .lab-dock-status-label {
+    flex-shrink: 0;
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
+    color: var(--text-muted);
+  }
+
+  .lab-dock-status-spacer {
+    flex: 1 1 auto;
+    min-width: 0.5rem;
+  }
+
+  .lab-dock-status-dot {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    flex-shrink: 0;
+    border-radius: 9999px;
+  }
+
+  .lab-dock-status-dot--running {
+    background: rgb(56 189 248 / 0.95);
+    box-shadow: 0 0 5px rgb(56 189 248 / 0.45);
+  }
+
+  .lab-dock-status-dot--pending {
+    background: var(--text-muted);
+  }
+
+  .lab-dock-status-dot--completed {
+    background: rgb(52 211 153 / 0.95);
+    box-shadow: 0 0 5px rgb(52 211 153 / 0.45);
+  }
+
+  .lab-dock-status-dot--failed {
+    background: rgb(248 113 113 / 0.95);
+    box-shadow: 0 0 5px rgb(248 113 113 / 0.45);
+  }
+
+  .lab-dock-status-dot--cancelled {
+    background: var(--text-muted);
+  }
+
+  .lab-dock-status-text {
+    min-width: 0;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .lab-dock-status-progress-track {
+    width: min(10rem, 28vw);
+    height: 0.3125rem;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: var(--mat-recess);
+    box-shadow: none;
+  }
+
+  .lab-dock-status-progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: rgb(56 189 248 / 0.85);
+    transition: width 200ms ease;
+  }
+
+  .lab-dock-status-progress-fill--batch {
+    background: linear-gradient(
+      90deg,
+      rgb(56 189 248 / 0.88) 0%,
+      rgb(103 232 249 / 0.95) 72%,
+      rgb(224 242 254 / 0.9) 100%
+    );
+    box-shadow: 0 0 8px rgb(56 189 248 / 0.35);
+  }
+
+  .lab-dock-status-pct,
+  .lab-dock-status-duration,
+  .lab-dock-status-files {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .lab-dock-strip-btn {
+    display: inline-flex;
+    shrink: 0;
+    align-items: center;
+    gap: 0.25rem;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.125rem 0.375rem;
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--text-muted);
+    background: transparent;
+    box-shadow: none;
+    cursor: pointer;
+    transition: color 150ms ease, transform 100ms ease, opacity 120ms ease;
+  }
+
+  .lab-dock-strip-btn:hover {
+    color: var(--text);
+    filter: none;
+  }
+
+  .lab-dock-strip-btn:active {
+    transform: translateY(1px);
+    opacity: 0.82;
+  }
+
+  .lab-dock-strip-grip {
+    display: inline-flex;
+    shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 1px solid var(--border-strong);
+    border-radius: calc(var(--radius) - 2px);
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-inset-well);
+    color: var(--text-muted);
+  }
+
+  .shell-meta-chevron {
+    display: inline-flex;
+    shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    color: var(--text-muted);
+    opacity: 0.85;
+  }
+
+  .shell-meta-chevron--muted {
+    opacity: 0.4;
+  }
+
+  .shell-meta-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}

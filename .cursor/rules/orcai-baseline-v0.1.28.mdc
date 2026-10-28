@@ -1,0 +1,55 @@
+---
+description: Эталонная сборка orcAI Desktop v0.1.28 — откат и сравнение с baseline
+alwaysApply: true
+---
+
+# orcAI Desktop v0.1.28 (baseline)
+
+Версия **v0.1.28** (2026-10-18) — предыдущий эталон (текущий: **v0.1.29**). При запросе «откатись на v0.1.28», «как в v0.1.28», «верни поведение v0.1.28» — ориентируйтесь на этот baseline.
+
+Предыдущий эталон **v0.1.27** сохранён отдельно (`orcai-baseline-v0.1.27.mdc`).
+
+## Артефакты
+
+- **.app:** `/tmp/orcAI-Desktop_0.1.28_aarch64.app` (и архив `/tmp/orcai-desktop-baseline-v0.1.28-app`)
+- **Исходники:** `/tmp/orcai-desktop-baseline-v0.1.28-src` (снимок `orcai-desktop` на момент релиза)
+- **Документация:** `docs/RELEASES.md`
+
+## Архитектура (зафиксирована)
+
+| Слой | Путь / роль |
+|------|-------------|
+| Shell | Tauri 2 + Rust (`src-tauri/`) — spawn sidecar, порты, hide-on-close |
+| UI | React + TS + Vite + Tailwind (`apps/ui/`) — только Lab |
+| Backend | Python 3.11 FastAPI sidecar (`apps/sidecar/`) + orcAI pip (**без форка**) |
+| Runtime | Динамический порт; `startAll` / `stopAll` / restart; bundled Python + AUTONOMY GATE |
+| Данные | SQLite (jobs/settings) + DuckDB; проекты = каталог orcAI на диске |
+| i18n | RU/EN; в UI `predict` → «распознавание»; **в таблице Задачи** — CLI-id (`predict`) |
+
+### Runtime (не ломать без явного запроса)
+
+- Старт приложения: прогресс **0%**, sidecar и движок **остановлены**
+- Запуск только кнопкой **«Запуск»** на Главной (`startAll`)
+- **Перезапуск:** `stopAll` → `startAll` с синхронным сбросом refs + live-check `invokeSidecarIsRunning` (фикс v0.1.9)
+- Старт движка: host HTTP `sidecar_engine_start` (не WKWebView `fetch`) — фикс v0.1.22
+- macOS: X / ⌘W — hide; ⌘Q — `stopEngine` + `stopSidecar`
+- Health / capabilities — только при `runtimeBase` сессии (не дефолт 8741)
+- `engineReady` / sidecar «готов» — только при `sidecarPhase === "running"`
+- Автономность / переносимость: `Python.framework` (incl. nested Python.app `@loader_path`) + vendored OpenSSL/sqlite/xz/mpdecimal; каждая сборка — **AUTONOMY GATE PASSED** (`orcai-autonomy-gate.mdc`)
+- Незавершённые задачи снимаются после реального выхода sidecar (crash-marker), не при кратком offline и не в обычном старте
+
+### UI (v0.1.28 snapshot)
+
+- Как v0.1.27; интерфейс не менялся
+- Отмена ожидающей задачи не удаляет файлы прошлого прогона; отмена запущенной снимает только артефакты не старше старта
+- Сбой обновления `recording_table.csv` возвращает прежнюю таблицу; после удаления записей таблица дополняется, а не пересобирается
+- Повторное распознавание не держит старый filtered; кастомный путь фильтра спрашивает перезапись
+- Пакетный `-o` именует предсказания по имени модели; классы вроде `SS_A` / `WH_2` не сливаются с `SS` / `WH`
+- `test` без unfiltered-датасета его не гоняет; падение шага плана отменяет остальные; overwrite TVT и hpsearch не оставляет старые шарды и логи
+- Перезапуск sidecar не даёт старому потоку остановить новый процесс
+- Задачи (m16): шапка колонок charcoal, LED-индикаторы у CLI-команд
+- `PageHelpButton` — outlined «Справка» во всех основных разделах (на экране Справки нет)
+
+## Откат
+
+См. `docs/RELEASES.md` — `rsync` из `/tmp/orcai-desktop-baseline-v0.1.28-src` или пересборка `scripts/build-macos-release.sh`.
