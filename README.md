@@ -2,7 +2,7 @@
 
 orcAI Desktop is a working prototype of a desktop application for [orcAI](https://github.com/ethz-tb/orcAI), a tool for training, testing & applying AI models to detect acoustic signals in spectrograms generated from audio recordings. This release uses orcAI 3.0.4.
 
-The public release is **1.0.0** for macOS arm64: [orcAI Desktop 1.0.1](https://github.com/macalpine1987/orcAI-Desktop/releases/tag/v1.0.0). The disk image includes Python, TensorFlow, and the orcAI models. A system Python install is not required. Linux support is in progress.
+The public release is **1.0.1** for macOS arm64: [orcAI Desktop 1.0.1](https://github.com/macalpine1987/orcAI-Desktop/releases/tag/v1.0.0). The disk image includes Python, TensorFlow, and the orcAI models. A system Python install is not required. Linux support is in progress.
 
 The interface is the Lab layout. Russian and English are chosen at startup; English is selected by default. The choice is saved.
 
