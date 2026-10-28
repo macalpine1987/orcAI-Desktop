@@ -16,3 +16,5 @@ __pycache__/
 src-tauri/gen/
 src-tauri/icons/**
 !src-tauri/icons/.gitkeep
+
+.cursor/
