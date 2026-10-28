@@ -1,6 +1,6 @@
 # orcAI Desktop
 
-orcAI Desktop is a working prototype of a desktop application for [orcAI](https://github.com/ethz-tb/orcAI) 3.0.4: detection and training on killer whale acoustics.
+orcAI Desktop is a working prototype: a desktop application for [orcAI](https://github.com/ethz-tb/orcAI). This release uses orcAI 3.0.4 for detection and training on killer whale acoustics.
 
 The public release is **1.0.0** for macOS arm64: [orcAI Desktop 1.0.0](https://github.com/macalpine1987/orcAI-Desktop/releases/tag/v1.0.0). The disk image includes Python, TensorFlow, and the orcAI models. A system Python install is not required. Linux support is in progress.
 
