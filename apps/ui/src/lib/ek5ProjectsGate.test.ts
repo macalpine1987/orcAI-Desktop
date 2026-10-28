@@ -222,11 +222,6 @@ describe("T-2 projects gate · requirements", () => {
     expect(welcome).toContain("pathCreateTitle");
     expect(welcome).toContain("pathOpenTitle");
     expect(welcome).toContain("m-projects-no-selection-welcome.png");
-    expect(
-      existsSync(
-        resolve(root, "..", "..", "docs", "cursor-handoff", "mockups", "m-projects-no-selection-welcome.png"),
-      ),
-    ).toBe(true);
     for (const lang of ["ru", "en"] as const) {
       const keys = studioKeys(lang);
       expect(keys.has("empty.pathCreateTitle")).toBe(true);

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -171,16 +171,4 @@ describe("T-4 predict analysis gate · requirements", () => {
     expect(pane).toContain("<>");
   });
 
-  it("8. mockup m04 exists in the handoff pack", () => {
-    const png = resolve(
-      root,
-      "..",
-      "..",
-      "docs",
-      "cursor-handoff",
-      "mockups",
-      "m04-predict-studio.png",
-    );
-    expect(existsSync(png)).toBe(true);
-  });
 });

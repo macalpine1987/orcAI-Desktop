@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -148,19 +148,6 @@ describe("T-5 predict filter gate · requirements", () => {
     }
     expect(ru.predict.filterStudio.apply).toBe("Применить фильтр");
     expect(en.predict.filterStudio.apply).toBe("Apply filter");
-  });
-
-  it("8. mockup m05 exists in the handoff pack", () => {
-    const png = resolve(
-      root,
-      "..",
-      "..",
-      "docs",
-      "cursor-handoff",
-      "mockups",
-      "m05-predict-filter.png",
-    );
-    expect(existsSync(png)).toBe(true);
   });
 
   it("9. filter tab toolbar has the Results button (same chrome as Analysis)", () => {

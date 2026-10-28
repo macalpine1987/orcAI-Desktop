@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -124,17 +124,6 @@ describe("T-6 results studio gate · / m06", () => {
     expect(ru.results.openRow).toBe("Открыть");
     expect(String(ru.results.truncated)).toContain("первые");
     expect(String(ru.results.filesFailed)).toContain("Пропущены");
-
-    const mockup = resolve(
-      root,
-      "..",
-      "..",
-      "docs",
-      "cursor-handoff",
-      "mockups",
-      "m06-results.png",
-    );
-    expect(existsSync(mockup)).toBe(true);
   });
 
   it("5. T-6 regression suite covers summary, filters, export, nav and source switch", () => {

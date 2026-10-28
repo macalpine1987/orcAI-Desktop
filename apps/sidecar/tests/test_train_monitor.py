@@ -417,6 +417,10 @@ class TrainMonitorTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("_abort_if_cancelled", live_src)
         self.assertIn("model.stop_training = True", live_src)
+        self.assertIn(
+            "def on_test_batch_end(self, batch: int, logs: Any = None)",
+            live_src,
+        )
         end = live_src.index("def on_train_end")
         abort = live_src.index("def _abort_if_cancelled")
         self.assertNotIn("_abort_if_cancelled", live_src[end:abort])

@@ -302,7 +302,10 @@ def install_train_fit_hook(
                 self._flush(batch=self.batch)
                 self._set_progress()
 
-        def on_test_batch_end(self, _batch: int, _logs: Any = None) -> None:
+        def on_test_batch_end(self, batch: int, logs: Any = None) -> None:
+            # Keras calls this as on_test_batch_end(batch, logs=logs). The names
+            # must stay `batch` and `logs`; a rename breaks validation.
+            del batch, logs
             self._abort_if_cancelled()
 
         def on_epoch_end(self, epoch: int, logs: Any = None) -> None:
