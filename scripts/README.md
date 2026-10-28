@@ -68,4 +68,3 @@ Called by Tauri `beforeBuildCommand`: ensure bundle + materialize into resources
 npm run build   # prepare:sidecar + tauri build
 ```
 
-See [docs/BUNDLED_PYTHON.md](../docs/BUNDLED_PYTHON.md).

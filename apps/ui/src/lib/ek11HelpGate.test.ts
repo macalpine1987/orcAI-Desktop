@@ -186,20 +186,6 @@ describe("T-16 help studio gate · / m18–m22 / m38", () => {
     const blocks = parseMarkdown(src);
     expect(blocks.some((b) => b.type === "h1")).toBe(true);
   });
-
-  it("9. Mockups m18–m22 and m38 are in the handoff folder", () => {
-    const mockups = join(repo, "docs/cursor-handoff/mockups");
-    for (const name of [
-      "m18-help-about.png",
-      "m19-help-manual-toc.png",
-      "m20-help-orcai.png",
-      "m21-help-license.png",
-      "m22-help-third-party.png",
-      "m38-help-manual-chapter.png",
-    ]) {
-      expect(existsSync(join(mockups, name)), name).toBe(true);
-    }
-  });
 });
 
 function orcaiNoEndorsementMentionsDenial(): boolean {

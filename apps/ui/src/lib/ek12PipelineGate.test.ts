@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -239,11 +239,5 @@ describe("T-7 training pipeline gate · / m07", () => {
     const catchAt = exportFn!.indexOf("} catch");
     expect(savedAt).toBeGreaterThan(0);
     expect(catchAt).toBeGreaterThan(savedAt);
-  });
-
-  it("7. Mockup m07 is in the handoff pack", () => {
-    expect(existsSync(join(repo, "docs/cursor-handoff/mockups/m07-train-pipeline.png"))).toBe(
-      true,
-    );
   });
 });

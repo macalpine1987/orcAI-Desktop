@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -244,11 +244,5 @@ describe("T-13 settings integration gate · / m17 / m31", () => {
     expect(css).toMatch(
       /\.settings-panel-body:has\(\.settings-runtime-grid\) \{[\s\S]*overflow: auto/,
     );
-  });
-
-  it("8. Mockups m17 and m31 are in the handoff folder", () => {
-    const mockups = join(repo, "docs/cursor-handoff/mockups");
-    expect(existsSync(join(mockups, "m17-settings.png"))).toBe(true);
-    expect(existsSync(join(mockups, "m31-settings-paths.png"))).toBe(true);
   });
 });

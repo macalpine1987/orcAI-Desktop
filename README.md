@@ -8,7 +8,6 @@ Cross-platform desktop UI for [orcAI](https://github.com/ethz-tb/orcAI).
 - **Simple / Expert** UI modes
 - **Standard / Lab** layout (Expert)
 - **Russian / English** — chosen at startup; English is selected by default
-- See [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)
 
 ## Quick start (native app)
 
@@ -27,8 +26,6 @@ npm run dev
 ```
 
 Use **Predict → Choose file** to select a `.wav` (or `recording_table.csv`) via the system dialog.
-
-Details: [docs/TAURI.md](docs/TAURI.md) · Production sidecar: [docs/BUNDLED_PYTHON.md](docs/BUNDLED_PYTHON.md)
 
 Release installer (bundles Python + orcAI on the build machine):
 
