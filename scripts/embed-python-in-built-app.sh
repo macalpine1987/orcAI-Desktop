@@ -7,8 +7,9 @@
 #   2. vendor-python-dylibs (+ normalize @loader_path/../ → ../../)
 #   3. sync sidecar site-packages
 #   4. portable pyvenv.cfg + bash stubs (LAST — never leave Mach-O pyvenv launcher)
-#   5. ad-hoc codesign Mach-O we touched
-#   6. verify-app-python.sh (AUTONOMY GATE)
+#   5. drop host LC_RPATH and pkgconfig prefixes (Homebrew / build home)
+#   6. ad-hoc codesign Mach-O we touched
+#   7. verify-app-python.sh (AUTONOMY GATE)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -35,6 +36,9 @@ bash "${ROOT}/scripts/sync-sidecar-into-app.sh" "${APP}"
 # Mach-O pyvenv launcher resolves home vs cwd — breaks in .app. Re-install stubs LAST.
 bash "${ROOT}/scripts/embed-python-framework.sh" "${PY_VENV}" --wrappers-only
 
+# Unused host search paths (Homebrew, /Users/runner). @loader_path stays.
+bash "${ROOT}/scripts/strip-host-search-paths.sh" "${APP}/Contents/Resources/python"
+
 if command -v codesign >/dev/null 2>&1; then
   FW="${APP}/Contents/Resources/python/Python.framework/Versions/3.11/Python"
   NESTED="${APP}/Contents/Resources/python/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python"
@@ -51,7 +55,12 @@ if command -v codesign >/dev/null 2>&1; then
     find "${DYN}" -type f -name "*.so" -print0 2>/dev/null \
       | xargs -0 -n1 codesign --force --sign - 2>/dev/null || true
   fi
-  # Deep-sign the .app so nested Mach-O matches the bundle seal (ad-hoc).
+  # Every Mach-O under python: install_name_tool above invalidates signatures
+  # in site-packages as well as the framework. --deep alone keeps a stale inner seal.
+  find "${APP}/Contents/Resources/python" \( -name '*.so' -o -name '*.dylib' -o -name 'Python' \) -type f -print0 2>/dev/null \
+    | xargs -0 -n1 codesign --force --sign - 2>/dev/null || true
+  # Seal the framework after its nested binaries, then the .app.
+  codesign --force --sign - "${APP}/Contents/Resources/python/Python.framework" 2>/dev/null || true
   codesign --force --deep --sign - "${APP}" 2>/dev/null || true
 fi
 

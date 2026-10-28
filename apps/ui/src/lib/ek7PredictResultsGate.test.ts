@@ -29,7 +29,11 @@ describe("T-4 predict analysis gate · requirements", () => {
     expect(view).toContain("SPECTROGRAM_SEGMENT_SEC = 200");
 
     const viewer = read(src("components/SpectrogramViewer.tsx"));
-    expect(viewer).toContain('const colormap = isScientific ? "gray" : colormapState');
+    expect(viewer).toContain("spectrogram_colormap");
+    expect(viewer).toContain("updateProject");
+    expect(viewer).not.toContain("notifySaved");
+    expect(viewer).toContain("onColormapChange={setColormap}");
+    expect(viewer).not.toContain('const colormap = isScientific ? "gray"');
     expect(viewer).toContain("hideColormap={isScientific}");
     expect(viewer).toContain("display_kind: SPECTROGRAM_DISPLAY_KIND");
     expect(viewer).toContain("showSpectrogram");

@@ -139,6 +139,21 @@ def get_auto_sync_recording_table(project_dir: Path | str) -> bool:
     return bool(settings.get("auto_sync_recording_table", True))
 
 
+_SPECTROGRAM_COLORMAPS = frozenset(
+    {"inferno", "viridis", "plasma", "magma", "cividis", "gray"}
+)
+
+
+def get_spectrogram_colormap(project_dir: Path | str) -> str | None:
+    """Per-project analysis colormap. None means the UI default (Greys)."""
+    settings = _read_desktop_settings(Path(project_dir))
+    raw = settings.get("spectrogram_colormap")
+    if not isinstance(raw, str):
+        return None
+    name = raw.strip().lower()
+    return name if name in _SPECTROGRAM_COLORMAPS else None
+
+
 def get_predict_model_settings(
     project_dir: Path | str,
 ) -> tuple[str | None, str | None]:
@@ -336,10 +351,12 @@ def project_to_dict(row: dict[str, Any]) -> dict[str, Any]:
 
     predict_model: str | None = None
     predict_model_dir: str | None = None
+    spectrogram_colormap: str | None = None
     auto_sync = True
     if project_dir.is_dir():
         auto_sync = get_auto_sync_recording_table(project_dir)
         predict_model, predict_model_dir = get_predict_model_settings(project_dir)
+        spectrogram_colormap = get_spectrogram_colormap(project_dir)
 
     return {
         "id": row["id"],
@@ -359,6 +376,7 @@ def project_to_dict(row: dict[str, Any]) -> dict[str, Any]:
         "auto_sync_recording_table": auto_sync,
         "predict_model": predict_model,
         "predict_model_dir": predict_model_dir,
+        "spectrogram_colormap": spectrogram_colormap,
         "manifest": manifest,
     }
 
@@ -807,6 +825,7 @@ def update_project(
     auto_sync_recording_table: bool | None = None,
     predict_model: str | None = None,
     predict_model_dir: str | None = None,
+    spectrogram_colormap: str | None = None,
 ) -> dict[str, Any]:
     with db_session() as conn:
         row = get_project_row(conn, project_id)
@@ -840,6 +859,12 @@ def update_project(
             settings["predict_model_dir"] = dir_value
         else:
             settings.pop("predict_model_dir", None)
+        settings_dirty = True
+    if spectrogram_colormap is not None:
+        name = spectrogram_colormap.strip().lower()
+        if name not in _SPECTROGRAM_COLORMAPS:
+            raise ValueError(f"Unknown spectrogram colormap: {spectrogram_colormap!r}")
+        settings["spectrogram_colormap"] = name
         settings_dirty = True
     if settings_dirty:
         _write_desktop_settings(project_dir, settings)

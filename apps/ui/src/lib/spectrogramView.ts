@@ -27,7 +27,39 @@ export const SPECTROGRAM_DISPLAY_KIND = "orcai" as const satisfies SpectrogramDi
  */
 export const SPECTROGRAM_AXIS_KIND = "linear" as const satisfies SpectrogramDisplayKind;
 
-export type SpectrogramColormap = "inferno" | "viridis" | "gray";
+export const SPECTROGRAM_COLORMAPS = [
+  "inferno",
+  "viridis",
+  "plasma",
+  "magma",
+  "cividis",
+  "gray",
+] as const;
+
+export type SpectrogramColormap = (typeof SPECTROGRAM_COLORMAPS)[number];
+
+/** Labels match the matplotlib maps used by orcAI. */
+export const SPECTROGRAM_COLORMAP_LABEL: Record<SpectrogramColormap, string> = {
+  inferno: "inferno",
+  viridis: "viridis",
+  plasma: "plasma",
+  magma: "magma",
+  cividis: "cividis",
+  gray: "Greys",
+};
+
+export function isSpectrogramColormap(
+  value: string | null | undefined,
+): value is SpectrogramColormap {
+  return (SPECTROGRAM_COLORMAPS as readonly string[]).includes(value ?? "");
+}
+
+/** Analysis default is matplotlib Greys when the project has no saved choice. */
+export function spectrogramColormapFromProject(
+  value: string | null | undefined,
+): SpectrogramColormap {
+  return isSpectrogramColormap(value) ? value : "gray";
+}
 
 export function spectrogramSegmentCount(durationSec: number): number {
   if (durationSec <= 0) return 1;

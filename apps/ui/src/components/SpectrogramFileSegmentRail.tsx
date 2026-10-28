@@ -1,14 +1,19 @@
 import {
   useCallback,
+  useEffect,
   useRef,
+  useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { formatSpectrogramAxisTime } from "../lib/spectrogramTimeTicks";
 import {
+  SPECTROGRAM_COLORMAP_LABEL,
+  SPECTROGRAM_COLORMAPS,
   spectrogramSegmentCount,
   spectrogramSegmentIndexForStart,
   spectrogramSegmentWindow,
+  type SpectrogramColormap,
 } from "../lib/spectrogramView";
 import {
   IconAudioFiles,
@@ -53,6 +58,9 @@ type Props = {
     fileName: string;
     onChange: (kind: AnalysisLabelKind) => void;
   } | null;
+  /** Analysis plot palette. Shown on the right of the segment strip. */
+  colormap?: SpectrogramColormap;
+  onColormapChange?: ((map: SpectrogramColormap) => void) | null;
 };
 
 export function SpectrogramFileSegmentRail({
@@ -76,9 +84,25 @@ export function SpectrogramFileSegmentRail({
   onClassesFilterToggle = null,
   classesFilterOpen = false,
   labelSource = null,
+  colormap = "gray",
+  onColormapChange = null,
 }: Props) {
   const { t } = useTranslation();
   const trackRef = useRef<HTMLDivElement>(null);
+  const cmapRef = useRef<HTMLDivElement>(null);
+  const [cmapOpen, setCmapOpen] = useState(false);
+
+  useEffect(() => {
+    if (!cmapOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (cmapRef.current?.contains(target)) return;
+      setCmapOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [cmapOpen]);
 
   const safeDuration = Math.max(durationSec, 0.01);
   const segmentTotal = spectrogramSegmentCount(safeDuration);
@@ -375,6 +399,61 @@ export function SpectrogramFileSegmentRail({
               <div className="analysis-segment-rail-studio-sep" aria-hidden />
 
               <div className="analysis-segment-rail-studio-right">
+                {onColormapChange ? (
+                  <div
+                    className="analysis-segment-rail-studio-cmap"
+                    ref={cmapRef}
+                  >
+                    <button
+                      type="button"
+                      className={`analysis-segment-rail-studio-cmap-btn${
+                        cmapOpen ? " is-open" : ""
+                      }`}
+                      aria-label={t("spectrogram.toolbar.colormapLabel")}
+                      aria-haspopup="listbox"
+                      aria-expanded={cmapOpen}
+                      onClick={() => setCmapOpen((open) => !open)}
+                    >
+                      <span
+                        className={`analysis-segment-rail-studio-cmap-swatch is-${colormap}`}
+                        aria-hidden
+                      />
+                      <span className="analysis-segment-rail-studio-cmap-name">
+                        {SPECTROGRAM_COLORMAP_LABEL[colormap]}
+                      </span>
+                    </button>
+                    {cmapOpen ? (
+                      <ul
+                        className="analysis-segment-rail-studio-cmap-menu"
+                        role="listbox"
+                        aria-label={t("spectrogram.toolbar.colormapLabel")}
+                      >
+                        {SPECTROGRAM_COLORMAPS.map((name) => (
+                          <li key={name}>
+                            <button
+                              type="button"
+                              role="option"
+                              aria-selected={name === colormap}
+                              className={`analysis-segment-rail-studio-cmap-item${
+                                name === colormap ? " is-selected" : ""
+                              }`}
+                              onClick={() => {
+                                onColormapChange(name);
+                                setCmapOpen(false);
+                              }}
+                            >
+                              <span
+                                className={`analysis-segment-rail-studio-cmap-swatch is-${name}`}
+                                aria-hidden
+                              />
+                              {SPECTROGRAM_COLORMAP_LABEL[name]}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
                 <div className="analysis-segment-rail-studio-meta">
                   <span className="analysis-segment-rail-studio-title">
                     {t("spectrogram.segment.counter", {

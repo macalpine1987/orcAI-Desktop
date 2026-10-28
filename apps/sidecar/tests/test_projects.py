@@ -129,6 +129,28 @@ class ProjectRegistryTests(unittest.TestCase):
         on = update_project(created["id"], auto_sync_recording_table=True)
         self.assertTrue(on["auto_sync_recording_table"])
 
+    def test_spectrogram_colormap_defaults_to_none_and_persists(self) -> None:
+        parent = self._home / "workspace"
+        parent.mkdir()
+        created = create_project(parent_dir=str(parent), display_name="Cmap")
+        self.assertIsNone(created.get("spectrogram_colormap"))
+        settings_path = (
+            Path(created["path"]) / ".orcai-desktop" / "desktop_settings.json"
+        )
+        self.assertFalse(settings_path.is_file())
+
+        updated = update_project(created["id"], spectrogram_colormap="plasma")
+        self.assertEqual(updated["spectrogram_colormap"], "plasma")
+        disk = json.loads(settings_path.read_text(encoding="utf-8"))
+        self.assertEqual(disk["spectrogram_colormap"], "plasma")
+
+        again = get_project(created["id"])
+        assert again is not None
+        self.assertEqual(again["spectrogram_colormap"], "plasma")
+
+        with self.assertRaises(ValueError):
+            update_project(created["id"], spectrogram_colormap="Grays")
+
     def test_predict_model_per_project_persist(self) -> None:
         parent = self._home / "workspace"
         parent.mkdir()

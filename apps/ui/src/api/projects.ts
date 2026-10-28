@@ -37,6 +37,8 @@ export type ProjectRecord = {
   predict_model?: string | null;
   /** Directory for trained models; null/omitted for builtins. */
   predict_model_dir?: string | null;
+  /** Analysis spectrogram map. Null until the user picks one; UI default is Greys. */
+  spectrogram_colormap?: string | null;
   manifest?: Record<string, unknown>;
   imported?: Array<{ source: string; dest: string; name: string }>;
 };
@@ -309,6 +311,7 @@ export async function updateProject(
     auto_sync_recording_table?: boolean;
     predict_model?: string;
     predict_model_dir?: string | null;
+    spectrogram_colormap?: string;
   },
 ): Promise<ProjectRecord> {
   const res = await fetch(`${getSidecarBase()}/v1/projects/${id}`, {

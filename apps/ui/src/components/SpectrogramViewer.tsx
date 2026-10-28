@@ -48,8 +48,10 @@ import {
   storeMarkOpacity,
 } from "../lib/spectrogramMarkOpacity";
 import { effectiveLabelDeltaT, segmentTimeSec } from "../lib/segmentTime";
+import { fetchProject, updateProject } from "../api/projects";
 import { useProjectClassColors } from "../hooks/useProjectClassColors";
 import { useSidecarStatus } from "../hooks/useSidecarStatus";
+import { useWorkspace } from "../hooks/useWorkspace";
 import { isTauri } from "../platform/tauri";
 import { AnnotationLanes, type LaneSegment } from "./AnnotationLanes";
 import { SpectrogramAudioPlayer } from "./SpectrogramAudioPlayer";
@@ -91,6 +93,8 @@ import { SpectrogramTimeRangeOverlay } from "./SpectrogramTimeRangeOverlay";
 import { basename } from "../platform/dialog";
 import {
   type SpectrogramColormap,
+  isSpectrogramColormap,
+  spectrogramColormapFromProject,
   SPECTROGRAM_AXIS_KIND,
   SPECTROGRAM_DISPLAY_KIND,
   SPECTROGRAM_MIN_VIEW_SPAN_SEC,
@@ -115,14 +119,24 @@ const TILE_FETCH_DEBOUNCE_MS = 90;
 
 const COLORMAP_STORAGE_KEY = "orcai.spectrogram.colormap";
 
-function loadColormap(): SpectrogramColormap {
+function loadStoredColormap(
+  key: string,
+  fallback: SpectrogramColormap,
+): SpectrogramColormap {
   try {
-    const v = localStorage.getItem(COLORMAP_STORAGE_KEY);
-    if (v === "inferno" || v === "viridis" || v === "gray") return v;
+    const v = localStorage.getItem(key);
+    if (isSpectrogramColormap(v)) return v;
   } catch {
     /* ignore */
   }
-  return "inferno";
+  return fallback;
+}
+
+function loadColormap(): SpectrogramColormap {
+  const stored = loadStoredColormap(COLORMAP_STORAGE_KEY, "inferno");
+  return stored === "plasma" || stored === "magma" || stored === "cividis"
+    ? "inferno"
+    : stored;
 }
 
 type Props = {
@@ -223,6 +237,8 @@ export function SpectrogramViewer({
 }: Props) {
   const { t } = useTranslation();
   const { sidecarPort } = useSidecarStatus();
+  const { activeProjectId } = useWorkspace();
+  const colormapChoiceRev = useRef(0);
   const { colors: classColorOverrides } = useProjectClassColors();
   const duration = meta.duration_sec;
   const axisMaxHz = spectrogramAxisMaxHz(meta);
@@ -261,17 +277,52 @@ export function SpectrogramViewer({
   const [colormapState, setColormapState] = useState<SpectrogramColormap>(() =>
     layout === "scientific" ? "gray" : loadColormap(),
   );
-  const colormap = isScientific ? "gray" : colormapState;
+  const colormap = colormapState;
+  const lightGrayCanvas = isScientific && colormap === "gray";
 
   const setColormap = (map: SpectrogramColormap) => {
-    if (isScientific) return;
     setColormapState(map);
+    if (isScientific) {
+      colormapChoiceRev.current += 1;
+      if (!activeProjectId) return;
+      void updateProject(activeProjectId, { spectrogram_colormap: map }).catch(
+        () => {
+          /* keep the selection on screen; the project file is unchanged */
+        },
+      );
+      return;
+    }
     try {
       localStorage.setItem(COLORMAP_STORAGE_KEY, map);
     } catch {
       /* ignore */
     }
   };
+
+  useEffect(() => {
+    if (layout !== "scientific") return;
+    colormapChoiceRev.current = 0;
+    if (!activeProjectId) {
+      setColormapState("gray");
+      return;
+    }
+    let cancelled = false;
+    void fetchProject(activeProjectId)
+      .then((project) => {
+        if (cancelled || colormapChoiceRev.current !== 0) return;
+        setColormapState(
+          spectrogramColormapFromProject(project.spectrogram_colormap),
+        );
+      })
+      .catch(() => {
+        if (!cancelled && colormapChoiceRev.current === 0) {
+          setColormapState("gray");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [layout, activeProjectId]);
   const [confidenceMin, setConfidenceMin] = useState(0);
   useEffect(() => {
     setConfidenceMin(0);
@@ -1456,6 +1507,8 @@ export function SpectrogramViewer({
         }
         classesFilterOpen={classesFilterOpen}
         labelSource={labelSource}
+        colormap={showSpectrogram ? colormap : undefined}
+        onColormapChange={showSpectrogram ? setColormap : null}
       />
     ) : null;
 
@@ -1536,7 +1589,7 @@ export function SpectrogramViewer({
       }
     >
     <div
-      className={`analysis-spectrogram-plot-assembly${isScientific ? " analysis-spectrogram-scientific" : ""}${studioChrome ? " analysis-spectrogram-studio" : ""}`}
+      className={`analysis-spectrogram-plot-assembly${isScientific ? " analysis-spectrogram-scientific" : ""}${studioChrome ? " analysis-spectrogram-studio" : ""}${isScientific && !lightGrayCanvas ? " is-cmap-dark" : ""}`}
     >
       {studioChrome && !segmentPortaled ? (
         <SpectrogramSpecHeaderBar
@@ -1609,20 +1662,20 @@ export function SpectrogramViewer({
                     <SpectrogramColormapCanvas
                       grayTileUrl={grayTileSrc}
                       colormap={colormap}
-                      invert={isScientific}
+                      invert={false}
                       reloadToken={tileReloadToken}
                       fileKey={wavPath}
                       width={plotWidth}
                       height={specHeight}
                       alt={t("spectrogram.placeholderTitle")}
-                      className={`pointer-events-none block w-full select-none ${isScientific ? "bg-[#ececec]" : "bg-black"}`}
+                      className={`pointer-events-none block w-full select-none ${lightGrayCanvas ? "bg-[#ececec]" : "bg-black"}`}
                       onLoading={onTileLoading}
                       onLoaded={onTileLoaded}
                       onFailed={onTileFailed}
                     />
                     {showTileLoadingOverlay ? (
                       <div
-                        className={`pointer-events-none absolute inset-0 flex items-center justify-center text-xs ${isScientific ? "bg-[#ececec]/80 text-foreground-muted" : "bg-black/60 text-foreground-muted"}`}
+                        className={`pointer-events-none absolute inset-0 flex items-center justify-center text-xs ${lightGrayCanvas ? "bg-[#ececec]/80 text-foreground-muted" : "bg-black/60 text-foreground-muted"}`}
                         aria-live="polite"
                       >
                         {t("common.loading")}
@@ -1846,7 +1899,7 @@ export function SpectrogramViewer({
                       <SpectrogramColormapCanvas
                         grayTileUrl={grayTileSrc}
                         colormap={colormap}
-                        invert={isScientific}
+                        invert={false}
                         reloadToken={tileReloadToken}
                         fileKey={wavPath}
                         width={plotWidth}

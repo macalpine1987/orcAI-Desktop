@@ -1435,6 +1435,19 @@
     box-sizing: border-box;
   }
 
+  .analysis-spectrogram-scientific.is-cmap-dark .analysis-spectrogram-canvas {
+    background: #000;
+  }
+
+  .analysis-spectrogram-scientific.is-cmap-dark .analysis-axis-guide-v,
+  .analysis-spectrogram-scientific.is-cmap-dark .analysis-axis-guide-h {
+    background: rgb(255 255 255 / 0.16);
+  }
+
+  .analysis-spectrogram-scientific.is-cmap-dark .analysis-axis-guide-v-minor {
+    background: rgb(255 255 255 / 0.08);
+  }
+
   .analysis-spectrogram-scientific .analysis-spectrogram-canvas {
     grid-column: 2;
     grid-row: 1;
@@ -4615,7 +4628,7 @@
   .predict-results-segment-panel {
     display: block;
     margin: 0.45rem 0 0.45rem;
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid var(--prs-chrome-border, #3a3a3c);
     background: var(--prs-chrome-bg, #242426);
     color: var(--prs-chrome-text, #ececec);
@@ -4936,6 +4949,108 @@
     background: var(--prs-chrome-border, #3a3a3c);
     justify-self: center;
     align-self: center;
+  }
+
+  .analysis-segment-rail-studio-cmap {
+    position: relative;
+    flex-shrink: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    /* Sit against the center separator; the segment counter stays at the right. */
+    margin-right: auto;
+  }
+
+  .analysis-segment-rail-studio-right:has(.analysis-segment-rail-studio-cmap) {
+    padding-left: 0.55rem;
+  }
+
+  .analysis-segment-rail-studio-cmap-btn,
+  .analysis-segment-rail-studio-cmap-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0;
+    border: 1px solid var(--prs-chrome-border, #3a3a3c);
+    background: #191a1b;
+    color: var(--prs-chrome-text, #ececec);
+    font: inherit;
+    font-size: 0.6875rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .analysis-segment-rail-studio-cmap-btn {
+    height: 1.5rem;
+    padding: 0 0.5rem 0 0.3rem;
+    border-radius: 0.25rem;
+  }
+
+  .analysis-segment-rail-studio-cmap-btn.is-open,
+  .analysis-segment-rail-studio-cmap-btn:hover {
+    border-color: #5a5a5c;
+  }
+
+  .analysis-segment-rail-studio-cmap-name {
+    min-width: 3.25rem;
+    text-align: left;
+  }
+
+  .analysis-segment-rail-studio-cmap-swatch {
+    display: block;
+    width: 1.75rem;
+    height: 0.5rem;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  .analysis-segment-rail-studio-cmap-swatch.is-inferno {
+    background: linear-gradient(90deg, #000004, #bc3754, #fca50a, #fcffa4);
+  }
+  .analysis-segment-rail-studio-cmap-swatch.is-viridis {
+    background: linear-gradient(90deg, #440154, #21918c, #fde725);
+  }
+  .analysis-segment-rail-studio-cmap-swatch.is-plasma {
+    background: linear-gradient(90deg, #0d0887, #cc4778, #f0f921);
+  }
+  .analysis-segment-rail-studio-cmap-swatch.is-magma {
+    background: linear-gradient(90deg, #000004, #b73779, #fcfdbf);
+  }
+  .analysis-segment-rail-studio-cmap-swatch.is-cividis {
+    background: linear-gradient(90deg, #00224e, #7c7b58, #fee838);
+  }
+  .analysis-segment-rail-studio-cmap-swatch.is-gray {
+    background: linear-gradient(90deg, #ffffff, #000000);
+  }
+
+  .analysis-segment-rail-studio-cmap-menu {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    z-index: 30;
+    margin: 0;
+    padding: 0.25rem;
+    list-style: none;
+    min-width: 8.5rem;
+    border: 1px solid var(--prs-chrome-border, #3a3a3c);
+    border-radius: 0.375rem;
+    background: var(--prs-chrome-bg, #242426);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  .analysis-segment-rail-studio-cmap-item {
+    width: 100%;
+    height: 1.5rem;
+    padding: 0 0.4rem;
+    border-color: transparent;
+    background: transparent;
+    border-radius: 0.2rem;
+  }
+
+  .analysis-segment-rail-studio-cmap-item.is-selected,
+  .analysis-segment-rail-studio-cmap-item:hover {
+    background: #191a1b;
+    border-color: #2a2c2f;
   }
 
   .analysis-segment-rail-studio-right {

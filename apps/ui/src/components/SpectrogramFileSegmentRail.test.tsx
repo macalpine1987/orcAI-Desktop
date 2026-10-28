@@ -1,3 +1,4 @@
+import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../test/render";
 import { SpectrogramFileSegmentRail } from "./SpectrogramFileSegmentRail";
@@ -68,6 +69,9 @@ describe("SpectrogramFileSegmentRail", () => {
       container.querySelector(".analysis-segment-rail-studio-sep"),
     ).toBeTruthy();
     expect(
+      container.querySelector(".analysis-segment-rail-studio-cmap"),
+    ).toBeNull();
+    expect(
       container.querySelector(".analysis-segment-rail-studio-right"),
     ).toBeTruthy();
     expect(
@@ -89,6 +93,45 @@ describe("SpectrogramFileSegmentRail", () => {
     expect(
       container.querySelector(".analysis-segment-rail-studio-block"),
     ).toBeNull();
+    unmount();
+  });
+
+  it("opens the colormap menu on the right of the separator", () => {
+    const onColormapChange = vi.fn();
+    const { container, unmount } = renderWithProviders(
+      <SpectrogramFileSegmentRail
+        studioLayout
+        durationSec={450}
+        viewStart={0}
+        viewSpan={200}
+        segmentIndex={0}
+        onViewStartChange={vi.fn()}
+        onSegmentSelect={vi.fn()}
+        colormap="gray"
+        onColormapChange={onColormapChange}
+      />,
+    );
+    const right = container.querySelector(".analysis-segment-rail-studio-right");
+    const sep = container.querySelector(".analysis-segment-rail-studio-sep");
+    expect(sep?.nextElementSibling).toBe(right);
+    const button = right?.querySelector(
+      ".analysis-segment-rail-studio-cmap-btn",
+    ) as HTMLButtonElement;
+    expect(button.textContent).toContain("Greys");
+    expect(right?.firstElementChild).toBe(
+      container.querySelector(".analysis-segment-rail-studio-cmap"),
+    );
+    act(() => {
+      button.click();
+    });
+    const items = container.querySelectorAll(
+      ".analysis-segment-rail-studio-cmap-item",
+    );
+    expect(items.length).toBe(6);
+    act(() => {
+      (items[2] as HTMLButtonElement).click();
+    });
+    expect(onColormapChange).toHaveBeenCalledWith("plasma");
     unmount();
   });
 

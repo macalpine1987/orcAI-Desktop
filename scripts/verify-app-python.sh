@@ -223,6 +223,42 @@ if [[ -n "${LEAKS}" ]]; then
   fail "Homebrew dylib references remain"
 fi
 
+echo "Checking host LC_RPATH and pkgconfig prefixes…"
+HOST_RPATH="$(
+  find "${APP}/Contents/Resources/python" \( \
+      -name 'Python' -o \
+      -name 'python3*' -o \
+      -name '*.so' -o \
+      -name '*.dylib' \
+    \) -type f 2>/dev/null | while IFS= read -r macho; do
+      [[ -f "${macho}" ]] || continue
+      file "${macho}" 2>/dev/null | grep -q "Mach-O" || continue
+      otool -l "${macho}" 2>/dev/null | awk -v f="${macho}" '
+        /cmd LC_RPATH/ { grab=1; next }
+        grab && $1 == "path" {
+          sub(/^[[:space:]]*path[[:space:]]+/, "")
+          sub(/ \(offset [0-9]+\)$/, "")
+          if ($0 ~ /^\/opt\/homebrew/ || $0 ~ /^\/usr\/local/ || $0 ~ /^\/Users\//) {
+            print f " → " $0
+          }
+          grab=0
+        }
+      '
+    done || true
+)"
+if [[ -n "${HOST_RPATH}" ]]; then
+  echo "${HOST_RPATH}" | head -20 >&2
+  fail "host LC_RPATH remains (Homebrew or build home)"
+fi
+HOST_PC="$(
+  find "${APP}/Contents/Resources/python" -type f -name '*.pc' -print0 2>/dev/null \
+    | xargs -0 grep -lE '/opt/homebrew|/usr/local/Cellar|/usr/local/opt|/Users/' 2>/dev/null || true
+)"
+if [[ -n "${HOST_PC}" ]]; then
+  echo "${HOST_PC}" >&2
+  fail "pkgconfig still points at the build machine"
+fi
+
 echo "Checking nested Python.app load paths…"
 if otool -L "${NESTED_PY}" 2>/dev/null | grep -qE '/opt/homebrew|/usr/local/Cellar|/usr/local/opt'; then
   otool -L "${NESTED_PY}" >&2 || true

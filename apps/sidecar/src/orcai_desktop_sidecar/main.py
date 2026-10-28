@@ -171,6 +171,7 @@ class UpdateProjectRequest(BaseModel):
     auto_sync_recording_table: bool | None = None
     predict_model: str | None = None
     predict_model_dir: str | None = None
+    spectrogram_colormap: str | None = None
 
 
 class RecordingChannelRequest(BaseModel):
@@ -1104,6 +1105,7 @@ def projects_update(project_id: str, body: UpdateProjectRequest) -> dict[str, An
         and body.auto_sync_recording_table is None
         and body.predict_model is None
         and body.predict_model_dir is None
+        and body.spectrogram_colormap is None
     ):
         raise HTTPException(status_code=400, detail="Nothing to update")
     try:
@@ -1116,6 +1118,7 @@ def projects_update(project_id: str, body: UpdateProjectRequest) -> dict[str, An
             or body.auto_sync_recording_table is not None
             or body.predict_model is not None
             or body.predict_model_dir is not None
+            or body.spectrogram_colormap is not None
         ):
             return update_project(
                 project_id,
@@ -1124,6 +1127,7 @@ def projects_update(project_id: str, body: UpdateProjectRequest) -> dict[str, An
                 auto_sync_recording_table=body.auto_sync_recording_table,
                 predict_model=body.predict_model,
                 predict_model_dir=body.predict_model_dir,
+                spectrogram_colormap=body.spectrogram_colormap,
             )
         assert project is not None
         return project

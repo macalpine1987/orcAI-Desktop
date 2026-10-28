@@ -126,6 +126,7 @@ if command -v codesign >/dev/null 2>&1; then
     find "${DYN_STAMP}" -type f -name "*.so" -print0 2>/dev/null \
       | xargs -0 -n1 codesign --force --sign - 2>/dev/null || true
   fi
+  codesign --force --sign - "${STAMP}/Contents/Resources/python/Python.framework" 2>/dev/null || true
   codesign --force --deep --sign - "${STAMP}" 2>/dev/null || true
 fi
 
