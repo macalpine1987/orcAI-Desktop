@@ -1,6 +1,6 @@
 [package]
 name = "orcai-desktop"
-version = "1.0.2"
+version = "1.0.3"
 description = "orcAI Desktop"
 authors = ["orcAI Desktop"]
 edition = "2021"

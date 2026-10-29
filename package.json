@@ -1,7 +1,7 @@
 {
   "name": "orcai-desktop",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Desktop application for orcAI",
   "scripts": {
     "dev": "bash scripts/tauri-dev.sh",

@@ -45,7 +45,9 @@
   flex-direction: column;
   min-height: 0;
   overflow: auto;
-  padding: 0.85rem 1rem 0.75rem;
+  /* Left edge meets the Parameters tab. Right edge meets the Results
+     button, which sits 8px in from the toolbar (same pad as the queue). */
+  padding: 0 var(--pp-params-scroll-pad-end, 8px) 0 0;
   gap: 0.7rem;
 }
 
@@ -598,7 +600,7 @@
 
 .predict-filter-m05-foot {
   flex: 0 0 auto;
-  padding: 0.65rem 1rem 0.75rem;
+  padding: 0.65rem var(--pp-params-scroll-pad-end, 8px) 0.75rem 0;
   border-top: 1px solid #2a2c2f;
 }
 
