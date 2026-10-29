@@ -6,6 +6,12 @@ The public release is **1.0.3** for macOS arm64: [orcAI Desktop 1.0.3](https://g
 
 The interface is the Lab layout. Russian and English are chosen at startup; English is selected by default. The choice is saved.
 
+## Interface
+
+![Predictions: spectrogram and detections](docs/screenshots/predictions.png)
+
+![Training pipeline](docs/screenshots/training.png)
+
 ## Run from source
 
 ```bash
