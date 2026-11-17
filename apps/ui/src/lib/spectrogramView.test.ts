@@ -7,6 +7,11 @@ import {
   spectrogramSegmentIndexForStart,
   spectrogramSegmentWindow,
   spectrogramTileOverscanWindow,
+  quantizeSpectrogramPlotPx,
+  spectrogramPlotLayoutSize,
+  spectrogramOverlayBoxSize,
+  SPECTROGRAM_TILE_MAX_HEIGHT_PX,
+  spectrogramTilePixelHeight,
   spectrogramTilePixelWidth,
   spectrogramViewNearTileEdge,
   spectrogramViewNeedsTileRefresh,
@@ -136,12 +141,76 @@ describe("spectrogramViewNearTileEdge", () => {
 });
 
 describe("spectrogramTilePixelWidth", () => {
-  it("scales width with overscan span", () => {
-    expect(spectrogramTilePixelWidth(400, 0, 50, 20)).toBe(1000);
+  it("scales width with overscan span and snaps to the width step", () => {
+    // 400 * (50/20) = 1000 → quantize 64 → 1024
+    expect(spectrogramTilePixelWidth(400, 0, 50, 20)).toBe(1024);
   });
 
-  it("caps at max width", () => {
+  it("caps at the default max width", () => {
+    expect(spectrogramTilePixelWidth(2000, 0, 100, 10)).toBe(2048);
+  });
+
+  it("honours an explicit max width", () => {
     expect(spectrogramTilePixelWidth(2000, 0, 100, 10, 4096)).toBe(4096);
+  });
+});
+
+describe("spectrogramTilePixelHeight", () => {
+  it("caps fullscreen plot height so maximize does not request a taller tile", () => {
+    expect(SPECTROGRAM_TILE_MAX_HEIGHT_PX).toBe(320);
+    expect(spectrogramTilePixelHeight(512)).toBe(320);
+    expect(spectrogramTilePixelHeight(480)).toBe(320);
+  });
+
+  it("snaps mid-range heights to the tile height step", () => {
+    expect(spectrogramTilePixelHeight(280)).toBe(256);
+    expect(spectrogramTilePixelHeight(200)).toBe(192);
+  });
+});
+
+describe("spectrogramPlotLayoutSize", () => {
+  it("divides bounding rect by CSS UI zoom", () => {
+    expect(
+      spectrogramPlotLayoutSize({ width: 1250, height: 400 }, 1.25),
+    ).toEqual({ width: 1000, height: 320 });
+  });
+
+  it("keeps 1× zoom unchanged", () => {
+    expect(spectrogramPlotLayoutSize({ width: 900, height: 280 }, 1)).toEqual({
+      width: 900,
+      height: 280,
+    });
+  });
+});
+
+describe("quantizeSpectrogramPlotPx", () => {
+  it("snaps to the step grid", () => {
+    expect(quantizeSpectrogramPlotPx(1005, 32)).toBe(992);
+    expect(quantizeSpectrogramPlotPx(1010, 32)).toBe(1024);
+  });
+});
+
+describe("spectrogramOverlayBoxSize", () => {
+  it("prefers the live CSS box over a stale quantized hint", () => {
+    expect(
+      spectrogramOverlayBoxSize(
+        { width: 640, height: 400 },
+        { w: 512, h: 256 },
+      ),
+    ).toEqual({ w: 640, h: 400 });
+  });
+
+  it("falls back to the layout hint until the host has size", () => {
+    expect(
+      spectrogramOverlayBoxSize({ width: 0, height: 0 }, { w: 480, h: 240 }),
+    ).toEqual({ w: 480, h: 240 });
+  });
+
+  it("returns zeros when neither source is ready", () => {
+    expect(spectrogramOverlayBoxSize({ width: 0, height: 0 })).toEqual({
+      w: 0,
+      h: 0,
+    });
   });
 });
 

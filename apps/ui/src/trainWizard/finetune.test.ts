@@ -371,6 +371,9 @@ describe("finetune helpers (m13)", () => {
   it("formats inheritance lines", () => {
     const s = { ...FACTORY_SPECTRO };
     expect(formatFinetuneSpectroLine(s, "en")).toContain("nfft");
+    expect(formatFinetuneSpectroLine(s, "en")).toContain("hop 256");
+    expect(formatFinetuneSpectroLine(s, "en")).not.toContain("overlap");
+    expect(formatFinetuneSpectroLine(s, "ru")).toContain("шаг 256");
     expect(formatFinetuneInputLine(s, "ru")).toContain("сниппет");
     expect(
       formatFinetuneArchLine(

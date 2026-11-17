@@ -1,28 +1,33 @@
 import { beforeEach, vi } from "vitest";
 
-const store = new Map<string, string>();
+const localStore = new Map<string, string>();
+const sessionStore = new Map<string, string>();
 
-const localStorageMock = {
-  getItem: (key: string) => store.get(key) ?? null,
-  setItem: (key: string, value: string) => {
-    store.set(key, value);
-  },
-  removeItem: (key: string) => {
-    store.delete(key);
-  },
-  clear: () => {
-    store.clear();
-  },
-  get length() {
-    return store.size;
-  },
-  key: (index: number) => [...store.keys()][index] ?? null,
-};
+function storageMock(store: Map<string, string>): Storage {
+  return {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      store.set(key, value);
+    },
+    removeItem: (key: string) => {
+      store.delete(key);
+    },
+    clear: () => {
+      store.clear();
+    },
+    get length() {
+      return store.size;
+    },
+    key: (index: number) => [...store.keys()][index] ?? null,
+  };
+}
 
-vi.stubGlobal("localStorage", localStorageMock);
+vi.stubGlobal("localStorage", storageMock(localStore));
+vi.stubGlobal("sessionStorage", storageMock(sessionStore));
 
 beforeEach(() => {
-  store.clear();
+  localStore.clear();
+  sessionStore.clear();
 });
 
 class ResizeObserverMock {

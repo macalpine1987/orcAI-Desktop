@@ -14,7 +14,13 @@ import {
   resampleNotes,
   type ProjectsPageMode,
 } from "../../lib/projectsStudio";
-import { IconAudioLarge, IconPlus, IconRefresh } from "./ProjectsIcons";
+import {
+  IconAudioLarge,
+  IconCsvAutoSync,
+  IconCsvColumns,
+  IconPlus,
+  IconRefresh,
+} from "./ProjectsIcons";
 import { useWavDropZone } from "./useWavDropZone";
 
 type Props = {
@@ -188,26 +194,30 @@ export function ProjectRecordingsTab({
             ? t("projects.studio.actions.clearSelection")
             : t("projects.studio.actions.selectAll")}
         </button>
-        <label className="ps-toolbar-check">
-          <input
-            type="checkbox"
-            checked={showAllColumns}
-            onChange={onToggleColumns}
-          />
-          <span>{t("projects.studio.table.showCsvColumns")}</span>
-        </label>
-        <label
-          className="ps-toolbar-check"
-          title={t("projects.studio.table.autoSyncCsvTip")}
+        <button
+          type="button"
+          className={clsx("ps-latch", showAllColumns && "is-on")}
+          aria-pressed={showAllColumns}
+          onClick={onToggleColumns}
         >
-          <input
-            type="checkbox"
-            checked={autoSyncCsv}
-            disabled={busy}
-            onChange={(e) => onToggleAutoSyncCsv(e.target.checked)}
-          />
-          <span>{t("projects.studio.table.autoSyncCsv")}</span>
-        </label>
+          <IconCsvColumns />
+          {t("projects.studio.table.showCsvColumns")}
+        </button>
+        <button
+          type="button"
+          className={clsx(
+            "ps-latch",
+            "ps-latch--lcd",
+            autoSyncCsv && "is-on",
+          )}
+          aria-pressed={autoSyncCsv}
+          disabled={busy}
+          title={t("projects.studio.table.autoSyncCsvTip")}
+          onClick={() => onToggleAutoSyncCsv(!autoSyncCsv)}
+        >
+          <IconCsvAutoSync />
+          {t("projects.studio.table.autoSyncCsv")}
+        </button>
         <div className="ps-toolbar-actions">
           {refreshButton}
           <button

@@ -19,7 +19,13 @@ export function normalizeAppPath(pathname: string): string {
 
 export function isRuntimeFreePath(pathname: string): boolean {
   const path = normalizeAppPath(pathname);
-  return path === "/" || path === "/settings" || path === "/help";
+  return (
+    path === "/" ||
+    path === "/settings" ||
+    path === "/help" ||
+    /* Lab-chrome design preview (Home wizard plan rail). */
+    path === "/__preview/home-plan-rail"
+  );
 }
 
 /**

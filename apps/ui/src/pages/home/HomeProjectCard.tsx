@@ -1,7 +1,8 @@
 import clsx from "clsx";
+import { useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { ProjectSummary } from "../../api/projects";
-import { revealInFileManager } from "../../platform/shell";
+import { RuntimeReadyLamp } from "../../components/RuntimeReadyLamp";
 import {
   formatNextActionsHint,
   readinessDotClass,
@@ -10,10 +11,26 @@ import {
   READINESS_ITEMS,
   type ReadinessItemKey,
 } from "../../lib/projectSummaryFormat";
+import {
+  isTrainMonitorEntryEnabled,
+  isTrainMonitorLive,
+} from "../../lib/trainMonitorAvailability";
+import { revealInFileManager } from "../../platform/shell";
+import { openOrFocusTrainMonitorWindow } from "../../platform/trainMonitorWindow";
+import { useSaveNotice } from "../../ui/saveNotice";
+import {
+  HomeWizardPlanRail,
+  type HomeWizardPlanStep,
+} from "./HomeWizardPlanRail";
+
+/** Shared pulse period for Monitor lamp + running plan-step LED. */
+const HOME_WIZARD_PULSE_MS = 1200;
 
 type Props = {
   projectName: string | null;
   projectPath: string | null;
+  /** Used to open the detached train-monitor window. */
+  projectId?: string | null;
   recordings: number | null;
   annotations: number | null;
   predicted: number | null;
@@ -23,6 +40,9 @@ type Props = {
   /** When false, «Перейти» / «Открыть проект» is disabled (engine not running). */
   engineReady?: boolean;
   onChangeProject: () => void;
+  /** Active wizard plan steps only (not manual pipeline runs). */
+  wizardPlanSteps?: HomeWizardPlanStep[] | null;
+  wizardPlanFoot?: string | null;
 };
 
 function IconOpenFolder({ size = 14 }: { size?: number }) {
@@ -88,6 +108,7 @@ export function shortHomeModelLabel(name: string | null | undefined): string | n
 export function HomeProjectCard({
   projectName,
   projectPath,
+  projectId = null,
   recordings,
   annotations,
   predicted,
@@ -96,9 +117,23 @@ export function HomeProjectCard({
   loading = false,
   engineReady = true,
   onChangeProject,
+  wizardPlanSteps = null,
+  wizardPlanFoot = null,
 }: Props) {
   const { t } = useTranslation();
+  const { notifyHeaderError } = useSaveNotice();
+  const cardRef = useRef<HTMLElement>(null);
   const hasProject = Boolean(projectName && projectPath);
+  const showWizardPlan =
+    hasProject && Array.isArray(wizardPlanSteps) && wizardPlanSteps.length > 0;
+  const monitorAvailable = isTrainMonitorEntryEnabled({
+    phase: null,
+    steps: wizardPlanSteps,
+  });
+  const monitorLive = isTrainMonitorLive({
+    phase: null,
+    steps: wizardPlanSteps,
+  });
   const dash = "—";
   const fmt = (n: number | null) =>
     loading && n == null ? "…" : n == null ? dash : String(n);
@@ -106,6 +141,28 @@ export function HomeProjectCard({
   const changeTitle = changeDisabled
     ? t("projects.studio.actions.needsEngine")
     : undefined;
+
+  /* Phase-align Monitor jewel + running step LED to the same wall-clock pulse. */
+  useLayoutEffect(() => {
+    const el = cardRef.current;
+    if (!el || !showWizardPlan) return;
+    const apply = () => {
+      el.style.setProperty(
+        "--home-wizard-pulse-delay",
+        `${-(Date.now() % HOME_WIZARD_PULSE_MS)}ms`,
+      );
+    };
+    apply();
+  }, [showWizardPlan, monitorLive, wizardPlanSteps]);
+
+  const openMonitor = () => {
+    if (!monitorAvailable) return;
+    void openOrFocusTrainMonitorWindow({
+      projectId: projectId ?? undefined,
+    }).catch(() => {
+      notifyHeaderError(t("home.monitorOpenFailed"));
+    });
+  };
 
   const tableSyncKey =
     tableSyncStatus === "current"
@@ -125,8 +182,45 @@ export function HomeProjectCard({
           : null;
 
   return (
-    <section className="mat-card home-project-card flex flex-col p-4">
-      <h2 className="home-card-eyebrow">{t("home.projectCardTitle")}</h2>
+    <section
+      ref={cardRef}
+      className={clsx(
+        "mat-card home-project-card flex flex-col p-4",
+        showWizardPlan && "has-wizard-plan",
+        monitorLive && "is-monitor-live",
+      )}
+    >
+      <div className="home-project-card-head">
+        <h2 className="home-card-eyebrow">{t("home.projectCardTitle")}</h2>
+      </div>
+      {showWizardPlan ? (
+        <div className="predict-tabs-m03 home-project-monitor-wrap">
+          <button
+            type="button"
+            className="predict-tab home-project-monitor-btn"
+            disabled={!monitorAvailable}
+            title={
+              !monitorAvailable
+                ? t("pipeline.monitorIdleHint")
+                : monitorLive
+                  ? t("pipeline.monitorLiveHint")
+                  : undefined
+            }
+            onClick={openMonitor}
+          >
+            <RuntimeReadyLamp
+              state={monitorLive ? "running" : "off"}
+              className="pp-monitor-lamp"
+              aria-label={
+                monitorLive
+                  ? t("pipeline.monitorLiveHint")
+                  : t("pipeline.monitorLampOff")
+              }
+            />
+            {t("pipeline.monitor")}
+          </button>
+        </div>
+      ) : null}
 
       {hasProject ? (
         <>
@@ -142,29 +236,38 @@ export function HomeProjectCard({
           >
             {projectPath}
           </p>
-          <div className="home-project-metrics mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {/* m01: all four LCD values green when set. */}
-            <MetricLcd label={t("home.projectMetricRecordings")} value={fmt(recordings)} accent />
-            <MetricLcd
-              label={t("home.projectMetricAnnotations")}
-              value={fmt(annotations)}
-              accent
+          {/* KPI LCD row only when no active wizard plan — plan rail replaces it. */}
+          {!showWizardPlan ? (
+            <div className="home-project-metrics mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {/* m01: all four LCD values green when set. */}
+              <MetricLcd label={t("home.projectMetricRecordings")} value={fmt(recordings)} accent />
+              <MetricLcd
+                label={t("home.projectMetricAnnotations")}
+                value={fmt(annotations)}
+                accent
+              />
+              <MetricLcd
+                label={t("home.projectMetricPredicted")}
+                value={fmt(predicted)}
+                accent
+              />
+              <MetricLcd
+                label={t("home.projectMetricModel")}
+                value={
+                  loading && !activeModelLabel
+                    ? "…"
+                    : shortHomeModelLabel(activeModelLabel) ?? dash
+                }
+                accent
+              />
+            </div>
+          ) : (
+            <HomeWizardPlanRail
+              steps={wizardPlanSteps!}
+              foot={wizardPlanFoot}
+              className="mt-3"
             />
-            <MetricLcd
-              label={t("home.projectMetricPredicted")}
-              value={fmt(predicted)}
-              accent
-            />
-            <MetricLcd
-              label={t("home.projectMetricModel")}
-              value={
-                loading && !activeModelLabel
-                  ? "…"
-                  : shortHomeModelLabel(activeModelLabel) ?? dash
-              }
-              accent
-            />
-          </div>
+          )}
         </>
       ) : (
         <p className="mt-3 text-sm text-foreground-muted">{t("home.projectEmpty")}</p>

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import multiprocessing
 import os
@@ -85,11 +86,6 @@ def _set_stage(stage: EngineStage) -> None:
         _set_stage_unlocked(stage)
 
 
-def engine_status() -> tuple[EngineStatus, str | None, str]:
-    with _lock:
-        return _status, _error, _device
-
-
 def engine_runtime_info() -> dict[str, Any]:
     """Progress fields for /health (UI runtime bar, engine segment 30–100%)."""
     with _lock:
@@ -99,14 +95,6 @@ def engine_runtime_info() -> dict[str, Any]:
             "compute_device": _device,
             "engine_stage": _stage,
             "engine_progress": _progress,
-        }
-
-
-def gpu_info() -> dict[str, Any]:
-    with _lock:
-        return {
-            "gpu_backend": _gpu_backend,
-            "gpu_devices": list(_gpu_devices),
         }
 
 
@@ -152,64 +140,70 @@ def _tensorflow_probe_subprocess() -> dict[str, Any]:
 
     ctx = _mp_context()
     queue: multiprocessing.Queue = ctx.Queue()
-    proc = ctx.Process(
-        target=run_tensorflow_probe,
-        args=(queue,),
-        daemon=True,
-        name="orcai-tf-probe",
-    )
-    proc.start()
-    proc.join(timeout=120)
-    if proc.is_alive():
-        proc.terminate()
-        proc.join(timeout=3)
-        payload = {
-            "tensorflow_version": None,
-            "gpu_devices": [],
-            "gpu_backend": None,
-            "metal_plugin_installed": False,
-            "gpu_available": False,
-            "accelerator_hint": "GPU",
-            "error": "TensorFlow probe timed out",
-        }
-        _probe_cache = payload
-        return dict(payload)
-
     try:
-        payload = queue.get_nowait()
-    except Exception as exc:  # noqa: BLE001 — TF probe IPC; error surfaced to caller
-        payload = {
-            "ok": False,
-            "error": str(exc),
-            "tensorflow_version": None,
-            "gpu_devices": [],
-            "gpu_backend": None,
-            "metal_plugin_installed": False,
-            "gpu_available": False,
-            "accelerator_hint": "GPU",
-        }
+        proc = ctx.Process(
+            target=run_tensorflow_probe,
+            args=(queue,),
+            daemon=True,
+            name="orcai-tf-probe",
+        )
+        proc.start()
+        proc.join(timeout=120)
+        if proc.is_alive():
+            proc.terminate()
+            proc.join(timeout=3)
+            payload = {
+                "tensorflow_version": None,
+                "gpu_devices": [],
+                "gpu_backend": None,
+                "metal_plugin_installed": False,
+                "gpu_available": False,
+                "accelerator_hint": "GPU",
+                "error": "TensorFlow probe timed out",
+            }
+            _probe_cache = payload
+            return dict(payload)
 
-    if not payload.get("ok", True):
-        result = {
-            "tensorflow_version": payload.get("tensorflow_version"),
-            "gpu_devices": payload.get("gpu_devices", []),
-            "gpu_backend": payload.get("gpu_backend"),
-            "metal_plugin_installed": payload.get("metal_plugin_installed", False),
-            "gpu_available": payload.get("gpu_available", False),
-            "accelerator_hint": payload.get("accelerator_hint", "GPU"),
-            "error": payload.get("error"),
-        }
-    else:
-        result = {
-            "tensorflow_version": payload.get("tensorflow_version"),
-            "gpu_devices": payload.get("gpu_devices", []),
-            "gpu_backend": payload.get("gpu_backend"),
-            "metal_plugin_installed": payload.get("metal_plugin_installed", False),
-            "gpu_available": payload.get("gpu_available", False),
-            "accelerator_hint": payload.get("accelerator_hint", "GPU"),
-        }
-    _probe_cache = result
-    return dict(result)
+        try:
+            payload = queue.get_nowait()
+        except Exception as exc:  # noqa: BLE001 — TF probe IPC; error surfaced to caller
+            payload = {
+                "ok": False,
+                "error": str(exc),
+                "tensorflow_version": None,
+                "gpu_devices": [],
+                "gpu_backend": None,
+                "metal_plugin_installed": False,
+                "gpu_available": False,
+                "accelerator_hint": "GPU",
+            }
+
+        if not payload.get("ok", True):
+            result = {
+                "tensorflow_version": payload.get("tensorflow_version"),
+                "gpu_devices": payload.get("gpu_devices", []),
+                "gpu_backend": payload.get("gpu_backend"),
+                "metal_plugin_installed": payload.get("metal_plugin_installed", False),
+                "gpu_available": payload.get("gpu_available", False),
+                "accelerator_hint": payload.get("accelerator_hint", "GPU"),
+                "error": payload.get("error"),
+            }
+        else:
+            result = {
+                "tensorflow_version": payload.get("tensorflow_version"),
+                "gpu_devices": payload.get("gpu_devices", []),
+                "gpu_backend": payload.get("gpu_backend"),
+                "metal_plugin_installed": payload.get("metal_plugin_installed", False),
+                "gpu_available": payload.get("gpu_available", False),
+                "accelerator_hint": payload.get("accelerator_hint", "GPU"),
+            }
+        _probe_cache = result
+        return dict(result)
+    finally:
+        with contextlib.suppress(Exception):
+            queue.close()
+        with contextlib.suppress(Exception):
+            queue.join_thread()
 
 
 def tensorflow_accelerator_summary() -> dict[str, Any]:

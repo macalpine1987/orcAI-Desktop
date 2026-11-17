@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import clsx from "clsx";
 import type { JobRecord } from "../../api/jobs";
 import { useJobsListContext } from "../../hooks/useJobsList";
+import { useNowSec } from "../../hooks/useNowSec";
 import { useSidecarStatus } from "../../hooks/useSidecarStatus";
 import {
   formatDuration,
@@ -16,6 +17,8 @@ import {
   JOB_STATUS_PILL_CLASS,
   JobStatusDot,
 } from "../../lib/jobStatusDot";
+import { useWorkspace } from "../../hooks/useWorkspace";
+import { hasActiveProject } from "../../layout/navigation";
 import { usePreferences } from "../../preferences/PreferencesContext";
 import {
   HOME_RECENT_JOBS_LIMIT,
@@ -43,6 +46,7 @@ function JobStatusPill({ status }: { status: JobRecord["status"] }) {
 export function HomeRecentJobs() {
   const { t } = useTranslation();
   const { online, engineReady } = useSidecarStatus();
+  const workspace = useWorkspace();
   const { defaultDockCollapsed } = usePreferences();
   const { jobs, loading } = useJobsListContext();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -69,17 +73,20 @@ export function HomeRecentJobs() {
   }, [defaultDockCollapsed, jobs.length]);
 
   const recent = jobs.slice(0, Math.min(visibleLimit, HOME_RECENT_JOBS_LIMIT));
-  const allJobsEnabled = engineReady;
+  const allJobsEnabled = engineReady && hasActiveProject(workspace);
   const hasLiveDuration = recent.some(
     (job) => job.status === "running" || job.status === "pending",
   );
-  const [nowSec, setNowSec] = useState(() => Date.now() / 1000);
-
-  useEffect(() => {
-    if (!hasLiveDuration) return;
-    const id = window.setInterval(() => setNowSec(Date.now() / 1000), 1000);
-    return () => window.clearInterval(id);
-  }, [hasLiveDuration]);
+  const nowSec = useNowSec(hasLiveDuration);
+  /** After first settled empty list, keep empty copy — avoid poll «загрузка» flash. */
+  const settledEmptyRef = useRef(false);
+  if (recent.length > 0) {
+    settledEmptyRef.current = false;
+  } else if (!loading) {
+    settledEmptyRef.current = true;
+  }
+  const showEmptyLoading =
+    loading && recent.length === 0 && !settledEmptyRef.current;
 
   return (
     <section className="home-recent-jobs">
@@ -95,7 +102,11 @@ export function HomeRecentJobs() {
         ) : (
           <span
             className="jobs-action-link jobs-action-link--disabled text-xs"
-            title={t("projects.studio.actions.needsEngine")}
+            title={
+              engineReady
+                ? t("app.navRequiresProject")
+                : t("projects.studio.actions.needsEngine")
+            }
             aria-disabled="true"
           >
             {t("home.recentJobsAll")}
@@ -110,7 +121,7 @@ export function HomeRecentJobs() {
           <p className="px-4 py-3 text-sm text-foreground-muted">
             {!online
               ? t("home.recentJobsOffline")
-              : loading
+              : showEmptyLoading
                 ? t("home.recentJobsLoading")
                 : t("home.recentJobsEmpty")}
           </p>
@@ -120,11 +131,6 @@ export function HomeRecentJobs() {
           ref={panelRef}
           className="jobs-table-body home-recent-jobs-panel overflow-x-auto"
         >
-          {!online ? (
-            <p className="px-4 py-2 text-xs text-foreground-muted">
-              {t("home.recentJobsOffline")}
-            </p>
-          ) : null}
           <table className="jobs-table w-full min-w-[40rem] text-left">
             <thead>
               <tr>

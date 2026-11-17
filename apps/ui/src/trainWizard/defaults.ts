@@ -102,8 +102,10 @@ export function emptyDraft(projectHint?: string): TrainWizardDraft {
       name: slug ? `orcai-${slug}` : FACTORY_MODEL.name,
     },
     includeHpsearch: false,
+    hpsearchParallel: false,
     hps: { ...FACTORY_HPS },
     testAfterTrain: false,
+    nUnfilteredTestSnippets: null,
     compression: "GZIP",
   };
 }
@@ -375,22 +377,6 @@ export function parseWizardNumber(raw: string, fallback: number): number {
 export function splitSumOk(spectro: SpectroFields): boolean {
   const s = spectro.train + spectro.val + spectro.test;
   return Math.abs(s - 1) < 1e-6;
-}
-
-/** Rough snippet estimate for step 3. */
-export function estimateSnippets(
-  annotatedRecordings: number,
-  spectro: SpectroFields,
-): { snippets: number; gb: number; minutes: number } {
-  const perRec =
-    Math.max(1, annotatedRecordings) *
-    spectro.segment_duration *
-    spectro.snippets_per_sec *
-    (1 - Math.min(0.999, Math.max(0, spectro.fraction_removal)) * 0.15);
-  const snippets = Math.round(perRec * Math.max(1, annotatedRecordings));
-  const gb = Math.round((snippets * 0.00008) * 10) / 10;
-  const minutes = Math.max(1, Math.round(snippets / 1600));
-  return { snippets, gb, minutes };
 }
 
 /** Rough train ETA for step 4 (m11); baseline ≈ 4h10m at factory epochs×batches. */

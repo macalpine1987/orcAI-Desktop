@@ -36,6 +36,11 @@ inflate() failed with error -3: incorrect header check
     expect(
       classifyPipelineError("File not found: …/times.json\nDid you create the spectrogram?"),
     ).toBe("missing_spectrogram");
+    expect(
+      classifyPipelineError(
+        "No recordings left for create-spectrograms (1 in table; excluded not annotated: 1; excluded no possible classes: 0). Or set include_not_annotated (-en) to include rows without annotations.",
+      ),
+    ).toBe("empty_spectrogram_selection");
     expect(classifyPipelineError("Label file not found: foo — missing label files")).toBe(
       "missing_labels",
     );
@@ -67,6 +72,7 @@ inflate() failed with error -3: incorrect header check
       "snippets_shortage",
       "call_weights",
       "missing_spectrogram",
+      "empty_spectrogram_selection",
       "missing_labels",
       "already_exists",
       "engine_sys_exit",

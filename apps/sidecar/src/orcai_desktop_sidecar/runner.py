@@ -236,7 +236,7 @@ def _record_prediction_result(
     try:
         from orcai_desktop_sidecar.jobs import JobStatus, get_job
         from orcai_desktop_sidecar.store import (
-            connect,
+            db_session,
             project_db_path,
             record_prediction,
         )
@@ -249,12 +249,8 @@ def _record_prediction_result(
         if not label_path or command not in ("predict", "filter-predictions"):
             return
         project_dir = params.get("project_dir")
-        for db in (
-            connect(),
-            connect(project_db_path(project_dir)) if project_dir else None,
-        ):
-            if db is None:
-                continue
+
+        def _write(db: Any) -> None:
             record_prediction(
                 db,
                 label_path=str(label_path),
@@ -264,6 +260,12 @@ def _record_prediction_result(
                 job_id=job_id,
                 project_dir=project_dir,
             )
+
+        with db_session() as db:
+            _write(db)
+        if project_dir:
+            with db_session(project_db_path(project_dir)) as db:
+                _write(db)
     except Exception:  # noqa: BLE001 — prediction index is best-effort side effect
         _log.debug("record_prediction failed for job %s", job_id, exc_info=True)
 

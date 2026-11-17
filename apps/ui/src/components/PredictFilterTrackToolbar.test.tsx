@@ -18,7 +18,7 @@ function wav(name: string, extra?: Partial<PredictQueueFile>): PredictQueueFile 
 }
 
 describe("PredictFilterTrackToolbar", () => {
-  it("shows the current WAV and steps to the next filter source", () => {
+  it("reuses Analysis fileNavOnly rail and steps to the next filter source", () => {
     const a = wav("10 Slow Motion.wav");
     const b = wav("11 Next.wav");
     const onSelect = vi.fn();
@@ -34,6 +34,9 @@ describe("PredictFilterTrackToolbar", () => {
       />,
     );
     expect(
+      container.querySelector(".analysis-segment-rail-studio.is-file-nav-only"),
+    ).toBeTruthy();
+    expect(
       container.querySelector(".analysis-segment-rail-studio-filename")
         ?.textContent,
     ).toBe("10 Slow Motion.wav");
@@ -42,7 +45,7 @@ describe("PredictFilterTrackToolbar", () => {
         ?.textContent,
     ).toMatch(/48/);
     const next = container.querySelectorAll(
-      ".analysis-segment-rail-studio-filenav-btn",
+      ".analysis-segment-rail-studio-fileframe-nav",
     )[1] as HTMLButtonElement;
     next.click();
     expect(onSelect).toHaveBeenCalledWith(b.labelPath);

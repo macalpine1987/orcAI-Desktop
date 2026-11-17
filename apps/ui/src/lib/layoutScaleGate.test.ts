@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { readAnalysisLabCss } from "./readAnalysisLabCss";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const styles = join(here, "..", "styles");
@@ -40,19 +41,27 @@ describe("TZ-layout-scale · container contract", () => {
   });
 
   it("Results spectrogram and detections size from cqh, not window vh", () => {
-    const css = readFileSync(join(styles, "analysis-lab.css"), "utf8");
+    const css = readAnalysisLabCss();
     expect(css).toContain("container-name: studio-results");
-    expect(css).toContain("max-height: min(32rem, 52cqh)");
+    expect(css).toContain("max-height: min(32rem, 48cqh)");
+    expect(css).toContain("height: min(32rem, 48cqh)");
     expect(css).toContain("28cqh");
     expect(css).not.toMatch(/34vh/);
     expect(css).not.toMatch(/22vh/);
     expect(css).not.toMatch(
       /\.predict-results-stage \.analysis-spectrogram-studio-with-sidebar\s*\{[^}]*max-height:\s*none/s,
     );
-    // Toast is chrome in the studio column — must not flex-shrink away.
+    // Detections absorb leftover height after the spectrogram cap (fullscreen).
     expect(css).toMatch(
-      /\.predict-results-toast\s*\{[^}]*flex:\s*0\s*0\s*auto/s,
+      /\.predict-results-studio \.analysis-detections-panel\s*\{[\s\S]*max-height:\s*none/,
     );
+    // Equal chrome gutters: segment↔plot and plot↔table share --prs-chrome-stack-gap
+    // (no extra .analysis-lab-stack 0.75rem gap on the studio host).
+    expect(css).toContain("--prs-chrome-stack-gap: 0.4rem");
+    expect(css).toMatch(
+      /\.predict-results-studio \.analysis-lab-stack\.analysis-scientific-stack\s*\{[\s\S]*?gap:\s*0;/,
+    );
+    // Run-complete copy lives in the app header notice chip (not a studio toast).
   });
 
   it("Home and Projects work panels are size containers", () => {
@@ -100,12 +109,52 @@ describe("TZ-layout-scale · container contract", () => {
     expect(css).toMatch(/\.tw-calc-modal \.tw-col-num\s*\{[^}]*min-width:\s*9\.75rem/s);
   });
 
-  it("wizard and monitor modals cap height with vh, not a size container", () => {
+  it("wizard modal caps height with vh; monitor window avoids size containment", () => {
     const wizard = readFileSync(join(styles, "train-wizard.css"), "utf8");
     const monitor = readFileSync(join(styles, "train-monitor.css"), "utf8");
     expect(wizard).toMatch(
       /\.tw-syn-modal\s*\{[^}]*max-height:\s*min\(36rem,\s*calc\(100vh - 3rem\)\)/s,
     );
-    expect(monitor).not.toMatch(/\.tm-modal\s*\{[^}]*container-type:\s*size/s);
+    expect(monitor).not.toMatch(
+      /\.tm-window-frame\s*\{[^}]*container-type:\s*size/s,
+    );
+  });
+
+  it("Filter studio stacks on container width and pins Apply outside the scroll host", () => {
+    const css = readFileSync(join(styles, "predict-filter.css"), "utf8");
+    const lab = readAnalysisLabCss();
+    const studio = readFileSync(
+      join(srcRoot, "components/PredictFilterStudio.tsx"),
+      "utf8",
+    );
+    expect(css).toContain("container-name: studio-filter");
+    expect(css).toContain("@container studio-filter (max-width: 960px)");
+    expect(css).not.toMatch(
+      /@media \(max-width: 960px\) \{\s*\.predict-filter-m05-grid/,
+    );
+    expect(css).toMatch(
+      /\.predict-filter-m05-shell\s*\{[^}]*overflow:\s*hidden/s,
+    );
+    expect(css).toMatch(
+      /\.predict-filter-m05\s*\{[^}]*overflow:\s*auto[^}]*padding:[^}]*10px/s,
+    );
+    expect(css).toContain(".predict-filter-m05-foot");
+    expect(css).toMatch(
+      /\.predict-filter-m05-side[^{]*\{[^}]*overflow:\s*visible/s,
+    );
+    expect(css).toMatch(
+      /\.predict-filter-m05-limits[^{]*\{[^}]*overflow:\s*visible/s,
+    );
+    expect(css).not.toMatch(/max-height:\s*[^;]*\bvh\b/);
+    expect(lab).toMatch(
+      /\.predict-filter-studio\s*\{[^}]*overflow:\s*hidden/s,
+    );
+    const footIdx = studio.indexOf("predict-filter-m05-foot");
+    const scrollClose = studio.lastIndexOf("</div>", footIdx);
+    expect(footIdx).toBeGreaterThan(0);
+    expect(scrollClose).toBeGreaterThan(0);
+    expect(scrollClose).toBeLessThan(footIdx);
+    expect(studio).toContain('selectedClass === "default"');
+    expect(studio).toContain("predict.filterStudio.histDefaultShared");
   });
 });

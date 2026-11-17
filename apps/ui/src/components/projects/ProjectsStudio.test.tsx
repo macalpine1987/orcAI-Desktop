@@ -260,7 +260,7 @@ describe("ProjectRecordingsTab · m33 / m34", () => {
     unmount();
   });
 
-  it("shows auto-sync checkbox and disables refresh when auto-sync is on", () => {
+  it("shows auto-sync latch and disables refresh when auto-sync is on", () => {
     const onToggleAutoSyncCsv = vi.fn();
     const onRefreshTable = vi.fn();
     const { container, unmount } = renderWithProviders(
@@ -276,12 +276,12 @@ describe("ProjectRecordingsTab · m33 / m34", () => {
     expect(container.textContent).toMatch(
       /Обновлять столбцы CSV автоматически|Update CSV columns automatically/,
     );
-    const checks = container.querySelectorAll<HTMLInputElement>(".ps-toolbar-check input");
-    expect(checks.length).toBeGreaterThanOrEqual(2);
+    const latches = container.querySelectorAll<HTMLButtonElement>("button.ps-latch");
+    expect(latches.length).toBeGreaterThanOrEqual(2);
     act(() => {
-      checks[1].click();
+      latches[1].click();
     });
-    expect(onToggleAutoSyncCsv).toHaveBeenCalled();
+    expect(onToggleAutoSyncCsv).toHaveBeenCalledWith(true);
 
     const manual = renderWithProviders(
       <ProjectRecordingsTab
@@ -375,7 +375,7 @@ describe("ProjectReadinessPanel · m36", () => {
     unmount();
   });
 
-  it("next steps toggle lists actions with CLI commands; full cycle line when all ready", () => {
+  it("next steps toggle lists actions with CLI commands; partial predict hides the full-cycle line", () => {
     const onNextStep = vi.fn();
     const { container, unmount } = renderWithProviders(
       <ProjectReadinessPanel
@@ -396,10 +396,34 @@ describe("ProjectReadinessPanel · m36", () => {
     expect(cmds.join(" ")).toMatch(/predict/);
     expect(cmds.join(" ")).toMatch(/train/);
     expect(cmds.join(" ")).toMatch(/filter-predictions/);
-    expect(container.querySelector(".ps-full-cycle")).toBeTruthy();
+    expect(container.querySelector(".ps-full-cycle")).toBeNull();
     expect(container.querySelector(".ps-next-step.is-guided")).toBeTruthy();
     act(() => steps[0].click());
     expect(onNextStep).toHaveBeenCalledTimes(1);
+    unmount();
+  });
+
+  it("full-cycle line appears only after every recording is predicted", () => {
+    const done = summary({
+      readiness_lines: {
+        ...summary().readiness_lines,
+        predict: { state: "ready", predicted: 12, total: 12 },
+      },
+    });
+    const { container, unmount } = renderWithProviders(
+      <ProjectReadinessPanel
+        summary={done}
+        focus="full"
+        loading={false}
+        online
+        showNextSteps
+        onToggleNextSteps={vi.fn()}
+        onNextStep={vi.fn()}
+      />,
+    );
+    expect(container.querySelector(".ps-full-cycle")?.textContent).toMatch(
+      /полному циклу|full cycle/i,
+    );
     unmount();
   });
 
@@ -452,6 +476,57 @@ describe("ProjectReadinessPanel · m36", () => {
     expect(container.querySelectorAll(".ps-readiness-card.is-ready").length).toBe(1);
     expect(container.textContent).toMatch(/не требуется|not required/i);
     expect(container.textContent).not.toMatch(/нет аннотаций|no annotations/i);
+    unmount();
+  });
+
+  it("annotation lamp shows the paired count and turns yellow when that is the first step", () => {
+    const s = summary({
+      readiness_lines: {
+        ...summary().readiness_lines,
+        recordings: { state: "ready", wav_count: 12, table_rows: 20 },
+        annotations: { state: "ready", annotated: 9, total: 20, paired_files: 5 },
+      },
+    });
+    const { container, unmount } = renderWithProviders(
+      <ProjectReadinessPanel
+        summary={s}
+        focus="full"
+        loading={false}
+        online
+        showNextSteps
+        onToggleNextSteps={vi.fn()}
+        onNextStep={vi.fn()}
+      />,
+    );
+    const annotations = container.querySelectorAll(".ps-readiness-card")[1];
+    expect(annotations?.textContent).toMatch(/5 из 12|5 of 12/);
+    expect(annotations?.classList.contains("is-attention")).toBe(true);
+    expect(annotations?.classList.contains("is-ready")).toBe(false);
+    expect(container.querySelector(".ps-next-step-title")?.textContent).toMatch(/7/);
+    unmount();
+  });
+
+  it("annotation lamp is not green when the table count has no matching txt", () => {
+    const s = summary({
+      readiness_lines: {
+        ...summary().readiness_lines,
+        annotations: { state: "ready", annotated: 9, total: 12, paired_files: 0 },
+      },
+    });
+    const { container, unmount } = renderWithProviders(
+      <ProjectReadinessPanel
+        summary={s}
+        focus="training"
+        loading={false}
+        online
+        showNextSteps={false}
+        onToggleNextSteps={vi.fn()}
+        onNextStep={vi.fn()}
+      />,
+    );
+    const annotations = container.querySelectorAll(".ps-readiness-card")[1];
+    expect(annotations?.textContent).toMatch(/нет аннотаций|no annotations/i);
+    expect(annotations?.classList.contains("is-ready")).toBe(false);
     unmount();
   });
 
@@ -518,6 +593,24 @@ describe("ProjectTabs · m02", () => {
     expect(tabs.length).toBe(2);
     expect(container.textContent).not.toMatch(/аннотац|annotat/i);
     expect(container.textContent).not.toMatch(/артефакт|artifact/i);
+    unmount();
+  });
+
+  it("marks the guided next-step tab without selecting it", () => {
+    const { container, unmount } = renderWithProviders(
+      <ProjectTabs
+        active="recordings"
+        guidedTab="annotations"
+        counts={{ recordings: 1, annotations: 0, artifacts: 0, parameters: null }}
+        onChange={vi.fn()}
+      />,
+    );
+    const recordings = container.querySelector('#projects-tab-recordings');
+    const annotations = container.querySelector('#projects-tab-annotations');
+    expect(recordings?.getAttribute("aria-selected")).toBe("true");
+    expect(annotations?.getAttribute("aria-selected")).toBe("false");
+    expect(annotations?.classList.contains("is-guided")).toBe(true);
+    expect(recordings?.classList.contains("is-guided")).toBe(false);
     unmount();
   });
 });

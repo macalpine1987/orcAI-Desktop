@@ -30,7 +30,6 @@ from orcai_desktop_sidecar.project_registry import (
 )
 from orcai_desktop_sidecar.project_studio import (
     _list_annotation_txt_files,
-    _read_json_file,
     _read_table_rows,
     _require_project,
     _resolve_annotation_path,
@@ -38,6 +37,7 @@ from orcai_desktop_sidecar.project_studio import (
     _truthy_cell,
     _wav_meta_safe,
     parameter_json_path,
+    read_json_file,
 )
 
 SPLITS: tuple[str, ...] = ("train", "val", "test")
@@ -137,7 +137,7 @@ def _parameter_doc(project_dir: Path, project: dict[str, Any] | None) -> dict[st
         if key in seen or not path.is_file():
             continue
         seen.add(key)
-        doc = _read_json_file(path)
+        doc = read_json_file(path)
         if doc:
             return doc
     return None

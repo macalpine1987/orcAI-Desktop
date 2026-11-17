@@ -77,13 +77,17 @@ export function formatPlayerClock(sec: number): string {
   return `${String(parts.minutes).padStart(2, "0")}:${String(parts.seconds).padStart(2, "0")}.${parts.tenths}`;
 }
 
-/** m04 Results LCD: `04:47` or `1:05:14` (no tenths). */
+/** m04 Results LCD: `04:47` or `1:05:14` (whole seconds, no fractional). */
 export function formatStudioLcdClock(sec: number): string {
-  const parts = splitPlayerClock(sec);
-  if (parts.hours > 0) {
-    return `${parts.hours}:${String(parts.minutes).padStart(2, "0")}:${String(parts.seconds).padStart(2, "0")}`;
+  const clamped = Math.max(0, Number.isFinite(sec) ? sec : 0);
+  const totalSec = Math.floor(clamped);
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
-  return `${String(parts.minutes).padStart(2, "0")}:${String(parts.seconds).padStart(2, "0")}`;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 /** Broken-out clock fields for Logic-style LCD cells. */

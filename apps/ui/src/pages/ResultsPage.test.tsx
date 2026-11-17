@@ -40,7 +40,7 @@ vi.mock("../api/results", async () => {
   };
 });
 
-import { ResultsPage } from "./ResultsPage";
+import { clearResultsSnapshotsForTests, ResultsPage } from "./ResultsPage";
 
 function row(
   partial: Partial<ResultsSummaryRow> & Pick<ResultsSummaryRow, "id" | "label" | "kind">,
@@ -125,6 +125,7 @@ describe("Results page · T-6 / regression", () => {
   beforeEach(() => {
     navigateMock.mockReset();
     fetchResultsSummary.mockReset();
+    clearResultsSnapshotsForTests();
     sidecar.online = true;
     sidecar.engineReady = true;
     seedWorkspace();
@@ -261,5 +262,22 @@ describe("Results page · T-6 / regression", () => {
     expect(noEngine.container.textContent).toMatch(/движок orcAI на главной|engine from the Home/i);
     expect(noEngine.container.querySelector(".results-studio")).toBeNull();
     noEngine.unmount();
+  });
+
+  it("shows a saved source immediately and skips refetch within TTL", async () => {
+    fetchResultsSummary.mockResolvedValue(payload("predicted"));
+    const first = renderPage();
+    await flushUi();
+    expect(first.container.textContent).toContain("WHISTLE");
+    expect(fetchResultsSummary).toHaveBeenCalledTimes(1);
+    first.unmount();
+
+    const second = renderPage();
+    await flushUi();
+    expect(second.container.textContent).toContain("WHISTLE");
+    expect(second.container.querySelector(".results-studio")).toBeTruthy();
+    expect(second.container.textContent).not.toMatch(/Загрузка|Loading/);
+    expect(fetchResultsSummary).toHaveBeenCalledTimes(1);
+    second.unmount();
   });
 });

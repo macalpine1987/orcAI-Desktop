@@ -129,12 +129,14 @@ class UiPortabilityScanTests(unittest.TestCase):
         """
         if not _UI_SRC.is_dir():
             self.skipTest("UI tree not present")
+        # Page façades (PipelinePage / usePredictPageState) stay thin; path joins
+        # live in action/local-state hooks after the v1.0.4 extract.
         targets = [
             "workspace/project.ts",
             "workspace/predictSettings.ts",
-            "pages/PipelinePage.tsx",
+            "hooks/usePipelineBoardActions.ts",
             "pages/ResultsPage.tsx",
-            "pages/PredictPage.tsx",
+            "hooks/usePredictPageLocalState.ts",
             "pages/ModelsPage.tsx",
             "components/PredictSpectrogramPanel.tsx",
             "trainWizard/plan.ts",
@@ -174,7 +176,15 @@ class UiPortabilityScanTests(unittest.TestCase):
         if not _UI_STYLES.is_dir():
             self.skipTest("UI styles not present")
         tokens = (_UI_STYLES / "tokens.css").read_text(encoding="utf-8")
-        lab = (_UI_STYLES / "analysis-lab.css").read_text(encoding="utf-8")
+        lab_barrel = (_UI_STYLES / "analysis-lab.css").read_text(encoding="utf-8")
+        lab_parts = [lab_barrel]
+        for line in lab_barrel.splitlines():
+            line = line.strip()
+            if line.startswith("@import"):
+                # @import "./foo.css";
+                name = line.split('"')[1].lstrip("./")
+                lab_parts.append((_UI_STYLES / name).read_text(encoding="utf-8"))
+        lab = "\n".join(lab_parts)
         self.assertIn("Segoe UI", tokens)
         self.assertIn("system-ui", tokens)
         self.assertIn("Inter", tokens)

@@ -80,13 +80,17 @@ export function splitLabel(train: number, val: number, test: number): string {
   return `${fmt(train)} / ${fmt(val)} / ${fmt(test)}`;
 }
 
-/** Label-dependent pipeline steps stay off while every loaded WAV lacks a .txt. */
+/**
+ * Wizard entry stays closed until at least one WAV has a matching .txt.
+ * Same rule as Projects `trainWizardBlockedByAnnotations` (0 WAV, or WAVs
+ * with no pairs → blocked; ≥1 pair → open).
+ */
 export function pipelineBlockedWithoutAnnotations(
   board: ProjectPipeline | null | undefined,
 ): boolean {
   const ann = board?.readiness.annotations;
-  if (!ann) return false;
-  return (ann.wav_count ?? 0) > 0 && (ann.paired ?? 0) <= 0;
+  if (!ann) return true;
+  return (ann.paired ?? 0) <= 0;
 }
 
 /**

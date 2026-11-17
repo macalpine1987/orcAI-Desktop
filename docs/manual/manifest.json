@@ -7,10 +7,10 @@
     {"id": "home", "file": "01-home", "title_ru": "Главная", "title_en": "Home"},
     {"id": "projects", "file": "02-projects", "title_ru": "Проекты", "title_en": "Projects"},
     {"id": "predict", "file": "03-predict", "title_ru": "Распознавание", "title_en": "Predictions"},
-    {"id": "train", "file": "04-train", "title_ru": "Обучение", "title_en": "Training"},
+    {"id": "train", "file": "04-train", "title_ru": "Обучение", "title_en": "Training Pipeline"},
     {"id": "models", "file": "05-models", "title_ru": "Модели", "title_en": "Models"},
     {"id": "results", "file": "06-results", "title_ru": "Результаты", "title_en": "Results"},
-    {"id": "tasks", "file": "07-tasks", "title_ru": "Задачи", "title_en": "Tasks"},
+    {"id": "tasks", "file": "07-tasks", "title_ru": "Задачи", "title_en": "Jobs"},
     {"id": "settings", "file": "08-settings", "title_ru": "Настройки", "title_en": "Settings"},
     {"id": "glossary", "file": "09-glossary", "title_ru": "Глоссарий", "title_en": "Glossary"},
     {"id": "troubleshooting", "file": "10-troubleshooting", "title_ru": "Устранение неполадок", "title_en": "Troubleshooting"}

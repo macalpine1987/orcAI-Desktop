@@ -46,6 +46,7 @@ export function useOpenedFiles() {
     if (!isTauri()) return;
 
     let unlisten: (() => void) | undefined;
+    let cancelled = false;
 
     const flushDeferred = () => {
       if (!sectionsAccessible || !deferredRef.current.length) return;
@@ -64,11 +65,16 @@ export function useOpenedFiles() {
       );
       flushDeferred();
     }).then((fn) => {
+      if (cancelled) {
+        fn();
+        return;
+      }
       unlisten = fn;
     });
 
     void invoke<string[]>("take_pending_open_files")
       .then((pending) => {
+        if (cancelled) return;
         openPaths(
           pending,
           navigate,
@@ -85,6 +91,7 @@ export function useOpenedFiles() {
     flushDeferred();
 
     return () => {
+      cancelled = true;
       unlisten?.();
     };
   }, [navigate, sectionsAccessible]);

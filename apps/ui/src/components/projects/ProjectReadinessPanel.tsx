@@ -8,6 +8,7 @@ import {
   readinessAttentionKey,
   readinessCardDetail,
   readinessCardInactiveForFocus,
+  readinessCardState,
   readinessCardTone,
   type NextStep,
 } from "../../lib/projectsStudio";
@@ -84,7 +85,7 @@ export function ProjectReadinessPanel({
         <ul className="ps-readiness-grid" role="list">
           {READINESS_CARD_KEYS.map((key) => {
             const inactive = readinessCardInactiveForFocus(key, focus);
-            const state = summary.readiness[key];
+            const state = readinessCardState(summary, key);
             const tone = inactive
               ? "empty"
               : readinessCardTone(state, attention === key);

@@ -28,15 +28,26 @@ describe("finetune gate", () => {
   });
 
   it("TrainWizard unlocks finetune (not soon) and wires load_model", () => {
-    const wiz = read("trainWizard/TrainWizard.tsx");
+    const wiz = [
+      read("trainWizard/TrainWizard.tsx"),
+      read("trainWizard/useTrainWizardDraft.ts"),
+      read("trainWizard/useTrainWizardFinetuneCatalog.ts"),
+      read("trainWizard/useTrainWizardLaunch.ts"),
+      read("trainWizard/trainWizardNavigation.ts"),
+    ].join("\n");
+    const cli = read("trainWizard/useWizardCliPreview.ts");
+    const panel = read("trainWizard/FinetuneDataStep.tsx");
+    const helpers = read("trainWizard/finetune.ts");
+    const spectro = read("trainWizard/TrainWizardSpectroStep.tsx");
     expect(wiz).toContain("inheritedLocked");
     expect(wiz).toContain("finetuneNeedBase");
     expect(wiz).toContain("finetuneNeedEngine");
     expect(wiz).toContain("hasRuntimeSidecarBase");
     expect(wiz).toContain("fetchModelDetail");
     expect(wiz).toContain("FinetuneDataStep");
-    expect(wiz).toContain("--load_model --load_model_from");
-    expect(wiz).toContain("finetuneInheritedTitle");
+    expect(cli).toContain("--load_model --load_model_from");
+    expect(panel).toContain("finetuneInheritedTitle");
+    expect(spectro).toContain("finetuneInheritedTitle");
     expect(wiz).toContain("forceFinetuneLocks");
     expect(wiz).toContain("finetuneInheritedMatches");
     expect(wiz).toContain("finetuneLockMatchesSelection");
@@ -54,10 +65,8 @@ describe("finetune gate", () => {
     expect(wiz).not.toMatch(
       /finetuneApplyStatus\s*!==\s*["']ready["']\s*\|\|\s*!finetuneLock/,
     );
-    const helpers = read("trainWizard/finetune.ts");
     expect(helpers).toContain("export function finetuneDataStepCanNext");
     expect(helpers).toContain("export function finetuneApplyStillSameBase");
-    const panel = read("trainWizard/FinetuneDataStep.tsx");
     expect(panel).toContain("finetuneClassStatus");
     expect(panel).toContain("tw-ft-inherit");
     const plan = read("trainWizard/plan.ts");

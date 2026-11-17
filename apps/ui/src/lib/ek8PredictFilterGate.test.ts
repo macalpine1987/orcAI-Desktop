@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { readAnalysisLabCss } from "./readAnalysisLabCss";
 
 const root = resolve(import.meta.dirname, "../..");
 const src = (...parts: string[]) => resolve(root, "src", ...parts);
@@ -13,11 +14,21 @@ function read(path: string): string {
   return readFileSync(path, "utf8");
 }
 
+/** Studio shell + extracted model hook (string-gate after split). */
+function readFilterStudio(): string {
+  return [
+    read(src("components/PredictFilterStudio.tsx")),
+    read(src("hooks/usePredictFilterStudioModel.ts")),
+    read(src("components/PredictFilterLimitsSection.tsx")),
+  ].join("\n");
+}
+
 describe("T-5 predict filter gate · requirements", () => {
   it("1. limits editor has default + class rows with empty min/max as null", () => {
-    const studio = read(src("components/PredictFilterStudio.tsx"));
+    const studio = readFilterStudio();
     expect(studio).toContain('{ key: "default", isDefault: true');
-    expect(studio).toContain("FILTER_CLASS_ORDER");
+    expect(studio).toContain("filterTableClassKeys");
+    expect(studio).not.toContain("FILTER_CLASS_ORDER");
     expect(studio).toContain("inputToBound");
     expect(studio).toContain("serializeLimitsJson");
 
@@ -33,26 +44,34 @@ describe("T-5 predict filter gate · requirements", () => {
     expect(lib).not.toMatch(/if \(!\(code in out\)\) out\[code\] = \[null, null\]/);
   });
 
-  it("2. live preview uses orcAI _check_duration and never writes filtered txt", () => {
+  it("2. live preview uses orcAI filter_predictions and never writes filtered txt", () => {
     const preview = read(sidecar("adapters", "filter_preview.py"));
-    expect(preview).toContain("from orcai.predict import _check_duration");
-    expect(preview).toContain("_check_duration(row, call_duration_limits, 1, label_suffix)");
+    expect(preview).toContain("from orcai.predict import filter_predictions");
+    expect(preview).toContain("filter_predictions(");
+    expect(preview).toContain("delta_t=1");
     expect(preview).toContain("original files are not touched");
     expect(preview).not.toContain("to_csv");
     expect(preview).not.toContain("filter_predictions_file");
+    expect(preview).not.toContain("_check_duration");
 
-    const main = read(sidecar("main.py"));
-    expect(main).toContain("/v1/filter-predictions/preview");
-    expect(main).toContain("preview_filter_predictions");
+    const fsRoutes = read(sidecar("routes", "fs.py"));
+    expect(fsRoutes).toContain("/v1/filter-predictions/preview");
+    expect(fsRoutes).toContain("preview_filter_predictions");
   });
 
   it("3. apply writes *_predicted_filtered.txt via filter-predictions + -cdl", () => {
     const page = read(src("pages/PredictPage.tsx"));
-    expect(page).toContain('createJob("filter-predictions"');
-    expect(page).toContain("call_duration_limits: limitsJsonPath");
+    const pageState = read(src("hooks/usePredictPageState.ts"));
+    const filterRun = read(src("hooks/usePredictFilterRun.ts"));
+    expect(filterRun).toContain('createJob("filter-predictions"');
+    expect(filterRun).toContain("call_duration_limits: limitsJsonPath");
     expect(page).toContain("onApply={onRunFilter}");
+    expect(pageState).toContain("usePredictFilterRun");
 
-    const adapter = read(sidecar("adapters", "predict.py"));
+    const adapter = [
+      read(sidecar("adapters", "predict.py")),
+      read(sidecar("adapters", "predict_paths.py")),
+    ].join("\n");
     expect(adapter).toContain("resolve_filtered_output_path");
     expect(adapter).toContain('f"{path.stem}_filtered.txt"');
 
@@ -61,7 +80,7 @@ describe("T-5 predict filter gate · requirements", () => {
   });
 
   it("4. load/save JSON is portable; default [0,null] warns; publication example is opt-in", () => {
-    const studio = read(src("components/PredictFilterStudio.tsx"));
+    const studio = readFilterStudio();
     expect(studio).toContain("onLoad");
     expect(studio).toContain("onSave");
     expect(studio).toContain('notifySaved(t("predict.filterStudio.saved"))');
@@ -70,6 +89,11 @@ describe("T-5 predict filter gate · requirements", () => {
     expect(studio).toContain("isNoOpDurationLimits");
     expect(studio).toContain("predict.filterStudio.defaultWarn");
     expect(studio).toContain("predict.filterStudio.publication");
+    expect(studio).toContain("predict.filterStudio.publicationHint");
+    expect(studio).toContain("predict-filter-m05-tool is-outline");
+    expect(studio).toContain("ORCAI_DOI");
+    expect(studio).toContain("publicationExampleFitsClasses");
+    expect(studio).toContain("predict.filterStudio.publicationNeedsBuiltin");
     expect(studio).toContain("predict-filter-m05-limits-title-row");
     expect(studio).toContain("predict-filter-m05-tool");
 
@@ -79,7 +103,7 @@ describe("T-5 predict filter gate · requirements", () => {
   });
 
   it("5. histogram is per selected class; duration is brushed on the preview plot", () => {
-    const studio = read(src("components/PredictFilterStudio.tsx"));
+    const studio = readFilterStudio();
     expect(studio).toContain("durationHistogram");
     expect(studio).toContain('selectedClass === "default"');
     expect(studio).toContain("applyAll");
@@ -88,6 +112,14 @@ describe("T-5 predict filter gate · requirements", () => {
     expect(studio).toContain("PredictFilterTrackToolbar");
     expect(studio).toContain("predict-filter-m05-right");
     expect(studio).toContain("setPair");
+
+    // Same Analysis fileNavOnly rail (not the old filenav + modal picker).
+    const track = read(src("components/PredictFilterTrackToolbar.tsx"));
+    expect(track).toContain("SpectrogramFileSegmentRail");
+    expect(track).toContain("fileNavOnly");
+    expect(track).toContain("studioLayout");
+    expect(track).not.toContain("PredictResultsFilePickerModal");
+    expect(track).not.toContain("analysis-segment-rail-studio-filenav-btn");
 
     const hist = read(src("components/PredictFilterHistogram.tsx"));
     expect(hist).toContain("onPointerDown");
@@ -101,6 +133,18 @@ describe("T-5 predict filter gate · requirements", () => {
     expect(css).toContain("52cqh");
     expect(css).toContain("28cqh");
     expect(css).not.toMatch(/max-height:\s*[^;]*vh/);
+    expect(css).toMatch(
+      /\.predict-filter-m05-side[^{]*\{[^}]*min-height:\s*min-content;[^}]*overflow:\s*visible/,
+    );
+    expect(css).not.toMatch(/predict-filter-m05-shared-btn/);
+    const studioSrc = readFilterStudio();
+    expect(studioSrc).not.toContain("predict-filter-m05-shared-btn");
+    expect(css).toMatch(
+      /\.predict-filter-m05-switch\s*\{[^}]*min-width:\s*0;[^}]*white-space:\s*normal/,
+    );
+    expect(css).toMatch(
+      /\.predict-filter-m05-switch-label\s*\{[^}]*overflow-wrap:\s*anywhere/,
+    );
     expect(css).toContain("--m16-table-head: #212224");
     expect(css).toContain("--m16-table-well: #131415");
     expect(css).toContain("var(--mat-row-selected");
@@ -109,8 +153,12 @@ describe("T-5 predict filter gate · requirements", () => {
     expect(studioRule).toContain("border: none");
     expect(studioRule).toContain("background: transparent");
     expect(studioRule).toContain("box-shadow: none");
-    // QA-L2: footer pinned outside scroll host (Params pattern).
+    // QA-L2 / Stage 7: footer pinned outside scroll host (Params pattern).
     expect(css).toContain(".predict-filter-m05-shell");
+    expect(css).toContain("@container studio-filter (max-width: 960px)");
+    expect(css).not.toMatch(
+      /@media \(max-width: 960px\) \{\s*\.predict-filter-m05-grid/,
+    );
     const studio = read(src("components/PredictFilterStudio.tsx"));
     expect(studio).toContain("predict-filter-m05-shell");
     const footIdx = studio.indexOf("predict-filter-m05-foot");
@@ -119,9 +167,12 @@ describe("T-5 predict filter gate · requirements", () => {
     expect(closeScroll).toBeGreaterThan(0);
     expect(closeScroll).toBeLessThan(footIdx);
 
-    const lab = read(src("styles/analysis-lab.css"));
+    const lab = readAnalysisLabCss();
     expect(lab).not.toMatch(
       /\.predict-filter-studio\s*\{[^}]*border:\s*1px solid var\(--bezel\)/,
+    );
+    expect(lab).toMatch(
+      /\.predict-filter-studio\s*\{[^}]*overflow:\s*hidden/s,
     );
   });
 
@@ -140,6 +191,21 @@ describe("T-5 predict filter gate · requirements", () => {
       "apply",
       "originalUntouched",
       "publication",
+      "publicationHint",
+      "publicationNeedsBuiltin",
+      "histScale",
+      "histTail",
+      "histTailRange",
+      "histCount",
+      "histColumn",
+      "histLegendKeep",
+      "histLegendDrop",
+      "histBin",
+      "histFateKeep",
+      "histFateDrop",
+      "histFateMixed",
+      "histDefaultEmpty",
+      "histDefaultShared",
       "cliTimes",
       "saved",
     ]) {
@@ -148,6 +214,21 @@ describe("T-5 predict filter gate · requirements", () => {
     }
     expect(ru.predict.filterStudio.apply).toBe("Применить фильтр");
     expect(en.predict.filterStudio.apply).toBe("Apply filter");
+    expect(ru.predict.filterStudio.publication).toBe("Пример");
+    expect(en.predict.filterStudio.publication).toBe("Example");
+    expect(ru.predict.filterStudio.publicationHint).toContain("публикации");
+    expect(en.predict.filterStudio.publicationHint).toContain("publication");
+    expect(ru.predict.filterStudio.histDefaultShared).toMatch(/строк[еу] таблицы/);
+    expect(en.predict.filterStudio.histDefaultShared).toMatch(/click a class row/i);
+    expect(ru.spectrogram.detections.colType).toBe("Тип");
+    expect(en.spectrogram.detections.colType).toBe("Type");
+    expect(ru.predict.results.modelSettings.title).not.toMatch(/ИИ/);
+    expect(en.predict.results.modelSettings.title).not.toMatch(/\bAI\b/);
+    expect(ru.predict.results.modelSettings.type).toBe("Вид модели");
+    expect(en.predict.results.modelSettings.type).toBe("Model kind");
+    const filterCli = read(src("lib", "filterCliLine.ts"));
+    expect(filterCli).toContain("liveLogVerbosity");
+    expect(filterCli).toContain('"-v"');
   });
 
   it("9. filter tab toolbar has the Results button (same chrome as Analysis)", () => {
@@ -160,11 +241,13 @@ describe("T-5 predict filter gate · requirements", () => {
   });
 
   it("10. filter overwrite asks before rewriting *_filtered.txt", () => {
-    const page = read(src("pages/PredictPage.tsx"));
-    expect(page).toContain("resolveFilterJobOutputPath(predicted, outputFile)");
-    expect(page).toContain("askFileOverwrite");
+    const pageState = read(src("hooks/usePredictPageState.ts"));
+    const filterRun = read(src("hooks/usePredictFilterRun.ts"));
+    expect(filterRun).toContain("resolveFilterJobOutputPath");
+    expect(filterRun).toContain("askFileOverwrite");
+    expect(pageState).toContain("askFileOverwrite");
     // Must not silently force overwrite = true when file exists.
-    expect(page).not.toMatch(
+    expect(filterRun).not.toMatch(
       /pathExists\(resolveFilterJobOutputPath\(predicted,\s*outputFile\)\)\)\s*\{\s*overwrite\s*=\s*true/,
     );
   });

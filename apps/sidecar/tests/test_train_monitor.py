@@ -381,7 +381,7 @@ class TrainMonitorTests(unittest.TestCase):
             / "src"
             / "orcai_desktop_sidecar"
             / "adapters"
-            / "training.py"
+            / "training_fit.py"
         )
         text = src.read_text(encoding="utf-8")
         self.assertNotIn("batch_size * n_batch", text)

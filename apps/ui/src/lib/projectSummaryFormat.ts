@@ -25,31 +25,43 @@ export function readinessFocusLabel(focus: ProjectFocus, t: TFunction): string {
   return t(`home.readinessFocus.${focus}`);
 }
 
+function nonNegative(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, value) : 0;
+}
+
+/** Files on disk. Table rows are not WAV files. */
+function homeWavCount(summary: ProjectSummary): number {
+  return nonNegative(summary.readiness_lines.recordings.wav_count);
+}
+
 export function readinessLineDetail(
   summary: ProjectSummary,
   key: ReadinessItemKey,
   t: TFunction,
 ): string {
   const lines = summary.readiness_lines;
+  const wav = homeWavCount(summary);
   switch (key) {
-    case "recordings": {
-      const line = lines.recordings;
-      if (line.table_rows > 0) {
-        return t("home.readinessDetail.recordingsTable", {
-          count: line.table_rows,
+    case "recordings":
+      return t("home.readinessDetail.recordingsWav", { count: wav });
+    case "annotations": {
+      const line = lines.annotations;
+      if (typeof line.paired_files === "number") {
+        const total = wav > 0 ? wav : nonNegative(line.total);
+        return t("home.readinessDetail.annotations", {
+          annotated: nonNegative(line.paired_files),
+          total,
         });
       }
-      return t("home.readinessDetail.recordingsWav", { count: line.wav_count });
-    }
-    case "annotations":
       return t("home.readinessDetail.annotations", {
-        annotated: lines.annotations.annotated,
-        total: lines.annotations.total,
+        annotated: nonNegative(line.annotated),
+        total: nonNegative(line.total),
       });
+    }
     case "predict":
       return t("home.readinessDetail.predict", {
-        predicted: lines.predict.predicted,
-        total: lines.predict.total,
+        predicted: nonNegative(lines.predict.predicted),
+        total: wav > 0 ? wav : nonNegative(lines.predict.total),
       });
     case "datasets":
       if (lines.datasets.file_count > 0) {

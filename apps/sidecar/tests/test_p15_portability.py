@@ -81,10 +81,11 @@ class UiJoinFsPathScanTests(unittest.TestCase):
         ui_src = repo / "apps" / "ui" / "src"
         if not ui_src.is_dir():
             self.skipTest("UI tree not present")
+        # Thin page façades may omit joinFsPath — scan the hooks that own path joins.
         targets = [
             ui_src / "workspace" / "project.ts",
             ui_src / "workspace" / "predictSettings.ts",
-            ui_src / "pages" / "PipelinePage.tsx",
+            ui_src / "hooks" / "usePipelineBoardActions.ts",
             ui_src / "pages" / "ResultsPage.tsx",
         ]
         for path in targets:

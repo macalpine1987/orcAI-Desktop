@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { pathExists, resolveOrcaiParameterPath } from "../api/fs";
@@ -8,11 +8,13 @@ import {
   exportModelDirectory,
   fetchModelDetail,
   fetchModels,
+  peekModels,
   importModelDirectory,
   type ModelDetail,
   type OrcaiModel,
 } from "../api/models";
 import { ModelsStudio } from "../components/ModelsStudio";
+import { useBusyGuard } from "../hooks/useBusyGuard";
 import { useSidecarStatus } from "../hooks/useSidecarStatus";
 import { useTrackJobInLab } from "../hooks/useTrackJobInLab";
 import { useWorkspace } from "../hooks/useWorkspace";
@@ -20,6 +22,7 @@ import { isAbortError } from "../lib/fetchErrors";
 import { joinFsPath } from "../lib/joinFsPath";
 import { pipelineNavInactiveForWorkspace } from "../layout/navigation";
 import { modelRowKey } from "../lib/modelsStudio";
+import { formatUserFacingErrorRequired } from "../lib/userFacingError";
 import { pickDirectory } from "../platform/dialog";
 import { revealInFileManager } from "../platform/shell";
 import { isTauri } from "../platform/tauri";
@@ -34,29 +37,54 @@ export function ModelsPage() {
   const { online, engineReady } = useSidecarStatus();
   const workspace = useWorkspace();
   const trackJobInLab = useTrackJobInLab();
+  const { busy, runBusy } = useBusyGuard();
+  const noticeTimer = useRef<number | null>(null);
 
   const projectDir = workspace.projectDir;
   const sidecarReady = online;
 
-  const [models, setModels] = useState<OrcaiModel[]>([]);
+  const [models, setModels] = useState<OrcaiModel[]>(
+    () => peekModels(workspace.projectDir ?? undefined) ?? [],
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ModelDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [compatBlocked, setCompatBlocked] = useState(false);
   const [compatUnchecked, setCompatUnchecked] = useState(false);
 
+  const showNotice = useCallback((text: string) => {
+    setNotice(text);
+    if (noticeTimer.current != null) window.clearTimeout(noticeTimer.current);
+    noticeTimer.current = window.setTimeout(() => {
+      setNotice(null);
+      noticeTimer.current = null;
+    }, 4500);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (noticeTimer.current != null) window.clearTimeout(noticeTimer.current);
+    };
+  }, []);
+
   const activeModelId = workspace.predictSettings?.model ?? null;
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (fresh = false) => {
     if (!sidecarReady) {
       setModels([]);
       return;
     }
+    if (!fresh) {
+      const peeked = peekModels(projectDir ?? undefined);
+      if (peeked) setModels(peeked);
+    }
     try {
-      const list = await fetchModels(projectDir ?? undefined);
+      const list = await fetchModels(
+        projectDir ?? undefined,
+        fresh ? { fresh: true } : undefined,
+      );
       setModels(list);
       setError(null);
       setSelectedId((cur) => {
@@ -72,9 +100,9 @@ export function ModelsPage() {
     } catch (err) {
       if (isAbortError(err)) return;
       setModels([]);
-      setError(err instanceof Error ? err.message : String(err));
+      setError(formatUserFacingErrorRequired(err, t));
     }
-  }, [sidecarReady, projectDir, activeModelId]);
+  }, [sidecarReady, projectDir, activeModelId, t]);
 
   useEffect(() => {
     void reload();
@@ -114,7 +142,7 @@ export function ModelsPage() {
         setDetail(null);
         setCompatBlocked(false);
         setCompatUnchecked(false);
-        setError(err instanceof Error ? err.message : String(err));
+        setError(formatUserFacingErrorRequired(err, t));
       })
       .finally(() => {
         if (!cancelled) setDetailLoading(false);
@@ -135,43 +163,43 @@ export function ModelsPage() {
       setError(t("models.needProject"));
       return;
     }
-    setBusy(true);
-    setError(null);
-    setNotice(null);
-    try {
-      const compat = await checkModelCompatibility(selected.id, projectDir);
-      // Recognition lists every catalog model. Assignment follows that list.
-      // Project-parameter mismatches still block Test, which reads that file.
-      setCompatBlocked(Boolean(compat.checked && !compat.ok));
-      const unchecked =
-        !compat.checked &&
-        (compat.reason === "no_project_parameter" || compat.reason === "no_project");
-      setCompatUnchecked(unchecked);
-      const isTrained = selected.kind === "trained";
-      savePredictSettings({
-        model: selected.id,
-        modelDir: isTrained ? selected.path : undefined,
-      });
-      await persistActiveProjectPredictModel(
-        selected.id,
-        isTrained ? selected.path : null,
-      );
-      if (unchecked) {
-        setNotice(t("models.compatUncheckedNotice"));
-      }
-      navigate("/predict", {
-        state: {
+    await runBusy(async () => {
+      setError(null);
+      setNotice(null);
+      try {
+        const compat = await checkModelCompatibility(selected.id, projectDir);
+        // Recognition lists every catalog model. Assignment follows that list.
+        // Project-parameter mismatches still block Test, which reads that file.
+        setCompatBlocked(Boolean(compat.checked && !compat.ok));
+        const unchecked =
+          !compat.checked &&
+          (compat.reason === "no_project_parameter" ||
+            compat.reason === "no_project");
+        setCompatUnchecked(unchecked);
+        const isTrained = selected.kind === "trained";
+        savePredictSettings({
           model: selected.id,
-          ...(isTrained ? { modelDir: selected.path } : {}),
-        },
-      });
-    } catch (err) {
-      if (!isAbortError(err)) {
-        setError(err instanceof Error ? err.message : String(err));
+          modelDir: isTrained ? selected.path : undefined,
+        });
+        await persistActiveProjectPredictModel(
+          selected.id,
+          isTrained ? selected.path : null,
+        );
+        if (unchecked) {
+          showNotice(t("models.compatUncheckedNotice"));
+        }
+        navigate("/predict", {
+          state: {
+            model: selected.id,
+            ...(isTrained ? { modelDir: selected.path } : {}),
+          },
+        });
+      } catch (err) {
+        if (!isAbortError(err)) {
+          setError(formatUserFacingErrorRequired(err, t));
+        }
       }
-    } finally {
-      setBusy(false);
-    }
+    });
   };
 
   const onFinetune = () => {
@@ -196,42 +224,41 @@ export function ModelsPage() {
       setError(t("models.compatBlockedTitle"));
       return;
     }
-    setBusy(true);
-    setError(null);
-    setNotice(null);
-    try {
-      const paramPath = await resolveOrcaiParameterPath(projectDir);
-      const tvt = joinFsPath(projectDir, "tvt_data");
-      const tvtTrain = joinFsPath(tvt, "train_dataset");
-      const tvtTest = joinFsPath(tvt, "test_dataset");
-      if (!paramPath) {
-        setError(t("models.testNeedParameter"));
-        return;
+    await runBusy(async () => {
+      setError(null);
+      setNotice(null);
+      try {
+        const paramPath = await resolveOrcaiParameterPath(projectDir);
+        const tvt = joinFsPath(projectDir, "tvt_data");
+        const tvtTrain = joinFsPath(tvt, "train_dataset");
+        const tvtTest = joinFsPath(tvt, "test_dataset");
+        if (!paramPath) {
+          setError(t("models.testNeedParameter"));
+          return;
+        }
+        const hasTvt =
+          (await pathExists(tvt)) &&
+          ((await pathExists(tvtTrain)) || (await pathExists(tvtTest)));
+        if (!hasTvt) {
+          setError(t("models.testNeedTvt"));
+          return;
+        }
+        const job = await createJob("test", {
+          project_dir: projectDir,
+          model_dir: selected.path,
+          data_dir: tvt,
+          orcai_parameter: paramPath,
+          test_unfiltered: true,
+        });
+        trackJobInLab(job);
+        showNotice(t("models.testQueued"));
+        navigate("/jobs");
+      } catch (err) {
+        if (!isAbortError(err)) {
+          setError(formatUserFacingErrorRequired(err, t));
+        }
       }
-      const hasTvt =
-        (await pathExists(tvt)) &&
-        ((await pathExists(tvtTrain)) || (await pathExists(tvtTest)));
-      if (!hasTvt) {
-        setError(t("models.testNeedTvt"));
-        return;
-      }
-      const job = await createJob("test", {
-        project_dir: projectDir,
-        model_dir: selected.path,
-        data_dir: tvt,
-        orcai_parameter: paramPath,
-        test_unfiltered: true,
-      });
-      trackJobInLab(job);
-      setNotice(t("models.testQueued"));
-      navigate("/jobs");
-    } catch (err) {
-      if (!isAbortError(err)) {
-        setError(err instanceof Error ? err.message : String(err));
-      }
-    } finally {
-      setBusy(false);
-    }
+    });
   };
 
   const onOpenFolder = async () => {
@@ -239,7 +266,7 @@ export function ModelsPage() {
     try {
       await revealInFileManager(selected.path);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(formatUserFacingErrorRequired(err, t));
     }
   };
 
@@ -252,26 +279,25 @@ export function ModelsPage() {
       setError(t("models.importNeedDesktop"));
       return;
     }
-    setBusy(true);
-    setError(null);
-    setNotice(null);
-    try {
-      const dir = await pickDirectory(t("models.importTitle"), projectDir);
-      if (!dir) return;
-      const { model } = await importModelDirectory({
-        sourceDir: dir,
-        projectDir,
-      });
-      await reload();
-      setSelectedId(modelRowKey(model));
-      setNotice(t("models.importOk", { name: model.name }));
-    } catch (err) {
-      if (!isAbortError(err)) {
-        setError(err instanceof Error ? err.message : String(err));
+    await runBusy(async () => {
+      setError(null);
+      setNotice(null);
+      try {
+        const dir = await pickDirectory(t("models.importTitle"), projectDir);
+        if (!dir) return;
+        const { model } = await importModelDirectory({
+          sourceDir: dir,
+          projectDir,
+        });
+        await reload(true);
+        setSelectedId(modelRowKey(model));
+        showNotice(t("models.importOk", { name: model.name }));
+      } catch (err) {
+        if (!isAbortError(err)) {
+          setError(formatUserFacingErrorRequired(err, t));
+        }
       }
-    } finally {
-      setBusy(false);
-    }
+    });
   };
 
   const onExport = async () => {
@@ -287,33 +313,32 @@ export function ModelsPage() {
       setError(t("models.exportNeedDesktop"));
       return;
     }
-    setBusy(true);
-    setError(null);
-    setNotice(null);
-    try {
-      const destParent = await pickDirectory(
-        t("models.exportTitle"),
-        projectDir ?? undefined,
-      );
-      if (!destParent) return;
-      const out = await exportModelDirectory({
-        modelId: selected.id || selected.path,
-        destParent,
-        projectDir: projectDir ?? undefined,
-      });
-      setNotice(t("models.exportOk", { name: out.name }));
+    await runBusy(async () => {
+      setError(null);
+      setNotice(null);
       try {
-        await revealInFileManager(out.path);
-      } catch {
-        /* export succeeded even if reveal fails */
+        const destParent = await pickDirectory(
+          t("models.exportTitle"),
+          projectDir ?? undefined,
+        );
+        if (!destParent) return;
+        const out = await exportModelDirectory({
+          modelId: selected.id || selected.path,
+          destParent,
+          projectDir: projectDir ?? undefined,
+        });
+        showNotice(t("models.exportOk", { name: out.name }));
+        try {
+          await revealInFileManager(out.path);
+        } catch {
+          /* export succeeded even if reveal fails */
+        }
+      } catch (err) {
+        if (!isAbortError(err)) {
+          setError(formatUserFacingErrorRequired(err, t));
+        }
       }
-    } catch (err) {
-      if (!isAbortError(err)) {
-        setError(err instanceof Error ? err.message : String(err));
-      }
-    } finally {
-      setBusy(false);
-    }
+    });
   };
 
   if (!sidecarReady) {

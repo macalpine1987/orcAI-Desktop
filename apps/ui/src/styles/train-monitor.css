@@ -1,22 +1,42 @@
-/* Training monitor — modal over pipeline board (m14) */
+/* Training monitor — detached Tauri window (m14) */
 
-.tm-modal {
+.tm-window {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  width: min(72rem, calc(100vw - 2rem));
-  max-height: min(46rem, calc(100vh - 3rem));
+  /* Detached Tauri window: fill webview; dvh avoids classic 100vh + CSS zoom drift. */
+  height: 100dvh;
+  min-height: 100%;
+  padding: 0.55rem;
+  background: var(--mat-recess, #0a0b0c);
+  color: var(--foreground, var(--text));
+}
+
+.tm-window-frame {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
   overflow: hidden;
-  /* Content-sized modal: do not make it a size container — size containment
-     would collapse it to zero height. */
+  /* Avoid size-type containment — it collapses content-sized layouts. */
   border: 1px solid var(--border, #111213);
   border-radius: 8px;
   background: var(--mat-face, #0e0f10);
   box-shadow:
     inset 0 1px 0 var(--m16-panel-top-hi, #3d3e40),
-    0 0 0 1px var(--border, #111213),
-    0 18px 48px rgb(0 0 0 / 0.45);
+    0 0 0 1px var(--border, #111213);
   color: var(--foreground, var(--text));
+}
+
+.tm-link-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 
 .tm-header {
@@ -157,12 +177,13 @@
 
 .tm-body {
   display: flex;
-  min-height: 0;
   flex: 1 1 auto;
   flex-direction: column;
   gap: 0.7rem;
-  padding: 12px 14px 14px;
+  min-height: 0;
+  padding: 12px 14px 16px;
   overflow: auto;
+  scroll-padding-bottom: 16px;
 }
 
 .tm-kpi-row {
@@ -199,12 +220,12 @@
   font-size: 1.1rem;
   font-weight: 600;
   line-height: 1.1;
-  color: #7dffa3;
+  color: var(--lcd-accent);
   font-variant-numeric: tabular-nums;
 }
 
 .tm-kpi-value--accent {
-  color: #7dffa3;
+  color: var(--lcd-accent);
 }
 
 .tm-batch-card {
@@ -234,7 +255,7 @@
   font-family: ui-monospace, "IBM Plex Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #7dffa3;
+  color: var(--lcd-accent);
   text-transform: none;
   letter-spacing: 0;
 }
@@ -243,7 +264,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: #7dffa3;
+  color: var(--lcd-accent);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -295,7 +316,7 @@
 }
 
 .tm-batch-fill.is-done {
-  background: linear-gradient(90deg, #1f8a4c, #7dffa3);
+  background: linear-gradient(90deg, #1f8a4c, var(--lcd-accent));
   box-shadow: 0 0 8px rgb(125 255 163 / 0.35);
 }
 
@@ -398,7 +419,7 @@
 .tm-chart-best {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #7dffa3;
+  color: var(--lcd-accent);
 }
 
 .tm-log-card {
@@ -426,7 +447,6 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
-
 
 .tm-chart-plot {
   position: relative;
@@ -480,7 +500,7 @@
 }
 
 .tm-legend-item--val {
-  color: #7dffa3;
+  color: var(--lcd-accent);
 }
 
 .tm-chart-empty {
@@ -579,35 +599,11 @@
   background: #242628;
 }
 
-[data-theme="light"] .tm-modal {
-  background: var(--mat-face);
-}
-
-[data-theme="light"] .tm-kpi,
-[data-theme="light"] .tm-batch-card,
-[data-theme="light"] .tm-chart-card,
-[data-theme="light"] .tm-status-card {
-  background: var(--mat-raised);
-  border-color: var(--border-strong);
-}
-
-[data-theme="light"] .tm-kpi-value,
-[data-theme="light"] .tm-batch-pct,
-[data-theme="light"] .tm-chart-best,
-[data-theme="light"] .tm-legend-item--val {
-  color: #147a3c;
-}
-
-[data-theme="light"] .tm-batch-fill {
-  background: linear-gradient(90deg, #3d7eff, #5b9dff);
-  box-shadow: none;
-}
-
-[data-theme="light"] .tm-chart-legend {
-  background: rgb(255 255 255 / 0.92);
-  border-color: var(--border-strong);
-}
-
+/*
+ * Narrow / browser fallback only. The Tauri window floor is 1120×720
+ * (trainMonitorWindow.ts) so the detached monitor stays on the wide layout
+ * without window scrollbars; do not lower the floor below this breakpoint.
+ */
 @media (max-width: 1100px) {
   .tm-kpi-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));

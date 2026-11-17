@@ -108,7 +108,7 @@ def _cleanup_predict_csv(
     since: float | None,
 ) -> list[str]:
     """CSV batch writes one label per recording, not a file named after the table."""
-    from orcai_desktop_sidecar.adapters.predict import _collect_csv_batch_files
+    from orcai_desktop_sidecar.adapters.predict import collect_csv_batch_files
 
     if not table_path.is_file():
         return []
@@ -117,7 +117,7 @@ def _cleanup_predict_csv(
     project_dir = params.get("project_dir")
     removed: list[str] = []
     try:
-        rows = _collect_csv_batch_files(
+        rows = collect_csv_batch_files(
             table_path,
             model_dir=model_dir,
             output_param=output_param,

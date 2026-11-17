@@ -92,14 +92,29 @@ describe("PredictFilterStudio", () => {
     expect(container.querySelector(".pp-cmd-lcd")).toBeTruthy();
     expect(container.querySelector(".predict-filter-m05-right .predict-filter-track-bar")).toBeTruthy();
 
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 250));
+    });
+    expect(container.textContent).toMatch(/WHISTLE/);
+
     const pub = Array.from(container.querySelectorAll("button")).find((b) =>
-      /orcAI-v1|публикации|Пример/i.test(b.textContent ?? ""),
+      /^(Пример|Example)$/.test(b.textContent ?? ""),
     );
     expect(pub).toBeTruthy();
+    expect(pub?.className).toContain("is-outline");
+    const tip = container.querySelector("#predict-filter-publication-tip");
+    expect(tip?.textContent).toMatch(/публикации|publication/i);
+    expect(tip?.textContent).toContain("doi.org/10.1111/mms.70083");
+    expect(tip?.querySelector("a")?.getAttribute("href")).toBe(
+      "https://doi.org/10.1111/mms.70083",
+    );
     await act(async () => {
       pub!.click();
     });
     expect(container.textContent).not.toMatch(/\[0, null\]/);
+    expect(
+      container.querySelector<HTMLInputElement>('input[aria-label="WHISTLE min"]')?.value,
+    ).toBe("0.1");
 
     const apply = Array.from(container.querySelectorAll("button")).find((b) =>
       /Применить фильтр|Apply filter/i.test(b.textContent ?? ""),
@@ -117,6 +132,84 @@ describe("PredictFilterStudio", () => {
       [wav.labelPath],
       "/proj/Ferop_call_duration_limits.json",
     );
+    unmount();
+  });
+
+  it("shows the start of a long prediction file name", () => {
+    const name = `${"hydrophone".repeat(4)}_session_orcai-isl-v1_predicted.txt`;
+    const { container, unmount } = renderWithProviders(
+      <PredictFilterStudio
+        sources={[{ file: wav, predictedPath: `/proj/${name}` }]}
+        activePredictedPath={`/proj/${name}`}
+        onSelectPredictedPath={vi.fn()}
+        limitsPath="/proj/Ferop_call_duration_limits.json"
+        labelSuffix="*"
+        filterSettings={{ outputFile: "default", overwrite: false }}
+        onFilterSettingsChange={vi.fn()}
+        orcaiReady
+        batchRunning={false}
+        filterSubmitting={false}
+        onApply={vi.fn()}
+      />,
+    );
+    const option = container.querySelector("select option");
+    expect(option?.textContent).toBe(name);
+    expect(option?.textContent?.startsWith("hydrophone")).toBe(true);
+    unmount();
+  });
+
+  it("leaves trained-model classes on the default limits", async () => {
+    fetchFilterPreview.mockResolvedValue({
+      total: { found: 2, keep: 2, drop: 0 },
+      classes: [
+        { label: "QAL", found: 1, keep: 1, drop: 0, durations: [0.2] },
+        { label: "KAZ", found: 1, keep: 1, drop: 0, durations: [0.4] },
+      ],
+      files_ok: 1,
+      files_missing: [],
+    });
+    const { container, unmount } = renderWithProviders(
+      <PredictFilterStudio
+        sources={[{ file: wav, predictedPath: wav.labelPath! }]}
+        activePredictedPath={wav.labelPath!}
+        onSelectPredictedPath={vi.fn()}
+        limitsPath="/proj/Ferop_call_duration_limits.json"
+        labelSuffix="*"
+        filterSettings={{ outputFile: "default", overwrite: false }}
+        onFilterSettingsChange={vi.fn()}
+        orcaiReady
+        batchRunning={false}
+        filterSubmitting={false}
+        onApply={vi.fn()}
+      />,
+    );
+
+    const pub = Array.from(container.querySelectorAll("button")).find((b) =>
+      /^(Пример|Example)$/.test(b.textContent ?? ""),
+    );
+    expect(pub).toBeTruthy();
+    await act(async () => {
+      pub!.click();
+    });
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 250));
+    });
+    expect(container.textContent).toMatch(/QAL/);
+    expect(container.textContent).toMatch(/KAZ/);
+    expect(container.textContent).not.toMatch(/\bPHS\b/);
+    expect(container.textContent).not.toMatch(/встроенной модели|built-in model/);
+    expect(container.textContent).toMatch(/\[0, null\]/);
+
+    await act(async () => {
+      pub!.click();
+    });
+    expect(container.textContent).toMatch(/встроенной модели|built-in model/);
+    expect(container.textContent).toMatch(/\[0, null\]/);
+    expect(container.textContent).not.toMatch(/\bPHS\b/);
+    expect(
+      container.querySelector<HTMLInputElement>('input[aria-label="QAL min"]')?.value ?? "",
+    ).not.toBe("0.4");
     unmount();
   });
 

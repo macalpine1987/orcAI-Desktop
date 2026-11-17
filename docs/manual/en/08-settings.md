@@ -1,27 +1,37 @@
 # Settings
 
-Settings are split into two tabs: **Runtime** and **Interface**. Version information is under **Help → About**.
+Settings are split into two tabs: **Runtime** and **Interface**. The application version is shown in **Help & About → About**.
 
 ## Runtime
 
-- **Start engine on launch** — start the runtime as soon as the app opens, without clicking **Start** on Home. Off by default.
-- **Show spectrogram** — when off, the **Analysis** tab shows the detections table in place of the plot, with no playback bar. The class filter still opens from the **Classes** button.
-- **Long recordings** — for recordings longer than 20 minutes the spectrogram is built only for the visible stretch. Prediction results are unchanged. The switch is available only while the spectrogram is on.
-- **Neural network device** — processor (CPU) or graphics card (GPU). CPU is selected on first launch. The runtime restarts itself after a change.
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Start engine on launch** | Starts the runtime when the application opens, so you do not need to click **Start** on the **Home** page | Off |
+| **Show spectrogram** | When this is off, the **Analysis** tab shows the detection table at full height instead of the spectrogram, with no playback bar. The class filter is still opened with the **Classes** button | On |
+| **Long recordings** | For recordings longer than 20 minutes, the spectrogram is rendered only for the visible section. Recognition results are not affected. Available only when **Show spectrogram** is on | Off |
+| **Neural network device** | The computing device: central processor (CPU) or graphics card (GPU). The runtime restarts automatically after you change the device | CPU |
 
-The **Data** block:
+> **Note.** **Show spectrogram** and **Long recordings** are on the **Runtime** tab (not **Interface**), even though they affect how the **Analysis** tab is displayed.
 
-- **Projects folder** — the folder the create wizard suggests by default. If none is set, the home folder is used.
-- **Application data** and **Sidecar log** — the app's own files.
-- **Spectrogram cache** — spectrogram tiles. **Clear** deletes them; recordings and projects are left as they are.
-- **Reset application** — deletes the job history, the in-app project list, caches, the settings file and the sidecar log. Recording folders on disk, including trained models inside them, are not deleted. After a reset, open the project from its folder again.
+### Data
+
+| Setting | Description |
+|---------|-------------|
+| **Projects directory** | The folder offered by default when you create a project. If it is not set, the user’s home folder is used |
+| **Application data**, **Sidecar log** | Internal application files |
+| **Spectrogram cache** | Saved pieces of spectrogram images. The **Clear** button deletes the cache; recordings and projects are not affected |
+| **Reset application** | Deletes the task history, the application’s list of projects, caches, the settings file, and the Sidecar log. Project folders on disk, including recordings and trained models, are not deleted. After a reset, open your project again from its folder |
+
+> **Important.** **Reset application** cannot be undone for the data listed above. Before you reset, make sure you no longer need your task history.
 
 ## Interface
 
-- **Language** — Russian or English. English is the default. Help switches along with the interface.
-- **Data health warnings** — tips at the top of the window when the project is missing recordings or annotations, the recordings table is outdated, or there are too few snippets for training. Off by default.
-- **Interface scale** — 100% or 125%.
-- **Full screen** — open the app full screen. F11 toggles it at any time.
-- **Default console** — **Collapsed** or **Expanded**. The console's own toggle saves the same choice.
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Language** | Russian or English. The help language switches together with the interface language | English |
+| **Show tips** | Tips in the window header: not enough recordings or annotations, the recording table is out of date, not enough snippets for training | Off |
+| **Interface scale** | 100% or 125% | 100% |
+| **Full screen** | Opens the application in full screen. You can toggle full screen at any time with the F11 shortcut | Off |
+| **Default console state** | The console state when the application opens: **Collapsed** or **Expanded**. The same choice is saved when you toggle the console itself | Collapsed |
 
-A small layout on the right shows how the chosen scale looks on the Tasks screen.
+A mini layout on the right shows how the selected scale looks on the Jobs screen.

@@ -1,5 +1,6 @@
 import { getSidecarBase } from "../api/sidecar";
 import type { JobRecord } from "../api/jobs";
+import { jobLogNextSince, trimJobLogLines } from "./jobLogTail";
 
 export type JobStreamPayload = {
   type: string;
@@ -87,14 +88,29 @@ export function patchJobFromStream(
 
   if (payload.type === "log" && typeof payload.line === "string") {
     const idx = payload.index;
+    const base = next.log_base ?? 0;
+    const absLen = jobLogNextSince(next);
     if (typeof idx === "number") {
-      if (idx === next.log.length) {
-        next.log = [...next.log, payload.line];
-      } else if (idx < next.log.length && next.log[idx] !== payload.line) {
-        const log = [...next.log];
-        log[idx] = payload.line;
-        next.log = log;
+      if (idx === absLen) {
+        next.log = trimJobLogLines([...next.log, payload.line]);
+        next.log_base = Math.max(0, idx + 1 - next.log.length);
+      } else if (idx > absLen) {
+        // Gap after trim / reconnect — append and keep a bounded tail.
+        next.log = trimJobLogLines([...next.log, payload.line]);
+        next.log_base = Math.max(0, idx + 1 - next.log.length);
+      } else if (idx >= base) {
+        const rel = idx - base;
+        if (rel < next.log.length && next.log[rel] !== payload.line) {
+          const log = [...next.log];
+          log[rel] = payload.line;
+          next.log = log;
+        }
+      } else {
+        // Line older than retained window — ignore.
       }
+    } else {
+      next.log = trimJobLogLines([...next.log, payload.line]);
+      next.log_base = Math.max(0, (next.log_base ?? 0) + 1 - next.log.length);
     }
   }
 

@@ -1,0 +1,153 @@
+/* Header notice chips (info / tip / error) — overlay on mat-shell-header. */
+
+.mat-shell-header {
+  position: relative;
+}
+
+.mat-shell-header-notice {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.mat-header-notice-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  box-sizing: border-box;
+  /* Grow with text horizontally; never wrap to a second line. */
+  width: max-content;
+  max-width: 100%;
+  min-height: 2.15rem;
+  padding: 0.28rem 0.55rem 0.28rem 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid #3a3c40;
+  background: linear-gradient(180deg, #222324 0%, #18191a 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 4px 16px rgb(0 0 0 / 0.45);
+  color: #e8e8ea;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.mat-header-notice-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 50%;
+  border: 1px solid #3a3c40;
+  background: #121314;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
+}
+
+.mat-header-notice-icon-svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.mat-header-notice-chip--info .mat-header-notice-icon {
+  color: #6a8ec8;
+}
+
+.mat-header-notice-chip--tip .mat-header-notice-icon {
+  color: #c9a227;
+}
+
+.mat-header-notice-chip--error .mat-header-notice-icon {
+  color: #d64545;
+}
+
+.mat-header-notice-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mat-header-notice-kind {
+  font-size: 0.58rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #8b8d91;
+}
+
+.mat-header-notice-chip--info .mat-header-notice-kind {
+  color: #7a93b8;
+}
+
+.mat-header-notice-chip--tip .mat-header-notice-kind {
+  color: #b8973a;
+}
+
+.mat-header-notice-chip--error .mat-header-notice-kind {
+  color: #c86a6a;
+}
+
+.mat-header-notice-text {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.15;
+  color: #ececed;
+}
+
+.mat-header-notice-action {
+  flex: 0 0 auto;
+  margin-left: 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 550;
+  color: #a8b8d0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mat-header-notice-action:hover {
+  color: #d0d8e8;
+}
+
+.mat-header-notice-dismiss {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-left: 0.1rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #3a3c40;
+  background: #121314;
+  color: #a8a9ab;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mat-header-notice-dismiss:hover {
+  color: #ececed;
+  border-color: #55575b;
+}
+
+/* Legacy full-width error strip removed in favor of the chip. */
+.mat-shell-header-error {
+  display: none;
+}

@@ -14,7 +14,7 @@ Local FastAPI service that runs orcAI commands for the UI.
 cd apps/sidecar
 python3.11 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -e ".[analytics]"   # DuckDB for test metrics
+pip install -e .
 ```
 
 First install may take several minutes (TensorFlow, orcAI from GitHub).
@@ -52,7 +52,6 @@ API: http://127.0.0.1:8741
 - `GET /v1/spectrogram/tile?path=&t0=&t1=&width=&height=` — PNG tile (exact orcAI `make_spectrogram`, float32 disk cache)
 - `GET /v1/spectrogram/waveform?path=&t0=&t1=` — PNG waveform strip
 - `POST /v1/jobs/{id}/cancel` — cancel job (cooperative + terminate worker subprocess)
-- `GET /v1/results/test-metrics` — scan CSV/JSON/DuckDB metrics under project/model dirs
 - `POST /v1/labels/export-audacity` — Audacity label file (tab-separated seconds)
 
 ## Example

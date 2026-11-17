@@ -1,0 +1,1803 @@
+/* Extracted from analysis-lab.css (move-only, cascade order preserved) */
+/**
+ * Pro Lab / Analysis — Instrument/DAW chrome for spectrogram workspace.
+ * Surfaces map to dark material tokens in tokens.css.
+ */
+
+:root {
+  --lab-canvas-bg: #020203;
+  --lab-canvas-vignette: rgb(0 0 0 / 0.5);
+  --lab-chrome-border: color-mix(in srgb, var(--border) 82%, var(--accent) 18%);
+  --spectrogram-plot-frame: color-mix(in srgb, var(--foreground) 38%, #6b7280);
+  --spectrogram-axis-surface: color-mix(in srgb, var(--bg-subtle) 82%, #0a0a0b);
+  --lab-chrome-shadow: var(--shadow-out);
+  --lab-sidebar-gradient: var(--mat-face-gradient);
+  --studio-face: var(--mat-face);
+  --studio-recess: var(--mat-recess);
+  --studio-raised: var(--mat-raised);
+  --studio-ink: var(--text);
+  --studio-ink-muted: var(--text-muted);
+  --studio-edge: var(--border);
+  --studio-lcd: var(--lcd-bg);
+  --studio-lcd-fg: var(--lcd-fg);
+}
+
+
+/* Predict section modals: dead-center, always on top of app UI. */
+.predict-app-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 0.42);
+  /*
+   * Do NOT put backdrop-filter on this element: WKWebView then breaks SVG
+   * strokes in descendants (paths render as round linecap dots only).
+   * Blur lives on ::before so dialog content is not under the filter.
+   */
+}
+
+.predict-app-modal-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.predict-app-modal-overlay > * {
+  position: relative;
+  z-index: 1;
+}
+
+@layer components {
+  .analysis-workspace {
+    border-radius: calc(var(--radius) + 4px);
+    border: 1px solid var(--lab-chrome-border);
+    background: var(--mat-face-gradient);
+    box-shadow: var(--lab-chrome-shadow);
+  }
+
+  .analysis-workspace-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--mat-raised-gradient);
+    padding: 0.625rem 1rem;
+  }
+
+  .analysis-workspace-header-title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .analysis-sidebar {
+    background: var(--lab-sidebar-gradient);
+    border-right: 1px solid var(--border);
+  }
+
+  .analysis-stage-column {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-subtle) 40%, var(--bg)) 0%,
+      var(--bg) 12rem
+    );
+  }
+
+  .analysis-lab-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .analysis-lab-toolbar {
+    border-color: var(--lab-chrome-border);
+    background: var(--mat-raised-gradient);
+    box-shadow: var(--shadow-out);
+  }
+
+  .analysis-lab-control-deck {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: calc(var(--radius) + 2px);
+    border: 1px solid var(--lab-chrome-border);
+    background: var(--mat-face-gradient);
+    box-shadow: var(--lab-chrome-shadow);
+  }
+
+  .analysis-lab-control-deck-section {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .analysis-lab-control-deck-section + .analysis-lab-control-deck-section {
+    border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  }
+
+  .analysis-lab-control-deck-segments {
+    padding-top: 0.375rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .analysis-lab-control-deck-segments .analysis-minimap {
+    border-top: none;
+    background: transparent;
+    padding: 0;
+  }
+
+  .analysis-lab-control-deck-coords {
+    padding-top: 0.375rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .analysis-lab-control-deck-coords .analysis-coordinates-bar {
+    border-top: none;
+    background: transparent;
+  }
+
+  .analysis-lab-toolbar-embedded {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .analysis-lab-player-embedded {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .analysis-lab-control-deck-playback {
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  .analysis-transport {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .analysis-transport-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+  }
+
+  .analysis-transport-cluster {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0;
+    padding: 0.2rem 0.25rem;
+    border-radius: calc(var(--radius) + 4px);
+    border: 1px solid var(--border);
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-in);
+  }
+
+  .analysis-transport-cluster > .analysis-transport-btn + .analysis-transport-btn {
+    box-shadow: -1px 0 0 color-mix(in srgb, var(--border) 65%, transparent);
+  }
+
+  .analysis-transport-divider {
+    width: 1px;
+    align-self: stretch;
+    margin: 0.2rem 0.15rem;
+    background: color-mix(in srgb, var(--border) 70%, transparent);
+  }
+
+  .analysis-transport-btn {
+    display: inline-flex;
+    shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 1.875rem;
+    border-radius: 0.3125rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--foreground);
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .analysis-transport-btn:hover:not(:disabled):not([aria-pressed="true"]) {
+    background: color-mix(in srgb, var(--bg-muted, var(--muted)) 80%, transparent);
+    border-color: color-mix(in srgb, var(--border) 80%, transparent);
+    color: var(--foreground);
+  }
+
+  .analysis-transport-btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .analysis-transport-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+
+  .analysis-transport-btn[aria-pressed="true"] {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+    color: var(--accent);
+  }
+
+  .analysis-transport-play {
+    display: inline-flex;
+    shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    margin: 0 0.15rem;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--accent) 65%, var(--border));
+    background: linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--accent) 88%, white) 0%,
+      color-mix(in srgb, var(--accent) 72%, black) 100%
+    );
+    color: color-mix(in srgb, var(--accent-foreground, white) 95%, white);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.22) inset,
+      0 4px 14px color-mix(in srgb, var(--accent) 28%, transparent);
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.15s ease,
+      filter 0.15s ease;
+  }
+
+  .analysis-transport-play:hover:not(:disabled) {
+    filter: brightness(1.06);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.28) inset,
+      0 6px 18px color-mix(in srgb, var(--accent) 36%, transparent);
+  }
+
+  .analysis-transport-play:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  .analysis-transport-play:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+    filter: grayscale(0.2);
+  }
+
+  .analysis-transport-play[aria-pressed="true"] {
+    background: linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--accent) 55%, var(--bg)) 0%,
+      color-mix(in srgb, var(--accent) 38%, var(--bg-subtle)) 100%
+    );
+    color: var(--accent);
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent),
+      0 2px 8px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+
+  .analysis-transport-clock {
+    min-width: 7.5rem;
+    padding: 0.25rem 0.5rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--studio-lcd-fg);
+    background: var(--studio-lcd);
+    border: 1px solid var(--border-strong);
+    border-radius: calc(var(--radius) - 1px);
+    box-shadow: var(--shadow-in);
+  }
+
+  .analysis-transport-clock strong {
+    font-weight: 600;
+    font-size: 0.75rem;
+  }
+
+  .analysis-transport-options {
+    display: flex;
+    flex: 1 1 12rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    min-width: 0;
+  }
+
+  .analysis-transport-chip {
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 90%, var(--bg-subtle));
+    padding: 0.25rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 500;
+    transition: background 0.15s ease;
+  }
+
+  .analysis-transport-chip:hover:not(:disabled) {
+    background: var(--bg-muted, var(--muted));
+  }
+
+  .analysis-transport-chip:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .analysis-transport-chip--accent {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+    color: var(--accent);
+  }
+
+  .analysis-transport-scrub {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .analysis-transport-scrub input[type="range"] {
+    flex: 1;
+    height: 0.375rem;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+
+  .analysis-label-sources {
+    border: 1px solid var(--lab-chrome-border);
+    border-radius: calc(var(--radius) + 2px);
+    background: color-mix(in srgb, var(--bg) 92%, var(--bg-subtle));
+  }
+
+  .analysis-label-sources > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    user-select: none;
+  }
+
+  .analysis-label-sources > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .analysis-label-sources > summary::before {
+    content: "▸ ";
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+
+  .analysis-label-sources[open] > summary::before {
+    transform: rotate(90deg);
+  }
+
+  .analysis-meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  .analysis-meta-badge {
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    padding: 0.125rem 0.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .analysis-spectrogram-plot-assembly {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+  }
+
+  .analysis-spectrogram-plot-frame {
+    display: contents;
+  }
+
+  .analysis-spectrogram-plot-row {
+    display: flex;
+    min-width: 0;
+    align-items: stretch;
+    gap: 0;
+    height: 280px;
+    max-height: 280px;
+    overflow: hidden;
+  }
+
+  .analysis-spectrogram-canvas {
+    position: relative;
+    overflow: hidden;
+    flex: 1 1 auto;
+    min-width: 0;
+    border-radius: 0;
+    border: 1px solid var(--spectrogram-plot-frame);
+    background: var(--lab-canvas-bg);
+    box-shadow: none;
+  }
+
+  .analysis-spectrogram-colorbar-gap {
+    margin-left: 0.5rem;
+    padding-left: 0.5rem;
+  }
+
+  .analysis-spectrogram-stage {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* Vignette sits behind spectrogram image and annotation overlay. */
+  .analysis-spectrogram-stage::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.45;
+    background: radial-gradient(
+      ellipse 120% 80% at 50% 45%,
+      transparent 55%,
+      var(--lab-canvas-vignette) 100%
+    );
+  }
+
+  .analysis-spectrogram-media {
+    position: relative;
+    z-index: 2;
+  }
+
+  .analysis-frequency-axis-width {
+    width: 2.25rem;
+    flex-shrink: 0;
+  }
+
+  .analysis-axis-corner {
+    position: relative;
+    width: 2.25rem;
+    flex-shrink: 0;
+    min-height: 1.75rem;
+    background: var(--spectrogram-axis-surface);
+  }
+
+  .analysis-axis-corner-unit {
+    position: absolute;
+    right: 0.25rem;
+    bottom: 0.1875rem;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .analysis-frequency-axis-tick-label {
+    position: absolute;
+    top: 50%;
+    right: 0.25rem;
+    min-width: 1.25rem;
+    transform: translateY(-50%);
+    text-align: right;
+    font-size: 8px;
+    font-weight: 500;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .analysis-frequency-axis-tick-label-top {
+    top: 0;
+    transform: translateY(0);
+  }
+
+  .analysis-spectrogram-scientific .analysis-frequency-axis-tick-label-top {
+    top: 0.0625rem;
+  }
+
+  .analysis-time-axis-tick-label {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    font-weight: 500;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .analysis-time-axis-tick-label-start {
+    text-align: left;
+    transform: translateX(50%);
+  }
+
+  .analysis-time-axis-tick-label-end {
+    text-align: right;
+    transform: translateX(-50%);
+  }
+
+  .analysis-frequency-axis-scale,
+  .analysis-time-axis-scale {
+    flex-shrink: 0;
+    background: var(--spectrogram-axis-surface);
+  }
+
+  .analysis-frequency-axis-scale {
+    border-right: none;
+  }
+
+  .analysis-frequency-axis-unit {
+    position: absolute;
+    z-index: 2;
+    top: 0.1875rem;
+    left: 0.25rem;
+    font-size: 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .analysis-time-axis-scale {
+    border-top: none;
+  }
+
+  .analysis-axis-tick-mark {
+    position: absolute;
+    background: var(--spectrogram-plot-frame);
+    box-shadow: none;
+  }
+
+  .analysis-axis-tick-mark-y {
+    top: 50%;
+    right: 0;
+    width: 0.5rem;
+    height: 1px;
+    transform: translateY(-50%);
+  }
+
+  .analysis-axis-tick-mark-x {
+    position: static;
+    top: auto;
+    left: auto;
+    flex-shrink: 0;
+    width: 1px;
+    min-width: 1px;
+    height: 0.5rem;
+    transform: none;
+    background: var(--spectrogram-plot-frame);
+    box-shadow: none;
+  }
+
+  .analysis-axis-tick-mark-x-minor {
+    height: 0.3125rem;
+    opacity: 0.72;
+  }
+
+  .analysis-plot-edge-tick-y {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 0.5rem;
+    height: 1px;
+    transform: translateY(-50%);
+    background: var(--spectrogram-plot-frame);
+    box-shadow: none;
+  }
+
+  .analysis-plot-edge-tick-x {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    height: 0.5rem;
+    transform: translateX(-50%);
+    background: var(--spectrogram-plot-frame);
+    box-shadow: none;
+  }
+
+  .analysis-axis-guide-h {
+    position: absolute;
+    right: 0;
+    left: 0;
+    height: 1px;
+    background: color-mix(in srgb, var(--spectrogram-plot-frame) 55%, transparent);
+  }
+
+  .analysis-axis-guide-h-minor {
+    position: absolute;
+    right: 0;
+    left: 0;
+    height: 1px;
+    background: color-mix(in srgb, var(--spectrogram-plot-frame) 28%, transparent);
+  }
+
+  .analysis-axis-guide-v {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    transform: translateX(-50%);
+    background: color-mix(in srgb, var(--spectrogram-plot-frame) 55%, transparent);
+  }
+
+  .analysis-axis-guide-v-minor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    transform: translateX(-50%);
+    background: color-mix(in srgb, var(--spectrogram-plot-frame) 28%, transparent);
+  }
+
+  .analysis-spectrogram-overlay-layer .analysis-overlay-box {
+    border-radius: 4px;
+  }
+
+  .analysis-spectrogram-overlay-layer .analysis-overlay-box-selected {
+    z-index: 2;
+  }
+
+  .analysis-spectrogram-scientific .analysis-overlay-box-selected {
+    /* No filter / box-shadow — both promote GPU layers and fringe the seam
+       between the plot and the segment rail on WebKit (Tauri). Selection is
+       conveyed by thicker border + higher fill alpha (see SpectrogramOverlay). */
+    outline: none;
+    box-shadow: none;
+    filter: none;
+  }
+
+  .analysis-spectrogram-overlay-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+    /* Isolate overlay paints from adjacent chrome (segment rail / margins). */
+    isolation: isolate;
+    contain: paint;
+  }
+
+  .analysis-colorbar-inferno {
+    background: linear-gradient(
+      to top,
+      #1a0a2e 0%,
+      #4a148c 28%,
+      #e65100 58%,
+      #ffeb3b 100%
+    );
+  }
+
+  .analysis-colorbar-viridis {
+    background: linear-gradient(
+      to top,
+      #440154 0%,
+      #31688e 35%,
+      #35b779 68%,
+      #fde725 100%
+    );
+  }
+
+  .analysis-colorbar-gray {
+    background: linear-gradient(to top, #000 0%, #fff 100%);
+  }
+
+  .analysis-time-range-overlay {
+    z-index: 8;
+    box-sizing: border-box;
+  }
+
+  .analysis-loop-region {
+    border: 1px solid rgb(96 165 250 / 0.85);
+    background: rgb(59 130 246 / 0.14);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+
+  .analysis-time-selection-draft {
+    border: 1px dashed rgb(147 197 253 / 0.9);
+    background: rgb(59 130 246 / 0.16);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  }
+
+  .analysis-time-range-edge {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgb(96 165 250 / 0.95);
+    box-shadow: none;
+  }
+
+  .analysis-time-range-edge-start {
+    left: 0;
+    transform: translateX(-50%);
+  }
+
+  .analysis-time-range-edge-end {
+    right: 0;
+    transform: translateX(50%);
+  }
+
+  .analysis-time-range-label {
+    position: absolute;
+    top: 0.3rem;
+    left: 50%;
+    z-index: 1;
+    display: flex;
+    max-width: calc(100% - 0.5rem);
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .analysis-time-range-label-pill {
+    border-radius: 3px;
+    border: 1px solid rgb(147 197 253 / 0.55);
+    background: rgb(8 20 40 / 0.72);
+    padding: 0.1rem 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    font-weight: 550;
+    line-height: 1.2;
+    color: rgb(219 234 254 / 0.95);
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  }
+
+  .analysis-time-range-label-hint {
+    font-size: 0.5rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: rgb(191 219 254 / 0.85);
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.7);
+    white-space: nowrap;
+  }
+
+  .analysis-playhead {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 9;
+    width: 2px;
+    transform: translateX(-50%);
+    background: var(--accent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
+      0 0 12px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  .analysis-playhead::before,
+  .analysis-playhead::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    width: 7px;
+    height: 7px;
+    margin-left: -3.5px;
+    border-radius: 9999px;
+    background: var(--accent);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+
+  .analysis-playhead::before {
+    top: 0;
+    transform: translateY(-50%);
+  }
+
+  .analysis-playhead::after {
+    bottom: 0;
+    transform: translateY(50%);
+  }
+
+  .analysis-minimap {
+    border-top: 1px solid rgb(255 255 255 / 0.06);
+    background: color-mix(in srgb, var(--lab-canvas-bg) 75%, var(--bg-muted));
+    padding: 0.375rem 0.5rem 0.5rem;
+  }
+
+  .analysis-minimap-track {
+    position: relative;
+    height: 1.375rem;
+    width: 100%;
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: var(--radius);
+    border: 1px solid rgb(255 255 255 / 0.08);
+    background: rgb(0 0 0 / 0.35);
+  }
+
+  .analysis-minimap-viewport {
+    pointer-events: none;
+    position: absolute;
+    inset-block: 2px;
+    z-index: 2;
+    border-radius: calc(var(--radius) - 2px);
+    border: 1.5px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25);
+  }
+
+  .analysis-minimap-segment {
+    position: absolute;
+    inset-block: 0;
+    z-index: 1;
+    min-width: 2px;
+    cursor: pointer;
+    border: none;
+    border-right: 1px solid rgb(255 255 255 / 0.1);
+    background: rgb(255 255 255 / 0.05);
+    padding: 0;
+    transition: background-color 120ms ease;
+  }
+
+  .analysis-minimap-segment:hover {
+    background: rgb(255 255 255 / 0.1);
+  }
+
+  .analysis-minimap-segment-active {
+    background: color-mix(in srgb, var(--accent) 22%, rgb(255 255 255 / 0.06));
+  }
+
+  .analysis-minimap-segment-active:hover {
+    background: color-mix(in srgb, var(--accent) 30%, rgb(255 255 255 / 0.08));
+  }
+
+  .analysis-coordinates-bar {
+    border-top: 1px solid rgb(255 255 255 / 0.06);
+    background: color-mix(in srgb, var(--lab-canvas-bg) 88%, var(--bg-muted));
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    padding: 0.375rem 0.625rem;
+  }
+
+  .analysis-legend-panel {
+    border: 1px solid var(--lab-chrome-border);
+    border-radius: calc(var(--radius) + 2px);
+    background: var(--bg);
+    padding: 0.75rem 1rem;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+  }
+
+  .analysis-detections-header-actions {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .analysis-detections-columns-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.625rem;
+    height: 1.625rem;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 0.3125rem;
+    background: var(--mat-recess, var(--muted));
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .analysis-detections-columns-btn:hover {
+    color: var(--text);
+  }
+
+  .analysis-detections-columns-btn.is-active {
+    background: var(--mat-raised, var(--surface));
+    color: var(--text);
+    box-shadow: 0 1px 1px rgb(0 0 0 / 0.2);
+  }
+
+  .analysis-detections-columns-modal {
+    width: min(18rem, 100%);
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.18);
+    border-radius: 0.5rem;
+    background: rgb(42 42 42 / 0.78);
+    color: rgb(255 255 255 / 0.94);
+    box-shadow: 0 18px 48px rgb(0 0 0 / 0.45);
+    backdrop-filter: blur(10px);
+  }
+
+  .analysis-detections-types-modal {
+    width: min(22rem, 100%);
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.18);
+    border-radius: 0.5rem;
+    background: rgb(42 42 42 / 0.78);
+    color: rgb(255 255 255 / 0.94);
+    box-shadow: 0 18px 48px rgb(0 0 0 / 0.45);
+    backdrop-filter: blur(10px);
+  }
+
+  .analysis-detections-types-list {
+    margin: 0;
+    padding: 0.35rem 0;
+    list-style: none;
+    max-height: 16rem;
+    overflow: auto;
+  }
+
+  .analysis-detections-types-item {
+    display: grid;
+    grid-template-columns: 0.75rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.45rem 0.85rem;
+  }
+
+  .analysis-detections-types-item:hover {
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  .analysis-detections-types-swatch {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25);
+  }
+
+  .analysis-detections-types-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+  }
+
+  .analysis-detections-types-count {
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.6875rem;
+    color: rgb(255 255 255 / 0.62);
+  }
+
+  .analysis-detections-types-empty {
+    margin: 0;
+    padding: 0.85rem;
+    font-size: 0.6875rem;
+    color: rgb(255 255 255 / 0.55);
+  }
+
+  .analysis-detections-columns-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 0.85rem 0.65rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.12);
+  }
+
+  .analysis-detections-columns-title {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .analysis-detections-columns-hint {
+    margin: 0.2rem 0 0;
+    font-size: 0.625rem;
+    line-height: 1.35;
+    color: rgb(255 255 255 / 0.55);
+  }
+
+  .analysis-detections-columns-close {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.3125rem;
+    border: 1px solid rgb(255 255 255 / 0.55);
+    background: linear-gradient(180deg, #5a5a5a 0%, #3e3e3e 100%);
+    color: #ffffff;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 1px 2px rgb(0 0 0 / 0.35);
+  }
+
+  .analysis-detections-columns-close:hover {
+    border-color: rgb(255 255 255 / 0.72);
+    background: linear-gradient(180deg, #6a6a6a 0%, #484848 100%);
+  }
+
+  .analysis-detections-columns-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.4rem;
+  }
+
+  .analysis-detections-columns-item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0.45rem 0.55rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .analysis-detections-columns-item:hover {
+    background: rgb(255 255 255 / 0.07);
+  }
+
+  .analysis-detections-columns-item input {
+    width: 0.875rem;
+    height: 0.875rem;
+    accent-color: #d0d0d0;
+  }
+
+  .analysis-detections-panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--lab-chrome-border, var(--border));
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .analysis-detections-header {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--muted);
+  }
+
+  .analysis-detections-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .analysis-detections-title {
+    margin: 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .analysis-detections-label-source {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.55rem;
+    margin-top: 0.3rem;
+  }
+
+  .analysis-detections-label-source-switch {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 0.28rem;
+    overflow: hidden;
+  }
+
+  .analysis-detections-label-source-btn {
+    margin: 0;
+    padding: 0.15rem 0.45rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .analysis-detections-label-source-btn + .analysis-detections-label-source-btn {
+    border-left: 1px solid var(--border);
+  }
+
+  .analysis-detections-label-source-btn[aria-pressed="true"] {
+    background: var(--muted);
+    color: var(--text);
+  }
+
+  .analysis-detections-label-source-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .analysis-detections-label-file {
+    max-width: 16rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.62rem;
+    color: var(--text-muted);
+  }
+
+  .analysis-detections-empty {
+    margin: 0;
+    padding: 0.875rem 0.75rem;
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  .analysis-detections-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.625rem;
+    color: var(--text-muted);
+  }
+
+  .analysis-detections-footer-primary {
+    min-width: 0;
+  }
+
+  .analysis-detections-footer-secondary {
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+
+  .analysis-detections-table {
+    width: 100%;
+    min-width: 32rem;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.6875rem;
+  }
+
+  .analysis-detections-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .analysis-detections-table th {
+    padding: 0.375rem 0.5rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .analysis-detections-th-color {
+    width: 1.75rem; /* 28px — mockup col */
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .analysis-detections-th-time {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .analysis-detections-th-confidence {
+    text-align: right;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .analysis-detections-row {
+    cursor: pointer;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    border-left: 3px solid var(--detection-swatch, transparent);
+    background: transparent;
+  }
+
+  .analysis-detections-row:last-child {
+    border-bottom: none;
+  }
+
+  .analysis-detections-row:hover {
+    background: rgb(0 0 0 / 0.04);
+  }
+
+  .analysis-detections-row.is-selected {
+    background: color-mix(in srgb, var(--detection-swatch, var(--accent)) 16%, transparent);
+    box-shadow: inset 3px 0 0 var(--detection-swatch, var(--accent));
+  }
+
+  .analysis-detections-row.is-dimmed {
+    opacity: 0.55;
+  }
+
+  .analysis-detections-row td {
+    padding: 0.375rem 0.5rem;
+    vertical-align: middle;
+  }
+
+  .analysis-detections-td-color {
+    width: 1.75rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    text-align: center;
+    line-height: 0;
+  }
+
+  .analysis-detections-td-time {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .analysis-detections-td-duration {
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+  }
+
+  .analysis-detections-td-confidence {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    text-align: right;
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Class color — mockup spectrogram-detections-v011: 10×10 circle */
+  .analysis-detections-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    background: var(--detection-swatch, transparent);
+    border: 1px solid color-mix(in srgb, var(--detection-swatch, #000) 35%, #000);
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  .analysis-detections-scope {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: stretch;
+    gap: 0.125rem;
+    box-sizing: border-box;
+    height: 1.625rem;
+    padding: 0.125rem;
+    border: 1px solid var(--border);
+    border-radius: 0.3125rem;
+    background: var(--mat-recess, var(--muted));
+  }
+
+  .analysis-detections-scope-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0 0.5rem;
+    border: none;
+    border-radius: 0.25rem;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .analysis-detections-scope-btn:hover {
+    color: var(--text);
+  }
+
+  .analysis-detections-scope-btn.is-active {
+    background: var(--mat-raised, var(--surface));
+    color: var(--text);
+    box-shadow: 0 1px 1px rgb(0 0 0 / 0.2);
+  }
+
+  .analysis-detections-table-scroll {
+    position: relative;
+    max-height: 14rem;
+    overflow: auto;
+  }
+
+  .analysis-lanes-panel {
+    overflow: hidden;
+    border-radius: calc(var(--radius) + 2px);
+    border: 1px solid var(--lab-chrome-border);
+    background: var(--lab-canvas-bg);
+  }
+
+  .swatch-inferno {
+    display: inline-block;
+    height: 0.75rem;
+    width: 0.75rem;
+    border-radius: 2px;
+    background: linear-gradient(
+      135deg,
+      #1a0a2e 0%,
+      #4a148c 25%,
+      #e65100 55%,
+      #ffeb3b 100%
+    );
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.2);
+  }
+
+  .swatch-gray {
+    display: inline-block;
+    height: 0.75rem;
+    width: 0.75rem;
+    border-radius: 2px;
+    background: linear-gradient(135deg, #000 0%, #fff 100%);
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.2);
+  }
+
+  .swatch-viridis {
+    display: inline-block;
+    height: 0.75rem;
+    width: 0.75rem;
+    border-radius: 2px;
+    background: linear-gradient(
+      135deg,
+      #440154 0%,
+      #31688e 35%,
+      #35b779 65%,
+      #fde725 100%
+    );
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.2);
+  }
+
+  /* —— Scientific / FEROP-style spectrogram (predict results) —— */
+  /* m04 crop: frame ~#0c0e0f, labels ~#808080, ticks near label ink so 1px marks read. */
+  .analysis-spectrogram-scientific {
+    --lab-canvas-bg: #ececec;
+    --spectrogram-plot-frame: #1a1a1a;
+    --spectrogram-axis-surface: #0c0e0f;
+    --spectrogram-axis-ink: #808080;
+    --spectrogram-axis-tick: #6e6e70;
+    --spectrogram-freq-top-label-inset: 0.5rem;
+    --spectrogram-axis-col-width: 2.125rem;
+    --spectrogram-time-axis-height: 1.625rem;
+  }
+
+  .analysis-spectrogram-scientific.analysis-spectrogram-plot-assembly {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+  }
+
+  /* Single clean frame around axes + plot (no double borders / hairline seams) */
+  .analysis-spectrogram-scientific .analysis-spectrogram-plot-frame {
+    display: grid;
+    grid-template-columns: var(--spectrogram-axis-col-width) minmax(0, 1fr);
+    grid-template-rows: 280px var(--spectrogram-time-axis-height);
+    align-items: stretch;
+    justify-items: stretch;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: 1px solid var(--spectrogram-plot-frame);
+    background: var(--spectrogram-axis-surface);
+  }
+
+  .analysis-spectrogram-scientific .analysis-spectrogram-plot-row,
+  .analysis-spectrogram-scientific .analysis-spectrogram-plot-footer {
+    display: contents;
+  }
+
+  .analysis-spectrogram-scientific .analysis-frequency-axis-width {
+    grid-column: 1;
+    grid-row: 1;
+    width: var(--spectrogram-axis-col-width);
+    max-width: var(--spectrogram-axis-col-width);
+    overflow: visible;
+    box-sizing: border-box;
+  }
+
+  .analysis-spectrogram-scientific .analysis-frequency-axis-scale {
+    overflow: visible;
+    box-sizing: border-box;
+  }
+
+  .analysis-spectrogram-scientific.is-cmap-dark .analysis-spectrogram-canvas {
+    background: #000;
+  }
+
+  .analysis-spectrogram-scientific.is-cmap-dark .analysis-axis-guide-v,
+  .analysis-spectrogram-scientific.is-cmap-dark .analysis-axis-guide-h {
+    background: rgb(255 255 255 / 0.16);
+  }
+
+  .analysis-spectrogram-scientific.is-cmap-dark .analysis-axis-guide-v-minor {
+    background: rgb(255 255 255 / 0.08);
+  }
+
+  .analysis-spectrogram-scientific .analysis-spectrogram-canvas {
+    grid-column: 2;
+    grid-row: 1;
+    box-sizing: border-box;
+    /* Outer plot-frame owns the edge — avoid uneven double border */
+    border: none;
+    border-radius: 0;
+    outline: none;
+    background: var(--lab-canvas-bg);
+    border-left: 1px solid #1a1a1a;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  .analysis-spectrogram-scientific .analysis-axis-corner {
+    grid-column: 1;
+    grid-row: 2;
+    width: var(--spectrogram-axis-col-width);
+    max-width: var(--spectrogram-axis-col-width);
+    height: var(--spectrogram-time-axis-height);
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    box-sizing: border-box;
+    background: var(--spectrogram-axis-surface);
+  }
+
+  .analysis-spectrogram-scientific .analysis-time-axis-scale {
+    grid-column: 2;
+    grid-row: 2;
+    height: var(--spectrogram-time-axis-height);
+    min-height: var(--spectrogram-time-axis-height);
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    overflow: visible;
+    box-sizing: border-box;
+  }
+
+  .analysis-spectrogram-scientific .analysis-axis-corner-unit {
+    position: static;
+    right: auto;
+    bottom: auto;
+    /* Align with time-axis tick marks at the top of the strip. */
+    padding: 0.0625rem 0.125rem 0 0;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 8px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--spectrogram-axis-ink);
+    opacity: 1;
+    background: transparent;
+  }
+
+  .analysis-spectrogram-scientific .analysis-frequency-axis-scale,
+  .analysis-spectrogram-scientific .analysis-time-axis-scale {
+    background: var(--spectrogram-axis-surface);
+    color: var(--spectrogram-axis-ink);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    border: none;
+  }
+
+  .analysis-spectrogram-scientific .analysis-frequency-axis-tick {
+    gap: 3px;
+    padding-right: 0;
+  }
+
+  .analysis-spectrogram-scientific .analysis-frequency-axis-tick-top {
+    padding-top: 0.0625rem;
+  }
+
+  .analysis-spectrogram-scientific .analysis-frequency-axis-tick-label,
+  .analysis-spectrogram-scientific .analysis-time-axis-tick-label {
+    position: static;
+    top: auto;
+    right: auto;
+    left: auto;
+    transform: none;
+    min-width: 0;
+    color: var(--spectrogram-axis-ink);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 8px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .analysis-spectrogram-scientific .analysis-frequency-axis-tick-label-top {
+    top: auto;
+    transform: none;
+  }
+
+  .analysis-spectrogram-scientific .analysis-time-axis-tick-label {
+    margin-top: 0;
+  }
+
+  .analysis-spectrogram-scientific .analysis-time-axis-tick-label-start,
+  .analysis-spectrogram-scientific .analysis-time-axis-tick-label-end {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .analysis-spectrogram-scientific .analysis-time-axis-tick-label-start {
+    transform: translateX(50%);
+  }
+
+  .analysis-spectrogram-scientific .analysis-time-axis-tick-label-end {
+    transform: translateX(-50%);
+  }
+
+  /* Keep all Y tick marks visible (including bottom). */
+  .analysis-spectrogram-scientific .analysis-frequency-axis-scale > div:last-child
+    .analysis-axis-tick-mark-y {
+    display: block;
+  }
+
+  .analysis-spectrogram-scientific .analysis-axis-tick-mark-x {
+    position: static;
+    top: auto;
+    flex-shrink: 0;
+    /* Same 1px stroke as Y ticks; 2px read as a heavier time axis. */
+    width: 1px;
+    min-width: 1px;
+    height: 0.5rem;
+    min-height: 0.5rem;
+    background: var(--spectrogram-axis-tick);
+    opacity: 1;
+  }
+
+  .analysis-spectrogram-scientific .analysis-axis-tick-mark-x-minor {
+    width: 1px;
+    min-width: 1px;
+    height: 0.3125rem;
+    min-height: 0.3125rem;
+    opacity: 1;
+    background: var(--spectrogram-axis-tick);
+  }
+
+  .analysis-spectrogram-scientific .analysis-axis-tick-mark-y {
+    position: static;
+    top: auto;
+    right: auto;
+    flex-shrink: 0;
+    width: 0.375rem;
+    min-width: 0.375rem;
+    height: 1px;
+    min-height: 1px;
+    transform: none;
+    background: var(--spectrogram-axis-tick);
+    opacity: 1;
+  }
+
+  .analysis-spectrogram-scientific .analysis-spectrogram-stage::after {
+    display: none;
+  }
+
+  .analysis-spectrogram-scientific .analysis-axis-guide-v {
+    background: rgb(0 0 0 / 0.18);
+  }
+
+  .analysis-spectrogram-scientific .analysis-axis-guide-v-minor {
+    background: rgb(0 0 0 / 0.08);
+  }
+
+  /* m04: horizontal frequency grid — subtle, not bright black. */
+  .analysis-spectrogram-scientific .analysis-axis-guide-h {
+    background: rgb(0 0 0 / 0.18);
+  }
+
+  .analysis-spectrogram-scientific .analysis-axis-guide-h-minor {
+    background: rgb(0 0 0 / 0.08);
+  }
+
+  /* No tick stubs inside the light canvas — risks live only on the dark outer frame. */
+  .analysis-spectrogram-scientific .analysis-plot-edge-tick-y,
+  .analysis-spectrogram-scientific .analysis-plot-edge-tick-x {
+    display: none;
+  }
+
+  .analysis-lab-control-deck-logic {
+    border-color: var(--border);
+    background: var(--mat-face-gradient);
+    color: var(--text);
+    box-shadow: var(--shadow-out);
+  }
+
+  .analysis-lab-control-deck-logic .analysis-lab-control-deck-section + .analysis-lab-control-deck-section {
+    border-top-color: var(--border);
+  }
+
+  .analysis-lab-toolbar-logic {
+    color: var(--text);
+  }
+
+  .analysis-lab-toolbar-logic button,
+  .analysis-lab-toolbar-logic label {
+    color: inherit;
+  }
+
+  .analysis-lab-toolbar-logic button {
+    border-color: var(--border-strong);
+    background: var(--mat-raised-gradient);
+    box-shadow: var(--shadow-out);
+  }
+
+  .analysis-lab-toolbar-logic button:hover:not(:disabled) {
+    filter: brightness(1.04);
+  }
+
+  .analysis-scientific-stack .analysis-label-sources-compact {
+    margin: 0.5rem 0.75rem 0;
+    font-size: 0.75rem;
+  }
+
+  .predict-page-header-actions {
+    display: flex;
+    flex-shrink: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .predict-page-crumb {
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+    color: rgb(255 255 255 / 0.45);
+    white-space: nowrap;
+  }
+
+  .predict-page-crumb-sep {
+    color: rgb(255 255 255 / 0.28);
+  }
+
+  .predict-page-meta-frames {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+    min-width: 0;
+    max-width: min(28rem, 46vw);
+    margin-left: auto;
+  }
+
+  /*
+   * Predict: right-align Project/Model with the tools panel inset.
+   * Frame size matches Projects / Pipeline (no extra shrink).
+   */
+  .mat-shell-header--meta-studio {
+    --meta-studio-main-pad: 1.5rem; /* main.p-6 */
+    --meta-studio-panel-inset: 0.75rem; /* tools/segment/plot margins */
+    --meta-studio-header-pad: 1rem; /* header px-4 */
+  }
+
+  .mat-shell-main {
+    scrollbar-gutter: stable;
+  }
+
+  .mat-shell-header--meta-studio .predict-page-meta-frames {
+    margin-right: calc(
+      var(--meta-studio-main-pad) + var(--meta-studio-panel-inset) -
+        var(--meta-studio-header-pad)
+    );
+  }
+
+  .predict-page-meta-frame {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4375rem;
+    flex: 0 1 auto;
+    width: fit-content;
+    min-width: 0;
+    max-width: min(13rem, 36vw);
+    min-height: 2.25rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    background: var(--mat-face-gradient, var(--mat-raised-gradient, var(--surface)));
+    box-shadow:
+      var(--shadow-out, 0 1px 2px rgb(0 0 0 / 0.12)),
+      inset 0 1px 0 var(--edge-hi, rgb(255 255 255 / 0.08));
+    overflow: hidden;
+  }
+
+  .predict-page-meta-text {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+
+  .predict-page-meta-label {
+    display: block;
+    margin-bottom: 0.0625rem;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.1;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .predict-page-meta-value {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .predict-page-meta-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.375rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    padding: 0;
+    border-radius: 0.25rem;
+    border: 1px solid var(--border);
+    background: var(--mat-raised-gradient, var(--mat-raised, var(--surface)));
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    box-shadow: var(--shadow-out, 0 1px 0 rgb(255 255 255 / 0.06) inset);
+    transition: filter 0.12s ease, transform 0.1s ease;
+  }
+
+  .predict-page-meta-action.is-pressed {
+    background: var(--accent, #f0f0f0);
+    color: var(--accent-fg, #121212);
+    box-shadow: none;
+  }
+
+  .predict-page-meta-action:hover:not(.is-pressed) {
+    filter: brightness(1.08);
+  }
+
+  .predict-page-meta-action:active:not(:disabled) {
+    transform: translateY(1px);
+    filter: brightness(0.96);
+  }
+}
+

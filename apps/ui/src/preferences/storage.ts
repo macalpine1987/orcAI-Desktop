@@ -18,7 +18,7 @@ export const PREFERENCES_VERSION = 12;
 
 export type AppLocale = "en" | "ru";
 
-export type Theme = "light" | "dark";
+export type Theme = "dark";
 
 export type ComputeDevice = "cpu" | "gpu";
 

@@ -28,11 +28,17 @@ describe("static gate · Jobs + console", () => {
     ]) {
       expect(text, key).toContain(key);
     }
-    expect(text).toContain('projectDir: null');
+    expect(text).toContain("useJobsList()");
+    expect(text).toContain("clearAllJobs(projectDir)");
   });
 
   it("LabDock exposes four console tabs and m26/m27 layout", () => {
-    const text = readFileSync(join(uiSrc, "components/LabDock.tsx"), "utf8");
+    const text = [
+      readFileSync(join(uiSrc, "components/LabDock.tsx"), "utf8"),
+      readFileSync(join(uiSrc, "components/labDock/LabDockChrome.tsx"), "utf8"),
+      readFileSync(join(uiSrc, "components/labDock/LabDockMain.tsx"), "utf8"),
+      readFileSync(join(uiSrc, "components/labDock/LabDockPanes.tsx"), "utf8"),
+    ].join("\n");
     for (const tab of ["log", "inspector", "errors", "command"]) {
       expect(text).toContain(`"${tab}"`);
     }
@@ -77,7 +83,9 @@ describe("static gate · Jobs + console", () => {
     expect(jobsCtx).toContain("useJobsProgressStream");
     // Transient offline during engine start must not wipe the list (table remount flicker).
     expect(jobsCtx).not.toMatch(/if\s*\(\s*!online\s*\)\s*\{[^}]*setJobs\(\[\]\)/s);
-    expect(jobsCtx).toContain("initialLoad");
+    expect(jobsCtx).toContain("hydratedRef");
+    expect(jobsCtx).toContain("showLoading");
+    expect(jobsCtx).not.toContain("initialLoad");
     const dock = readFileSync(join(uiSrc, "components/LabDock.tsx"), "utf8");
     expect(dock).not.toContain("useJobsList({");
   });

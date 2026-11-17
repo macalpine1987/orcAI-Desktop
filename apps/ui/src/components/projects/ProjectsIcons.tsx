@@ -158,6 +158,28 @@ export function IconRefresh({ size = 14, className }: IconProps) {
   );
 }
 
+/** Table grid — «Все столбцы CSV» latch. */
+export function IconCsvColumns({ size = 14, className }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <rect x="2.5" y="3" width="11" height="10" rx="1.25" />
+      <path d="M2.5 6.25h11M7 6.25V13M11 6.25V13" />
+    </svg>
+  );
+}
+
+/** Sync arrows — «Обновлять столбцы CSV автоматически» latch. */
+export function IconCsvAutoSync({ size = 14, className }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <path d="M3 8a5 5 0 0 1 8.75-3.3" />
+      <path d="M13 8a5 5 0 0 1-8.75 3.3" />
+      <path d="M11.5 2.5V5H9" />
+      <path d="M4.5 13.5V11H7" />
+    </svg>
+  );
+}
+
 /** Stacked project rows — «Список проектов». */
 export function IconProjectsList({ size = 14, className }: IconProps) {
   return (

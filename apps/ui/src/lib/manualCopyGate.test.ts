@@ -14,24 +14,32 @@ describe("manual copy for duration limits, presets, and empty snippets", () => {
     const ru = manual("ru", "03-predict.md");
     const en = manual("en", "03-predict.md");
     expect(ru).toContain("4. Нажмите **Применить фильтр**.");
-    expect(ru.indexOf("первая строка — **default**")).toBeGreaterThan(
+    expect(ru.indexOf("Первая строка таблицы — **default**.")).toBeGreaterThan(
       ru.indexOf("4. Нажмите **Применить фильтр**."),
     );
-    expect(ru.indexOf("Исходный файл `*_predicted.txt` не меняется.")).toBeGreaterThan(
-      ru.indexOf("первая строка — **default**"),
+    expect(ru.indexOf("Исходный файл `*_predicted.txt` не изменяется.")).toBeGreaterThan(
+      ru.indexOf("4. Нажмите **Применить фильтр**."),
     );
     expect(ru).toContain(
-      "Классы, для которых пример ничего не задаёт, проходят по строке **default**.",
+      "Классы, для которых в примере значения не заданы, обрабатываются по строке **default**.",
     );
     expect(en).toContain("4. Click **Apply filter**.");
-    expect(en.indexOf("The first row of the duration limits table is **default**.")).toBeGreaterThan(
+    expect(en.indexOf("The first row of the table is **default**.")).toBeGreaterThan(
       en.indexOf("4. Click **Apply filter**."),
     );
     expect(en.indexOf("The original `*_predicted.txt` file is not changed.")).toBeGreaterThan(
-      en.indexOf("The first row of the duration limits table is **default**."),
+      en.indexOf("4. Click **Apply filter**."),
     );
     expect(en).toContain(
-      "Classes the example does not set follow the **default** row.",
+      "Classes for which the example defines no values are handled by the **default** row.",
+    );
+    expect(ru).toContain("нажмите **Пример**");
+    expect(ru).not.toContain("Пример orcai-v1");
+    expect(en).toContain("click **Example**");
+    expect(en).not.toContain("orcAI-v1 example");
+    expect(manual("ru", "10-troubleshooting.md")).toContain("**Пример** подставляет");
+    expect(manual("en", "10-troubleshooting.md")).toContain(
+      "The **Example** button fills",
     );
   });
 
@@ -39,14 +47,14 @@ describe("manual copy for duration limits, presets, and empty snippets", () => {
     const ru = manual("ru", "03-predict.md");
     const en = manual("en", "03-predict.md");
     expect(ru).toContain(
-      "Пустое поле суффикс не добавляет. Столбец **Тип** на вкладке **Анализ** его не показывает",
+      "Если поле суффикса пустое, суффикс не добавляется. Столбец **Тип** на вкладке **Анализ** суффикс не показывает",
     );
     expect(ru).toContain(
-      "**Сохранить** обновляет выбранный пресет и не привязывает общий пресет к открытому проекту.",
+      "**Сохранить** обновляет выбранный пресет. Общий пресет при этом не привязывается к открытому проекту",
     );
-    expect(en).toContain("An empty field adds no suffix.");
+    expect(en).toContain("If the suffix field is empty, no suffix is added.");
     expect(en).toContain(
-      "**Save** updates the selected preset and does not bind a shared preset to the open project.",
+      "**Save** updates the selected preset. It does not link a shared preset to the open project.",
     );
   });
 
@@ -60,39 +68,61 @@ describe("manual copy for duration limits, presets, and empty snippets", () => {
     expect(ruGlossary).not.toContain("`call_duration_limits.json`");
     expect(enGlossary).not.toContain("`call_duration_limits.json`");
 
-    expect(manual("ru", "10-troubleshooting.md")).toContain(
-      "Своя строка класса с теми же пределами перекрывает **default**.",
+    const ruTrouble = manual("ru", "10-troubleshooting.md");
+    const enTrouble = manual("en", "10-troubleshooting.md");
+    expect(ruTrouble).toContain(
+      "Строка с именем класса имеет приоритет над строкой **default**, даже если пределы совпадают.",
     );
-    expect(manual("en", "10-troubleshooting.md")).toContain(
-      "A class row with the same limits overrides **default**.",
+    expect(enTrouble).toContain(
+      "A row named after a class takes priority over the **default** row, even if the limits are the same.",
     );
   });
 
-  it("keeps the unfiltered-test checkbox sentence and replaces the two paragraphs after it", () => {
+  it("documents sequential hpsearch and hidden -pl in the Desktop UI", () => {
+    const ru = manual("ru", "04-train.md");
+    const en = manual("en", "04-train.md");
+    expect(ru).toContain("Поиск выполняется последовательно");
+    expect(ru).toContain("`-pl`");
+    expect(ru).toContain("скрыт");
+    expect(ru).toContain("в интерфейсе Desktop");
+    expect(ru).toContain("на шаге 5 мастера");
+    expect(ru).toContain("**Подобрать гиперпараметры**");
+    expect(ru).not.toContain("включается отдельно, в мастере и на шаге конвейера");
+    expect(en).toContain("The search runs sequentially by default");
+    expect(en).toContain("`-pl`");
+    expect(en).toContain("hidden in the Desktop UI");
+    expect(en).toContain("on wizard step 5");
+    expect(en).toContain("**Tune hyperparameters**");
+    expect(en).not.toContain(
+      "turned on separately, in the wizard and in the pipeline step",
+    );
+  });
+
+  it("keeps the unfiltered-test checkbox sentence and empty-snippet framing", () => {
     const ru = manual("ru", "04-train.md");
     const en = manual("en", "04-train.md");
     expect(ru).toContain(
-      "Какую долю сниппетов без метки отбросить. В записях их обычно гораздо больше, чем звуков; без этой настройки обучение идёт в основном по ним",
+      "В записях пустых фрагментов намного больше, чем звуков; без отбрасывания обучение шло бы преимущественно на них",
     );
     expect(ru).toContain(
-      "На этом шаге есть флажок **Нефильтрованный тест (-tu)**.",
+      "На шаге 5 доступен флажок **Нефильтрованный тест (-tu)**.",
     );
     expect(ru).toContain(
-      "В полевой записи таких фрагментов гораздо больше, чем звуков.",
+      "В полевой записи пустых фрагментов значительно больше, чем звуков.",
     );
-    expect(ru).toContain("вместе с пустыми фрагментами.");
+    expect(ru).toContain("вместе с пустыми.");
     expect(ru).not.toContain("с естественной долей тишины");
 
     expect(en).toContain(
-      "Recordings usually contain far more of them than sounds; without this setting training runs mainly on them",
+      "Recordings contain far more empty stretches than sounds; without discarding, training would focus mostly on them",
     );
     expect(en).toContain(
-      "This step has an **Unfiltered test (-tu)** checkbox.",
+      "Step 5 has an **Unfiltered test (-tu)** checkbox.",
     );
     expect(en).toContain(
-      "A field recording contains far more of these fragments than sounds.",
+      "In a field recording there are far more empty stretches than sounds.",
     );
-    expect(en).toContain("empty fragments included.");
+    expect(en).toContain("empty ones included.");
     expect(en).not.toContain("with their natural share of silence");
   });
 });

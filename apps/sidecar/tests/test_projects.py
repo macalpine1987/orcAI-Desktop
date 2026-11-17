@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 from orcai_desktop_sidecar.project_registry import (
     ProjectNameConflictError,
+    _compute_next_actions,
     check_project_name_available,
     compute_project_summary,
     create_project,
@@ -294,6 +295,18 @@ class ProjectRegistryTests(unittest.TestCase):
         )
         self.assertFalse(create_params["overwrite"])
         self.assertNotIn("update_table", create_params)
+
+        extras = sync_table_job_params(
+            created["id"],
+            overwrite=False,
+            update_table=True,
+            default_channel=2,
+            remove_duplicate_filenames=True,
+            exclude_patterns="/tmp/exclude.json",
+        )
+        self.assertEqual(extras["default_channel"], 2)
+        self.assertTrue(extras["remove_duplicate_filenames"])
+        self.assertEqual(extras["exclude_patterns"], "/tmp/exclude.json")
 
     def test_delete_all_recordings_removes_table(self) -> None:
         parent = self._home / "workspace"
@@ -677,11 +690,74 @@ class ProjectRegistryTests(unittest.TestCase):
         self.assertEqual(summary["metrics"]["recordings"], 1)
         self.assertEqual(summary["metrics"]["annotations"], 1)
         self.assertEqual(summary["metrics"]["predicted"], 1)
+        self.assertEqual(summary["readiness_lines"]["predict"]["unfiltered"], 1)
         self.assertEqual(summary["recording_table"]["sync_status"], "missing")
         self.assertEqual(summary["readiness"]["recordings"], "needed")
         self.assertEqual(summary["readiness"]["predict"], "ready")
         self.assertIn("readiness_lines", summary)
         self.assertIn("next_actions", summary)
+
+    def test_summary_predicted_counts_unique_wav_stems_not_files(self) -> None:
+        """Two model outputs for one WAV count as one predicted recording."""
+        parent = self._home / "workspace"
+        parent.mkdir()
+        created = create_project(parent_dir=str(parent), display_name="StemCount")
+        project_dir = Path(created["path"])
+        rec = recordings_dir(project_dir)
+        _write_pcm16_wav(rec / "clip_a.wav")
+        _write_pcm16_wav(rec / "clip_b.wav")
+        (project_dir / "clip_a_c1_orcai-isl-v1_predicted.txt").write_text(
+            "0.0 1.0 WHISTLE\n", encoding="utf-8"
+        )
+        (project_dir / "clip_a_c1_orcai-nor-v1_predicted.txt").write_text(
+            "0.0 1.0 WHISTLE\n", encoding="utf-8"
+        )
+        summary = compute_project_summary(created["id"])
+        self.assertEqual(summary["metrics"]["predicted"], 1)
+        self.assertEqual(summary["readiness_lines"]["predict"]["predicted"], 1)
+        self.assertEqual(summary["readiness_lines"]["predict"]["total"], 2)
+        self.assertEqual(summary["readiness_lines"]["predict"]["unfiltered"], 1)
+
+    def test_summary_unfiltered_tracks_filtered_mtime_after_repredict(self) -> None:
+        """Filter step drops when filtered is current; returns after a newer predict."""
+        import os
+        import time
+
+        parent = self._home / "workspace"
+        parent.mkdir()
+        created = create_project(parent_dir=str(parent), display_name="Unfiltered")
+        project_dir = Path(created["path"])
+        rec = recordings_dir(project_dir)
+        wav = rec / "clip_a.wav"
+        _write_pcm16_wav(wav)
+        # Current table so Home next_actions can offer filter (recordings ready).
+        table = project_dir / "recording_table.csv"
+        table.write_text(
+            "recording,channel,rel_recording_path,rel_annotation_path\n"
+            "clip_a,1,recordings/clip_a.wav,\n",
+            encoding="utf-8",
+        )
+        now = time.time()
+        os.utime(wav, (now - 10, now - 10))
+        os.utime(table, (now, now))
+        predicted = project_dir / "clip_a_c1_orcai-isl-v1_predicted.txt"
+        filtered = project_dir / "clip_a_c1_orcai-isl-v1_predicted_filtered.txt"
+        predicted.write_text("0.0 1.0 WHISTLE\n", encoding="utf-8")
+        filtered.write_text("0.0 1.0 WHISTLE\n", encoding="utf-8")
+        # Filtered newer than (or equal to) predicted → nothing to filter.
+        os.utime(predicted, (1_700_000_000, 1_700_000_000))
+        os.utime(filtered, (1_700_000_100, 1_700_000_100))
+        done = compute_project_summary(created["id"])
+        self.assertEqual(done["recording_table"]["sync_status"], "current")
+        self.assertEqual(done["readiness_lines"]["predict"]["predicted"], 1)
+        self.assertEqual(done["readiness_lines"]["predict"]["unfiltered"], 0)
+        self.assertNotIn("filter", done["next_actions"])
+
+        # Re-predict: predicted newer than filtered → needs filter again.
+        os.utime(predicted, (1_700_000_200, 1_700_000_200))
+        again = compute_project_summary(created["id"])
+        self.assertEqual(again["readiness_lines"]["predict"]["unfiltered"], 1)
+        self.assertIn("filter", again["next_actions"])
 
     def test_compute_project_summary_datasets_needed_from_annotations(self) -> None:
         """BUG-P-06: create_tvt readiness from annotations, not only after predict."""
@@ -795,6 +871,85 @@ class ProjectRegistryTests(unittest.TestCase):
         stale_ann = compute_project_summary(created["id"])
         self.assertEqual(stale_ann["recording_table"]["sync_status"], "stale")
         self.assertEqual(stale_ann["metrics"]["annotations"], 1)
+
+
+class NextActionsHintTests(unittest.TestCase):
+    def _ready(self, **overrides: str) -> dict[str, str]:
+        readiness = {
+            "recordings": "ready",
+            "annotations": "ready",
+            "predict": "ready",
+            "datasets": "needed",
+            "model": "needed",
+        }
+        readiness.update(overrides)
+        return readiness
+
+    def test_partial_predictions_and_labels_stay_on_the_home_hint(self) -> None:
+        actions = _compute_next_actions(
+            self._ready(),
+            table_sync="current",
+            wav_count=12,
+            paired_annotations=5,
+            predicted_count=7,
+            unfiltered_count=7,
+        )
+        self.assertEqual(
+            actions,
+            ["predict", "filter", "annotate", "create_tvt", "results"],
+        )
+
+    def test_complete_files_drop_predict_and_annotate(self) -> None:
+        actions = _compute_next_actions(
+            self._ready(datasets="ready", model="ready"),
+            table_sync="current",
+            wav_count=12,
+            paired_annotations=12,
+            predicted_count=12,
+            unfiltered_count=12,
+        )
+        self.assertNotIn("predict", actions)
+        self.assertNotIn("annotate", actions)
+        self.assertIn("filter", actions)
+        self.assertIn("results", actions)
+        self.assertNotIn("train", actions)
+
+    def test_home_hint_omits_filter_when_everything_is_filtered(self) -> None:
+        actions = _compute_next_actions(
+            self._ready(datasets="ready", model="ready"),
+            table_sync="current",
+            wav_count=12,
+            paired_annotations=12,
+            predicted_count=12,
+            unfiltered_count=0,
+        )
+        self.assertNotIn("filter", actions)
+        self.assertIn("results", actions)
+
+    def test_stale_table_does_not_offer_predict_before_sync(self) -> None:
+        actions = _compute_next_actions(
+            self._ready(recordings="needed"),
+            table_sync="stale",
+            wav_count=12,
+            paired_annotations=5,
+            predicted_count=7,
+        )
+        self.assertEqual(actions[0], "sync_table")
+        self.assertNotIn("predict", actions)
+        self.assertIn("annotate", actions)
+
+    def test_zero_predictions_offer_predict_without_filter(self) -> None:
+        actions = _compute_next_actions(
+            self._ready(predict="needed", annotations="needed", datasets="empty", model="empty"),
+            table_sync="current",
+            wav_count=12,
+            paired_annotations=0,
+            predicted_count=0,
+        )
+        self.assertIn("predict", actions)
+        self.assertNotIn("filter", actions)
+        self.assertIn("annotate", actions)
+        self.assertNotIn("results", actions)
 
 
 if __name__ == "__main__":

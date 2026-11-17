@@ -8,6 +8,8 @@ import { useWorkspace } from "../hooks/useWorkspace";
 import {
   NAV_ITEMS,
   pipelineNavInactiveForWorkspace,
+  predictNavInactiveForWorkspace,
+  projectRequiredNavInactive,
   type NavItemId,
 } from "../layout/navigation";
 
@@ -25,6 +27,7 @@ export function CommandPalette() {
   const sectionsAccessible = useSectionsAccessible();
   const workspace = useWorkspace();
   const hidePipeline = pipelineNavInactiveForWorkspace(workspace);
+  const hidePredict = predictNavInactiveForWorkspace(workspace);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -39,7 +42,9 @@ export function CommandPalette() {
     const allowedNav = NAV_ITEMS.filter(
       (item) =>
         (sectionsAccessible || isRuntimeFreeNavId(item.id)) &&
-        !(hidePipeline && item.id === "pipeline"),
+        !projectRequiredNavInactive(item.id, workspace) &&
+        !(hidePipeline && item.id === "pipeline") &&
+        !(hidePredict && item.id === "predict"),
     );
 
     const nav: CommandItem[] = allowedNav.map((item) => ({
@@ -59,7 +64,9 @@ export function CommandPalette() {
       .filter(
         (id) =>
           (sectionsAccessible || isRuntimeFreeNavId(id)) &&
-          !(hidePipeline && id === "pipeline"),
+          !projectRequiredNavInactive(id, workspace) &&
+          !(hidePipeline && id === "pipeline") &&
+          !(hidePredict && id === "predict"),
       )
       .map((id) => {
       const navItem = NAV_ITEMS.find((item) => item.id === id)!;
@@ -76,7 +83,7 @@ export function CommandPalette() {
     });
 
     return [...quick, ...nav];
-  }, [close, hidePipeline, navigate, sectionsAccessible, t]);
+  }, [close, hidePipeline, hidePredict, navigate, sectionsAccessible, t, workspace]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

@@ -59,7 +59,6 @@ export function ProjectCreateWizard({
             ? t("projects.studio.wizard.stepInitTitle")
             : t("projects.studio.wizard.title")}
         </h2>
-        <p className="ps-wizard-subtitle">{t("projects.studio.wizard.subtitle")}</p>
 
         {inProgress ? (
           <div className="ps-wizard-progress" role="status">

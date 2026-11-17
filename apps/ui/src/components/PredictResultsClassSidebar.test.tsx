@@ -159,4 +159,44 @@ describe("PredictResultsClassSidebar · probability floor C", () => {
     expect(boxes[1]?.checked).toBe(false);
     unmount();
   });
+
+  it("does not draw quantity share bars under class rows", () => {
+    const { container, unmount } = renderWithProviders(
+      <PredictResultsClassSidebar
+        entries={[
+          { label: "SS", count: 54 },
+          { label: "CC", count: 27 },
+          { label: "HERDING", count: 0 },
+        ]}
+        modelClasses={["SS", "CC", "HERDING"]}
+        hidden={new Set(["CC"])}
+        colorMap={new Map([
+          ["SS", "#5b8def"],
+          ["CC", "#e0a14a"],
+          ["HERDING", "#9b7bde"],
+        ])}
+        totalCount={81}
+        probabilityFloor={0}
+        onProbabilityFloorChange={noop}
+        showProbability
+        showAnnotations={false}
+        annotationsAvailable={false}
+        onToggle={noop}
+        onShowProbabilityChange={noop}
+        onShowAnnotationsChange={noop}
+        showDisplayControls={false}
+      />,
+    );
+    expect(container.querySelector(".predict-results-class-share")).toBeNull();
+    expect(
+      container.querySelector(".predict-results-class-share-fill"),
+    ).toBeNull();
+    const off = container.querySelector(
+      ".predict-results-class-row.is-off .predict-results-class-check",
+    ) as HTMLInputElement | null;
+    expect(off?.checked).toBe(false);
+    expect(off?.disabled).toBe(false);
+    unmount();
+  });
 });
+

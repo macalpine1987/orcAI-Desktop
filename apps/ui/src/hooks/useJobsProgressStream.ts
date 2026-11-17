@@ -5,6 +5,7 @@ import {
   isTerminalJobStatus,
   patchJobFromStream,
 } from "../lib/jobEventStream";
+import { jobLogNextSince } from "../lib/jobLogTail";
 
 type PatchFn = (jobId: string, patch: (job: JobRecord) => JobRecord) => void;
 
@@ -45,7 +46,7 @@ export function useJobsProgressStream({
     const runningIds = runningKey.split(",").filter(Boolean);
     const closers = runningIds.map((jobId) => {
       const row = jobsRef.current.find((j) => j.id === jobId);
-      const since = row?.log.length ?? 0;
+      const since = row ? jobLogNextSince(row) : 0;
       return connectJobEventStream(jobId, since, {
         onLog: (payload) => {
           onPatchRef.current(jobId, (current) =>

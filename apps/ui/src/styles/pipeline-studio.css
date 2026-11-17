@@ -8,19 +8,9 @@
     --st-panel: var(--mat-face);
     --st-card: #191a1b;
     --st-card-rim: #2a2c2f;
-    --pp-lcd: #7dffa3;
+    --pp-lcd: var(--lcd-accent);
     --settings-segment-track: var(--m16-btn-bg, #20262b);
     --settings-segment-border: #3a3c40;
-  }
-
-  [data-theme="light"] .app-viewport--pipeline-studio {
-    --m16-table-rim-outer: var(--border-strong);
-    --st-panel: var(--mat-face);
-    --st-card: var(--mat-raised);
-    --st-card-rim: var(--border-strong);
-    --pp-lcd: #147a3c;
-    --settings-segment-track: var(--mat-recess);
-    --settings-segment-border: var(--border-strong);
   }
 
   .app-viewport--pipeline-studio .mat-shell-main--pipeline-studio {
@@ -84,6 +74,11 @@
     align-items: center;
     gap: 0.45rem 0.75rem;
     padding: 0 var(--m16-pad-main, 10px);
+    /* Same reserved gutter as .pp-body. Overlay scrollbars report
+       offsetWidth - clientWidth as 0, so a measured padding never moves
+       «Обновить». The gutter itself still insets the step cards. */
+    overflow: hidden;
+    scrollbar-gutter: stable;
   }
 
   .pp-toolbar-hint {
@@ -113,6 +108,21 @@
     height: 14px;
   }
 
+  /* Compact jewel inside the Monitor tab (same family as Home runtime lamp). */
+  .pp-toolbar .pp-monitor-lamp {
+    margin-right: 0.1rem;
+  }
+
+  .pp-toolbar .pp-monitor-lamp .runtime-ready-lamp-well {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  .pp-toolbar .pp-monitor-lamp .runtime-ready-lamp-jewel {
+    width: 0.45rem;
+    height: 0.45rem;
+  }
+
   .pp-soon {
     flex: 0 0 auto;
     margin: 0 var(--m16-pad-main, 10px);
@@ -138,6 +148,7 @@
     padding: 0 var(--m16-pad-main, 10px) var(--m16-pad-main, 10px);
     overflow-x: hidden;
     overflow-y: auto;
+    scroll-padding-bottom: var(--m16-pad-main, 10px);
     align-items: stretch;
     align-content: start;
     scrollbar-gutter: stable;
@@ -189,18 +200,6 @@
       rgb(74 76 80 / 0) 100%
     );
     box-shadow: 0 1px 0 rgb(0 0 0 / 0.45);
-  }
-
-  [data-theme="light"] .pp-split-rule::before {
-    background: linear-gradient(
-      90deg,
-      rgb(0 0 0 / 0) 0%,
-      #9a9b9e 16%,
-      #7a7b7e 50%,
-      #9a9b9e 84%,
-      rgb(0 0 0 / 0) 100%
-    );
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.45);
   }
 
   .pp-card-kicker {
@@ -370,8 +369,8 @@
     box-shadow: none;
     padding: 0.48rem 0.85rem;
     min-height: 3.15rem;
-    /* Grow into spare height; never shrink below content (parent .pp-body scrolls). */
-    flex: 1 0 auto;
+    /* Equal share of spare height (basis 0) so hpsearch matches other rows. */
+    flex: 1 0 0;
   }
 
   .pp-step-num {
@@ -388,12 +387,37 @@
     line-height: 1.25;
   }
 
-  .pp-step-cmd {
+  .pp-step-cmd-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.65rem;
     margin-top: 0.1rem;
+    min-width: 0;
+  }
+
+  .pp-step-cmd {
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 0.68rem;
     color: var(--foreground-muted, var(--text-muted));
     line-height: 1.25;
+    min-width: 0;
+  }
+
+  .pp-step-opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    font-size: 0.7rem;
+    color: var(--foreground-muted, var(--text-muted));
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .pp-step-opt input {
+    margin: 0;
   }
 
   .pp-step-meta {
@@ -483,16 +507,17 @@
     flex: 0 0 auto;
     margin: 0 var(--m16-pad-main, 10px);
     font-size: 0.8rem;
-    color: var(--pp-lcd, #7dffa3);
+    color: var(--pp-lcd, var(--lcd-accent));
   }
 
+  /* Inside .pp-col-board so left/right edges match the step cards. */
   .pp-plan-banner {
     display: flex;
     flex: 0 0 auto;
     align-items: center;
     justify-content: space-between;
     gap: 0.85rem;
-    margin: 0 var(--m16-pad-main, 10px) 0.55rem;
+    margin: 0 0 0.55rem;
     padding: 0.65rem 0.85rem;
     border: 1px solid #2f5a3f;
     border-radius: 6px;
@@ -508,7 +533,7 @@
     margin: 0;
     font-size: 0.82rem;
     font-weight: 600;
-    color: var(--pp-lcd, #7dffa3);
+    color: var(--pp-lcd, var(--lcd-accent));
   }
 
   .pp-plan-banner-body {
@@ -592,27 +617,11 @@
   box-shadow: none;
 }
 
-[data-theme="light"] .app-viewport--pipeline-studio .pp-col-side {
-  background: var(--mat-raised, #f7f7f7);
-  border-color: var(--border-strong);
-}
-
-[data-theme="light"] .app-viewport--pipeline-studio .pp-col-board {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
 .app-viewport--pipeline-studio .pp-step {
   border: 1px solid #2a2c2f;
   border-radius: 8px;
   background: #191a1b;
   box-shadow: none;
-}
-
-[data-theme="light"] .app-viewport--pipeline-studio .pp-step {
-  border-color: var(--border-strong);
-  background: var(--mat-raised, #f7f7f7);
 }
 
 /* Safari 13 build flattens @layer; keep pipeline .pp-btn scoped so Predict footer stays. */

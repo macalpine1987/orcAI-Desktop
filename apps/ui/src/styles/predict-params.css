@@ -9,7 +9,7 @@
   --pp-run: #65aaf0;
   --pp-idle: #6e7074;
   --pp-lcd: #0a0b0c;
-  --pp-lcd-fg: #7dffa3;
+  --pp-lcd-fg: var(--lcd-accent);
   /* Preset strip matches the «Очередь запуска» column (scroll pads + column gap). */
   --pp-params-scroll-pad-start: 6px;
   --pp-params-scroll-pad-end: 8px;
@@ -180,6 +180,40 @@
 .predict-tabs-m03 .predict-tab:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Same amber pulse as pipeline / train-wizard «hint» CTAs (pp-btn--hint). */
+.predict-tabs-m03 .predict-tab.predict-tab--hint:not([aria-selected="true"]):not(:disabled) {
+  border-color: #c9a227;
+  background: linear-gradient(180deg, #3d3418 0%, #2a2410 100%);
+  color: #f5de8a;
+  box-shadow:
+    inset 0 1px 0 rgb(255 220 120 / 0.18),
+    0 0 0 1px rgb(230 180 34 / 0.45),
+    0 0 12px rgb(230 180 34 / 0.28);
+  animation: pp-btn-hint-pulse 1.8s ease-in-out infinite;
+}
+
+.predict-tabs-m03 .predict-tab.predict-tab--hint:not([aria-selected="true"]):not(:disabled):hover {
+  border-color: #e6b422;
+  background: linear-gradient(180deg, #4a3f1c 0%, #322b12 100%);
+  color: #ffe9a0;
+}
+
+@keyframes pp-btn-hint-pulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgb(255 220 120 / 0.18),
+      0 0 0 1px rgb(230 180 34 / 0.45),
+      0 0 10px rgb(230 180 34 / 0.22);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgb(255 220 120 / 0.22),
+      0 0 0 1px rgb(230 180 34 / 0.7),
+      0 0 18px rgb(230 180 34 / 0.45);
+  }
 }
 
 .predict-tabs-m03 .predict-tab-badge {
@@ -1124,9 +1158,10 @@
 }
 
 .pp-queue-th-status {
-  width: 9.25rem;
+  /* Fits RU «ОТФИЛЬТРОВАНО» / «НЕ ВЫПОЛНЕНО» in the status pill. */
+  width: 11.5rem;
   text-align: right;
-  padding-right: 0.85rem;
+  padding-right: 0.75rem;
 }
 
 .pp-queue-table td {
@@ -1178,9 +1213,10 @@
 }
 
 .pp-queue-td-status {
-  width: 9.25rem;
+  width: 11.5rem;
   text-align: right;
-  padding-right: 0.85rem;
+  padding-left: 0.45rem;
+  padding-right: 0.75rem;
   overflow: hidden;
 }
 
@@ -1243,9 +1279,10 @@
 .pp-status {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   max-width: 100%;
-  padding: 0.22rem 0.65rem 0.22rem 0.45rem;
+  box-sizing: border-box;
+  padding: 0.22rem 0.55rem 0.22rem 0.4rem;
   border-radius: 999px;
   border: 1px solid #3a3c40;
   background: #161718;
@@ -1253,7 +1290,7 @@
   color: #e8e8ea;
   font-size: 9px;
   font-weight: 650;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
   --pp-status-dot: #6e7074;
@@ -1346,7 +1383,7 @@
   border-radius: 10px;
   border: 1px solid #0b0c0d;
   background: #050607;
-  color: #7dffa3;
+  color: var(--lcd-accent);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   line-height: 1.25;
@@ -1399,6 +1436,10 @@
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.08),
     0 1px 2px rgb(0 0 0 / 0.35);
+}
+
+.pp-btn:active:not(:disabled) {
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
 }
 
 .pp-btn:disabled {

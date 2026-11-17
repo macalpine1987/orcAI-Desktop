@@ -5,32 +5,41 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-_CACHE_DIR = Path.home() / ".orcai-desktop" / "audio-cache"
+AUDIO_CACHE_DIR = Path.home() / ".orcai-desktop" / "audio-cache"
 # Skip building a full-file mono cache above this size (segment clips still work).
-_MAX_FULL_CACHE_BYTES = 200 * 1024 * 1024
-_MAX_CACHE_DIR_BYTES = 512 * 1024 * 1024
-_BLOCK_FRAMES = 65_536
+MAX_FULL_AUDIO_CACHE_BYTES = 200 * 1024 * 1024
+MAX_AUDIO_CACHE_DIR_BYTES = 512 * 1024 * 1024
+AUDIO_CACHE_BLOCK_FRAMES = 65_536
+
+# Compat aliases
+_CACHE_DIR = AUDIO_CACHE_DIR
+_MAX_FULL_CACHE_BYTES = MAX_FULL_AUDIO_CACHE_BYTES
+_MAX_CACHE_DIR_BYTES = MAX_AUDIO_CACHE_DIR_BYTES
+_BLOCK_FRAMES = AUDIO_CACHE_BLOCK_FRAMES
 
 
-def _cache_key(wav_path: Path, channel: int) -> str:
+def audio_cache_key(wav_path: Path, channel: int) -> str:
     stat = wav_path.stat()
     raw = f"{wav_path.resolve()}|{channel}|{stat.st_mtime_ns}|{stat.st_size}"
     return hashlib.sha256(raw.encode()).hexdigest()[:24]
 
 
-def _enforce_cache_limit() -> None:
-    if not _CACHE_DIR.is_dir():
+_cache_key = audio_cache_key
+
+
+def enforce_audio_cache_limit() -> None:
+    if not AUDIO_CACHE_DIR.is_dir():
         return
     entries: list[tuple[float, Path, int]] = []
     total = 0
-    for path in _CACHE_DIR.glob("*.wav"):
+    for path in AUDIO_CACHE_DIR.glob("*.wav"):
         try:
             st = path.stat()
         except OSError:
             continue
         entries.append((st.st_mtime, path, st.st_size))
         total += st.st_size
-    if total <= _MAX_CACHE_DIR_BYTES:
+    if total <= MAX_AUDIO_CACHE_DIR_BYTES:
         return
     for _, path, _ in sorted(entries):
         try:
@@ -39,8 +48,11 @@ def _enforce_cache_limit() -> None:
             total -= size
         except OSError:
             continue
-        if total <= _MAX_CACHE_DIR_BYTES:
+        if total <= MAX_AUDIO_CACHE_DIR_BYTES:
             break
+
+
+_enforce_cache_limit = enforce_audio_cache_limit
 
 
 def ensure_mono_playback_wav(wav_path: str | Path, channel: int = 1) -> Path:
@@ -51,16 +63,16 @@ def ensure_mono_playback_wav(wav_path: str | Path, channel: int = 1) -> Path:
     if not src.is_file():
         raise FileNotFoundError(f"WAV not found: {src}")
 
-    if src.stat().st_size > _MAX_FULL_CACHE_BYTES:
+    if src.stat().st_size > MAX_FULL_AUDIO_CACHE_BYTES:
         raise ValueError(
             "Recording is too large for full-file playback cache "
-            f"(>{_MAX_FULL_CACHE_BYTES // (1024 * 1024)} MiB). "
+            f"(>{MAX_FULL_AUDIO_CACHE_BYTES // (1024 * 1024)} MiB). "
             "Use segment playback or a shorter excerpt."
         )
 
-    _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    AUDIO_CACHE_DIR.mkdir(parents=True, exist_ok=True)
     ch = max(1, int(channel))
-    out = _CACHE_DIR / f"{_cache_key(src, ch)}_ch{ch}.wav"
+    out = AUDIO_CACHE_DIR / f"{audio_cache_key(src, ch)}_ch{ch}.wav"
     if out.is_file():
         return out
 
@@ -80,7 +92,7 @@ def ensure_mono_playback_wav(wav_path: str | Path, channel: int = 1) -> Path:
         pos = 0
         while pos < frames:
             block = snd.read(
-                min(_BLOCK_FRAMES, frames - pos),
+                min(AUDIO_CACHE_BLOCK_FRAMES, frames - pos),
                 dtype="float32",
                 always_2d=True,
             )

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { act } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { renderWithProviders } from "../../test/render";
 import { HomeProjectCard, shortHomeModelLabel } from "./HomeProjectCard";
 
@@ -7,7 +8,12 @@ vi.mock("../../platform/shell", () => ({
   revealInFileManager: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../../platform/trainMonitorWindow", () => ({
+  openOrFocusTrainMonitorWindow: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { revealInFileManager } from "../../platform/shell";
+import { openOrFocusTrainMonitorWindow } from "../../platform/trainMonitorWindow";
 
 describe("shortHomeModelLabel", () => {
   it("strips orcai- prefix for LCD (m01)", () => {
@@ -159,6 +165,40 @@ describe("HomeProjectCard · B-01/B-02", () => {
     );
     expect(container.querySelector(".home-project-table-status")).toBeNull();
     expect(container.textContent).toMatch(/No project selected|Проект не выбран/i);
+    unmount();
+  });
+
+  it("wizard plan shows Monitor button and hides KPI tiles", () => {
+    const { container, unmount } = renderWithProviders(
+      <MemoryRouter>
+        <HomeProjectCard
+          projectName="Demo"
+          projectPath="/tmp/demo"
+          projectId="demo"
+          recordings={12}
+          annotations={9}
+          predicted={7}
+          activeModelLabel="orcai-isl-v1"
+          tableSyncStatus="current"
+          onChangeProject={vi.fn()}
+          wizardPlanSteps={[
+            { id: "create-tvt-data", status: "done" },
+            { id: "train", status: "running" },
+            { id: "test", status: "queued" },
+          ]}
+        />
+      </MemoryRouter>,
+    );
+    expect(container.querySelector(".home-project-metric")).toBeNull();
+    const monitorBtn = Array.from(container.querySelectorAll("button")).find((b) =>
+      /Monitor|Монитор/i.test(b.textContent ?? ""),
+    ) as HTMLButtonElement | undefined;
+    expect(monitorBtn).toBeTruthy();
+    expect(monitorBtn?.disabled).toBe(false);
+    act(() => {
+      monitorBtn?.click();
+    });
+    expect(openOrFocusTrainMonitorWindow).toHaveBeenCalled();
     unmount();
   });
 });

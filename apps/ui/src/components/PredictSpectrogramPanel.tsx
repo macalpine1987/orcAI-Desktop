@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatUserFacingErrorRequired } from "../lib/userFacingError";
 import {
   fetchSpectrogramMeta,
   peekSpectrogramMeta,
@@ -30,6 +31,9 @@ export function PredictSpectrogramPanel({
   toolsSlot = null,
   lcdSlot = null,
   zoomSlot = null,
+  classesToolsSlot = null,
+  classesToolsOpen = false,
+  onClassesToolsOpenChange,
   segmentSlot = null,
   studioFilePicker = null,
   onDetectionTotalChange,
@@ -53,15 +57,22 @@ export function PredictSpectrogramPanel({
   toolsSlot?: HTMLElement | null;
   lcdSlot?: HTMLElement | null;
   zoomSlot?: HTMLElement | null;
+  classesToolsSlot?: HTMLElement | null;
+  classesToolsOpen?: boolean;
+  onClassesToolsOpenChange?: (open: boolean) => void;
   segmentSlot?: HTMLElement | null;
   studioFilePicker?: {
     open: boolean;
     onToggle: () => void;
+    onClose?: () => void;
     disabled?: boolean;
     canPrev?: boolean;
     canNext?: boolean;
     onPrev?: () => void;
     onNext?: () => void;
+    files?: readonly { name: string }[];
+    activeFileName?: string | null;
+    onSelect?: (name: string) => void;
   } | null;
   onDetectionTotalChange?: (total: number | null) => void;
   neighborFiles?: { path: string; kind?: string }[] | null;
@@ -148,7 +159,7 @@ export function PredictSpectrogramPanel({
       .catch((err) => {
         if (ac.signal.aborted) return;
         if (!cached) setMeta(null);
-        setMetaError(err instanceof Error ? err.message : String(err));
+        setMetaError(formatUserFacingErrorRequired(err, t));
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoadingMeta(false);
@@ -325,6 +336,9 @@ export function PredictSpectrogramPanel({
           toolsSlot={toolsSlot}
           lcdSlot={lcdSlot}
           zoomSlot={zoomSlot}
+          classesToolsSlot={classesToolsSlot}
+          classesToolsOpen={classesToolsOpen}
+          onClassesToolsOpenChange={onClassesToolsOpenChange}
           segmentSlot={segmentSlot}
           studioFilePicker={studioFilePicker}
           onDetectionTotalChange={onDetectionTotalChange}

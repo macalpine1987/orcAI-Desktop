@@ -158,6 +158,26 @@ class CliFullCoverageTests(unittest.TestCase):
         self.assertIn("-dc", line)
         self.assertNotIn("-ow", line)
 
+    def test_create_recording_table_strips_fill_call_possibility(self) -> None:
+        n = normalize_job_params(
+            "create-recording-table",
+            {
+                "base_dir_recording": "/w",
+                "fill_call_possibility": False,
+            },
+        )
+        self.assertNotIn("fill_call_possibility", n)
+        line = build_command_line(
+            "create-recording-table",
+            {
+                "base_dir_recording": "/w",
+                "fill_call_possibility": True,
+                "default_channel": 1,
+            },
+        )
+        self.assertNotIn("fill_call_possibility", line)
+        self.assertNotIn("fill-call", line)
+
     def test_snippet_table_output_path_alias(self) -> None:
         line = build_command_line(
             "create-snippet-table",
@@ -640,6 +660,23 @@ class MessengerProgressTests(_JobsFixture):
         assert refreshed is not None
         self.assertAlmostEqual(refreshed.progress or 0.0, 0.3, places=2)
 
+        # Arbitrary % in prose must not hijack the progress bar.
+        before = refreshed.progress
+        msgr.print("Using confidence threshold 95%")
+        refreshed = get_job(job.id)
+        assert refreshed is not None
+        self.assertAlmostEqual(refreshed.progress or 0.0, before or 0.0, places=2)
+
+        msgr.print("[predict-file] 1/4 clip")
+        refreshed = get_job(job.id)
+        assert refreshed is not None
+        self.assertAlmostEqual(refreshed.progress or 0.0, 0.0, places=2)
+
+        msgr.print("[predict-file] 2/4 clip")
+        refreshed = get_job(job.id)
+        assert refreshed is not None
+        self.assertAlmostEqual(refreshed.progress or 0.0, 0.25, places=2)
+
     def test_verbosity_filters_debug(self) -> None:
         job = create_job("predict", {"recording_path": "/a.wav"})
         msgr = JobMessenger(job.id, verbosity=1, title=None)
@@ -918,9 +955,12 @@ class ApiContractTests(_JobsFixture):
             self.assertIn("orcai init", body.get("command_line") or "")
             self.assertEqual(body.get("priority"), 3)
 
+            import asyncio
+
             final = None
             for _ in range(80):
-                final = jobs_get(jid)
+                # Route handlers are async (to_thread); tests call them directly.
+                final = asyncio.run(jobs_get(jid))
                 if final["status"] in ("completed", "failed", "cancelled"):
                     break
                 time.sleep(0.05)
@@ -931,19 +971,19 @@ class ApiContractTests(_JobsFixture):
                 all(Path(p).is_absolute() for p in (final.get("artifacts") or []))
             )
 
-            log = jobs_log_since(jid, since=0)
+            log = asyncio.run(jobs_log_since(jid, since=0))
             self.assertIn("lines", log)
             self.assertGreaterEqual(log["next_since"], 1)
             self.assertTrue(any("work-line" in ln for ln in log["lines"]))
 
-            q = jobs_queue_status()
+            q = asyncio.run(jobs_queue_status())
             self.assertEqual(q["max_concurrent"], 1)
 
-            retry = jobs_retry(jid)
+            retry = asyncio.run(jobs_retry(jid))
             self.assertEqual(retry["retry_of"], jid)
 
             with self.assertRaises(HTTPException) as ctx:
-                jobs_get("does-not-exist-p14")
+                asyncio.run(jobs_get("does-not-exist-p14"))
             self.assertEqual(ctx.exception.status_code, 404)
 
     def test_sse_replay_after_completion(self) -> None:
@@ -1007,10 +1047,12 @@ class ApiContractTests(_JobsFixture):
             )
 
     def test_capabilities_lists_twelve(self) -> None:
+        import asyncio
+
         from orcai_desktop_sidecar.main import capabilities
 
         with patch("orcai_desktop_sidecar.main.orcai_available", return_value=True):
-            data = capabilities()
+            data = asyncio.run(capabilities())
         listed = set(data.get("implemented_commands") or [])
         for cmd in TWELVE:
             self.assertIn(cmd, listed)

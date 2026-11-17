@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  SPECTROGRAM_TILE_CACHE_MAX_ENTRIES,
   fetchSpectrogramTileBlob,
   invalidateSpectrogramTileCache,
+  sidecarPortRequiresTileInvalidate,
   spectrogramTileCacheKey,
   spectrogramTileCacheSize,
 } from "./spectrogramTileCache";
@@ -64,5 +66,34 @@ describe("spectrogramTileCache", () => {
       globalThis.fetch = originalFetch;
       invalidateSpectrogramTileCache();
     }
+  });
+
+  it("evicts oldest tiles when resize width buckets exceed the LRU", async () => {
+    invalidateSpectrogramTileCache();
+    const blob = new Blob([new Uint8Array([7])], { type: "image/png" });
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(blob, { status: 200 })) as typeof fetch;
+
+    try {
+      const n = SPECTROGRAM_TILE_CACHE_MAX_ENTRIES + 8;
+      for (let i = 0; i < n; i += 1) {
+        await fetchSpectrogramTileBlob(
+          `http://tile.test/width-bucket-${i}?width=${640 + i * 64}`,
+        );
+      }
+      expect(spectrogramTileCacheSize()).toBe(SPECTROGRAM_TILE_CACHE_MAX_ENTRIES);
+    } finally {
+      globalThis.fetch = originalFetch;
+      invalidateSpectrogramTileCache();
+    }
+  });
+
+  it("does not invalidate tiles on first port observe or same-port remount", () => {
+    expect(sidecarPortRequiresTileInvalidate(undefined, 8741)).toBe(false);
+    expect(sidecarPortRequiresTileInvalidate(8741, 8741)).toBe(false);
+    expect(sidecarPortRequiresTileInvalidate(8741, 9000)).toBe(true);
+    expect(sidecarPortRequiresTileInvalidate(8741, null)).toBe(true);
+    expect(sidecarPortRequiresTileInvalidate(null, 8741)).toBe(true);
   });
 });

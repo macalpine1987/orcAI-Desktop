@@ -18,19 +18,6 @@
     --settings-toggle-thumb-on: #ffffff;
   }
 
-  [data-theme="light"] .app-viewport--settings-studio {
-    --m16-table-rim-outer: var(--border-strong);
-    --st-panel: var(--mat-face);
-    --st-card: var(--mat-raised);
-    --st-card-rim: var(--border-strong);
-    --settings-segment-track: var(--mat-recess);
-    --settings-segment-border: var(--border-strong);
-    --settings-toggle-off: #c4c4c4;
-    --settings-toggle-on: #2563eb;
-    --settings-toggle-thumb-off: #ffffff;
-    --settings-toggle-thumb-on: #ffffff;
-  }
-
   .app-viewport--settings-studio .mat-shell-main--settings-studio {
     padding-bottom: 0;
   }
@@ -97,6 +84,7 @@
     overflow: auto;
     margin: 0 var(--m16-pad-main, 10px) var(--m16-pad-main, 10px);
     padding: 0 var(--m16-pad-main, 10px) var(--m16-pad-main, 10px);
+    scroll-padding-bottom: var(--m16-pad-main, 10px);
   }
 
   .settings-panel-body:has(.settings-interface-layout),
@@ -125,8 +113,9 @@
     gap: 1.25rem;
     align-items: stretch;
     width: 100%;
-    min-height: 0;
-    flex: 1;
+    /* Grow with fields; parent .settings-panel-body scrolls (train-wizard pattern). */
+    flex: 1 0 auto;
+    min-height: min-content;
   }
 
   /* Two columns when the panel itself is wide. Viewport media queries stay
@@ -134,7 +123,8 @@
   @container studio-work (min-width: 40rem) {
     .settings-interface-layout {
       grid-template-columns: max-content minmax(0, 1fr);
-      grid-template-rows: minmax(0, 1fr);
+      grid-template-rows: auto;
+      min-height: 100%;
       gap: 1.5rem;
     }
   }
@@ -705,12 +695,6 @@
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
   }
 
-  [data-theme="light"] .app-viewport--settings-studio .settings-studio-inset {
-    border-color: var(--border-strong);
-    background: var(--mat-recess);
-    box-shadow: none;
-  }
-
   .settings-studio-inset-title {
     margin: 0 0 0.15rem;
     font-size: 0.5625rem;
@@ -821,11 +805,6 @@
     color: var(--text);
     white-space: nowrap;
     text-overflow: ellipsis;
-  }
-
-  [data-theme="light"] .settings-path-value {
-    background: var(--mat-recess);
-    border-color: var(--border-strong);
   }
 
   .settings-path-btn {

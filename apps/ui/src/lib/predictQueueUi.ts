@@ -32,7 +32,15 @@ export function resolveQueueUnavailable(params: {
   projectInitialized?: boolean;
 }): PredictQueueUnavailableReason | null {
   if (!params.hasActiveProject) return "no_project";
-  if (!params.queueLoading && params.projectLoadFailed) return "project_missing";
+  // A cached ProjectRecord (initialized===true) softens a transient refetch
+  // failure so Analysis stays open after Projects→Predict keep-alive navigations.
+  if (
+    !params.queueLoading &&
+    params.projectLoadFailed &&
+    params.projectInitialized !== true
+  ) {
+    return "project_missing";
+  }
   if (
     !params.queueLoading &&
     params.projectInitialized === false
@@ -42,15 +50,34 @@ export function resolveQueueUnavailable(params: {
   return null;
 }
 
-/** True while project queue is loading — show spinner, hide file table. */
+/** i18n key for the queue empty-state when the project gate is closed. */
+export function queueUnavailableMessageKey(
+  reason: PredictQueueUnavailableReason,
+): string {
+  if (reason === "project_missing") return "predict.queueBlockedProjectMissing";
+  if (reason === "not_initialized") return "predict.queueBlockedNotInitialized";
+  return "predict.queueBlockedNoProject";
+}
+
+/** Queue already saved for this project. A later disk walk must not hide it. */
+export function rememberedQueueForProject<T extends { projectId: string }>(
+  stored: T | null | undefined,
+  projectId: string,
+): T | null {
+  return stored?.projectId === projectId ? stored : null;
+}
+
+/** True while the queue is still empty and the first load has not finished. */
 export function shouldShowQueueLoading(params: {
   hasActiveProject: boolean;
   queueLoading: boolean;
   queueUnavailable: PredictQueueUnavailableReason | null;
+  hasQueue?: boolean;
 }): boolean {
   return (
     params.hasActiveProject &&
     params.queueLoading &&
+    !params.hasQueue &&
     params.queueUnavailable == null
   );
 }
@@ -141,10 +168,9 @@ export function resolveAnalysisLabelPath(
   modelLabelName?: string,
 ): string | undefined {
   if (kind === "filtered") {
-    return (
-      filteredLabelPathForQueueFile(file) ??
-      originalLabelPathForQueueFile(file, channel, modelId, modelLabelName)
-    );
+    // Do not fall back to original: UI would claim "filtered" while loading
+    // unfiltered *_predicted.txt when the filtered file is missing.
+    return filteredLabelPathForQueueFile(file);
   }
   return originalLabelPathForQueueFile(file, channel, modelId, modelLabelName);
 }
@@ -228,7 +254,10 @@ export function predictResultsTabEnabled(
   queueReady: boolean,
 ): boolean {
   if (!queueReady || !queue) return false;
-  return predictQueueAudioFiles(queue).some(isPredictResultBrowsable);
+  // Analysis opens only after recognition finishes — not while a WAV is still
+  // `running` mid-batch (isPredictResultBrowsable includes running for live
+  // spectrogram browsing elsewhere).
+  return predictQueueAudioFiles(queue).some(isRecognitionComplete);
 }
 
 /** Spectrogram tab: project queue has WAV files and is ready. */

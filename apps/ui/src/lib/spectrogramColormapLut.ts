@@ -36,6 +36,36 @@ export function spectrogramColormapLut(name: SpectrogramColormap): Uint8ClampedA
   return LUT_BY_NAME[name];
 }
 
+/** Yield to the browser so large colormap remaps do not freeze the UI thread. */
+function yieldToMain(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => resolve());
+      return;
+    }
+    setTimeout(resolve, 0);
+  });
+}
+
+function fillRgbaRange(
+  gray: Uint8ClampedArray,
+  out: Uint8ClampedArray,
+  lut: Uint8ClampedArray,
+  start: number,
+  end: number,
+  invert: boolean,
+): void {
+  for (let i = start; i < end; i++) {
+    const g = invert ? 255 - (gray[i] ?? 0) : (gray[i] ?? 0);
+    const li = g * 3;
+    const o = i * 4;
+    out[o] = lut[li] ?? 0;
+    out[o + 1] = lut[li + 1] ?? 0;
+    out[o + 2] = lut[li + 2] ?? 0;
+    out[o + 3] = 255;
+  }
+}
+
 /** Map single-channel luminance buffer to RGBA pixels (length = width * height * 4). */
 export function grayToRgbaPixels(
   gray: Uint8ClampedArray,
@@ -45,16 +75,35 @@ export function grayToRgbaPixels(
   invert = false,
 ): Uint8ClampedArray {
   const lut = spectrogramColormapLut(colormap);
-  const out = new Uint8ClampedArray(width * height * 4);
   const n = width * height;
-  for (let i = 0; i < n; i++) {
-    const g = invert ? 255 - (gray[i] ?? 0) : (gray[i] ?? 0);
-    const li = g * 3;
-    const o = i * 4;
-    out[o] = lut[li] ?? 0;
-    out[o + 1] = lut[li + 1] ?? 0;
-    out[o + 2] = lut[li + 2] ?? 0;
-    out[o + 3] = 255;
+  const out = new Uint8ClampedArray(n * 4);
+  fillRgbaRange(gray, out, lut, 0, n, invert);
+  return out;
+}
+
+/**
+ * Same as ``grayToRgbaPixels``, but yields between chunks so palette switches
+ * on large spectrogram tiles do not hitch the main thread.
+ */
+export async function grayToRgbaPixelsAsync(
+  gray: Uint8ClampedArray,
+  width: number,
+  height: number,
+  colormap: SpectrogramColormap,
+  invert = false,
+  signal?: AbortSignal,
+  chunkPixels = 48_000,
+): Promise<Uint8ClampedArray> {
+  const lut = spectrogramColormapLut(colormap);
+  const n = width * height;
+  const out = new Uint8ClampedArray(n * 4);
+  for (let i = 0; i < n; i += chunkPixels) {
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
+    const end = Math.min(i + chunkPixels, n);
+    fillRgbaRange(gray, out, lut, i, end, invert);
+    if (end < n) await yieldToMain();
   }
   return out;
 }

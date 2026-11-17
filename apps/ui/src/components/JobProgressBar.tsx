@@ -6,10 +6,11 @@ import {
 } from "../lib/jobFormat";
 
 type JobProgressBarProps = {
-  job: JobRecord;
-  /** `table` — m16 jobs grid; `dock` — collapsed console strip */
+  /** Omit when only `percent` / forceIndeterminate drive the bar (batch strip). */
+  job?: JobRecord | null;
+  /** `table` — m16 jobs grid; `dock` — console strip / header */
   variant?: "table" | "dock";
-  /** Force indeterminate (e.g. batch predict at 0/N files). */
+  /** Force indeterminate (e.g. running without numeric progress). */
   forceIndeterminate?: boolean;
   percent?: number | null;
   accent?: "batch";
@@ -17,24 +18,31 @@ type JobProgressBarProps = {
 };
 
 export function JobProgressBar({
-  job,
+  job = null,
   variant = "table",
   forceIndeterminate = false,
   percent,
   accent,
   className,
 }: JobProgressBarProps) {
-  const pct = percent ?? jobProgressPercent(job);
+  const fromJob = job ? jobProgressPercent(job) : null;
+  const pct = percent !== undefined ? percent : fromJob;
   const indeterminate =
     forceIndeterminate ||
-    (job.status === "running" && isJobProgressIndeterminate(job));
+    (job != null &&
+      job.status === "running" &&
+      percent === undefined &&
+      isJobProgressIndeterminate(job)) ||
+    (job == null && forceIndeterminate) ||
+    (job == null && (pct == null || Number.isNaN(pct)));
 
+  const status = job?.status ?? "running";
   const tone =
-    job.status === "failed"
+    status === "failed"
       ? "job-progress-fill--failed"
-      : job.status === "completed"
+      : status === "completed"
         ? "job-progress-fill--completed"
-        : job.status === "running"
+        : status === "running"
           ? "job-progress-fill--running"
           : "job-progress-fill--pending";
 
@@ -69,10 +77,18 @@ export function JobProgressBar({
           className={clsx(
             fillClass,
             tone,
-            indeterminate && "progress-fill--indeterminate",
+            // Dock: quiet static stub (old console look). Table/monitor: sliding bar.
+            indeterminate &&
+              (variant === "dock"
+                ? "progress-fill--indeterminate-static"
+                : "progress-fill--indeterminate"),
             accent === "batch" && "lab-dock-status-progress-fill--batch",
           )}
-          style={indeterminate ? undefined : { width: pct != null ? `${pct}%` : "0%" }}
+          style={
+            indeterminate
+              ? undefined
+              : { width: pct != null ? `${pct}%` : "0%" }
+          }
         />
       </div>
     </div>

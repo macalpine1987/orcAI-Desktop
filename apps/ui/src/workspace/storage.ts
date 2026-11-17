@@ -1,7 +1,6 @@
 import type { FilterSettings, PredictSettings } from "./predictSettings";
-import type { AnalysisPackage } from "./analysisPackages";
 import type { ModelProfile } from "./predictModelProfiles";
-import type { PredictQueue } from "./predictQueue";
+import type { PredictQueue } from "./predictQueueTypes";
 import type { ProjectFocus, ProjectKind } from "../api/projects";
 
 const WORKSPACE_KEY = "orcai-desktop.workspace";
@@ -27,8 +26,6 @@ export type WorkspaceState = {
   filterSettings: FilterSettings | null;
   predictModelProfiles: ModelProfile[] | null;
   activePredictProfileId: string | null;
-  analysisPackages: AnalysisPackage[] | null;
-  activeAnalysisPackageId: string | null;
 };
 
 const DEFAULT: WorkspaceState = {
@@ -47,8 +44,6 @@ const DEFAULT: WorkspaceState = {
   filterSettings: null,
   predictModelProfiles: null,
   activePredictProfileId: null,
-  analysisPackages: null,
-  activeAnalysisPackageId: null,
 };
 
 export function loadWorkspace(): WorkspaceState {

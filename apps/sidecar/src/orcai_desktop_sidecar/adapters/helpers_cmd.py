@@ -136,21 +136,15 @@ def _fill_call_possibility_columns(table: Any) -> Any:
     orcAI ``create_recording_table`` leaves call columns as empty/NA. Empty cells
     mean «class masked / not possible»; ``create-label-arrays`` then crashes with
     ``Cannot mask with non-boolean array containing NA`` and spectrograms may
-    skip every row. Desktop treats «has annotation file» as all listed classes
+    skip every row. Desktop can treat «has annotation file» as all listed classes
     possible (user can still mask later in the CSV).
+
+    This is a Desktop post-step, not part of ``orcai create-recording-table``.
+    Gate it with job param ``fill_call_possibility`` (default True).
     """
     if not hasattr(table, "columns") or "rel_annotation_path" not in table.columns:
         return table
-    standard = {
-        "recording",
-        "channel",
-        "duplicate",
-        "base_dir_recording",
-        "rel_recording_path",
-        "base_dir_annotation",
-        "rel_annotation_path",
-    }
-    call_cols = [c for c in table.columns if c not in standard]
+    call_cols = [c for c in table.columns if c not in _STANDARD_TABLE_COLUMNS]
     if not call_cols:
         return table
     out = table.copy()
@@ -163,6 +157,17 @@ def _fill_call_possibility_columns(table: Any) -> Any:
         empty = series.isna() | (series.astype(str).str.strip() == "")
         out.loc[has_ann & empty, col] = True
     return out
+
+
+def resolve_fill_call_possibility(params: dict[str, Any]) -> bool:
+    """Desktop fill of class columns after create-recording-table.
+
+    Default True so Projects / training keep working. Set False for CSV that
+    matches raw orcAI call-column NA cells (CLI parity).
+    """
+    if "fill_call_possibility" not in params:
+        return True
+    return bool(params.get("fill_call_possibility"))
 
 
 def _normalize_parameter_seed(project_path: Path, project_name: str) -> None:
@@ -207,6 +212,8 @@ def run_create_recording_table(job_id: str, params: dict[str, Any]) -> dict[str,
 
     prepared = dict(params)
     overwrite = bool(prepared.pop("overwrite", False))
+    fill_call_possibility = resolve_fill_call_possibility(prepared)
+    prepared.pop("fill_call_possibility", None)
     prepared.pop("update_table_path", None)
     prepared.pop("update_table", None)
     if prepared.get("output_path") is None:
@@ -275,20 +282,27 @@ def run_create_recording_table(job_id: str, params: dict[str, Any]) -> dict[str,
         if update_table_path is not None:
             table = _prune_merged_rows(table)
         table = _sort_recording_table(table)
-        table = _fill_call_possibility_columns(table)
+        if fill_call_possibility:
+            table = _fill_call_possibility_columns(table)
+            msgr.info(
+                "Desktop filled call-possibility columns for annotated rows "
+                "(not part of orcai create-recording-table; "
+                "set fill_call_possibility=false for CLI-like NA cells).",
+                indent=1,
+            )
         if hasattr(table, "to_csv"):
             table.to_csv(output_resolved)
 
         # Prefer project recordings/ + annotations/ over the folder annotations
         # were imported from (orcAI may keep the source base_dir_* when it still exists).
         with contextlib.suppress(Exception):
-            from orcai_desktop_sidecar.project_studio import _rewrite_table_base_dirs
+            from orcai_desktop_sidecar.project_studio import rewrite_table_base_dirs
 
             project_guess = output_resolved.parent
             if (project_guess / "annotations").is_dir() or (
                 project_guess / "recordings"
             ).is_dir():
-                _rewrite_table_base_dirs(project_guess)
+                rewrite_table_base_dirs(project_guess)
 
         annotated = (
             int(table["rel_annotation_path"].count())
@@ -304,6 +318,7 @@ def run_create_recording_table(job_id: str, params: dict[str, Any]) -> dict[str,
             "row_count": len(table),
             "annotated_count": annotated,
             "duplicate_count": duplicates,
+            "fill_call_possibility": fill_call_possibility,
             "created_files": collect_created(output_resolved),
             "cli_params": cli_params_from_engine(kwargs),
         }

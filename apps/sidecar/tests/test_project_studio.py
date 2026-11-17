@@ -665,12 +665,13 @@ class ProjectStudioTests(unittest.TestCase):
 
         doc = json.loads(json.dumps(PARAMETER_DOC))
         doc["spectrogram"]["n_overlap"] = 1024
-        bad_spec = validate_parameters_text(json.dumps(doc))
-        self.assertIn("spectrogram.n_overlap must be smaller than nfft", bad_spec["errors"])
+        wide_hop = validate_parameters_text(json.dumps(doc))
+        self.assertTrue(wide_hop["valid"], wide_hop["errors"])
 
         ok = validate_parameters_text(json.dumps(PARAMETER_DOC))
         self.assertTrue(ok["valid"])
-        self.assertTrue(any("TAILSLAP" in w for w in ok["warnings"]))
+        self.assertIn("TAILSLAP", ok.get("excluded_calls") or [])
+        self.assertFalse(any("excluded from calls" in w for w in ok["warnings"]))
 
         with self.assertRaises(ValueError):
             write_parameters(project["id"], "{}")
@@ -681,6 +682,25 @@ class ProjectStudioTests(unittest.TestCase):
         self.assertTrue(saved["validation"]["valid"])
         self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["seed"], 42)
         self.assertTrue(get_project(project["id"])["initialized"])
+
+    def test_saved_hop_may_exceed_nfft_and_must_stay_positive(self) -> None:
+        project = self._project()
+        self._init_parameters(project)
+        doc = json.loads(json.dumps(PARAMETER_DOC))
+        doc["spectrogram"]["nfft"] = 512
+        doc["spectrogram"]["n_overlap"] = 1024
+        saved = write_parameters(project["id"], json.dumps(doc))
+        self.assertTrue(saved["validation"]["valid"])
+        written = json.loads(Path(saved["path"]).read_text(encoding="utf-8"))
+        self.assertEqual(written["spectrogram"]["n_overlap"], 1024)
+        self.assertNotIn("overlap", written["spectrogram"])
+
+        doc["spectrogram"]["n_overlap"] = 0
+        zero = validate_parameters_text(json.dumps(doc))
+        self.assertFalse(zero["valid"])
+        self.assertTrue(any("n_overlap" in err for err in zero["errors"]))
+        with self.assertRaises(ValueError):
+            write_parameters(project["id"], json.dumps(doc))
 
     # ------------------------------------------------------------------ data_health (shell banner)
 

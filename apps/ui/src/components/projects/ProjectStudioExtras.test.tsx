@@ -272,6 +272,41 @@ describe("ProjectParametersTab · m25", () => {
     unmount();
   });
 
+  it("shows excluded-calls triangle next to Valid; click lists classes", async () => {
+    const { container, unmount } = renderWithProviders(
+      <ProjectParametersTab
+        data={params({
+          validation: {
+            valid: true,
+            errors: [],
+            warnings: [],
+            excluded_calls: ["BR", "WHISTLE"],
+          },
+        })}
+        loading={false}
+        busy={false}
+        onValidate={vi.fn()}
+        onSave={vi.fn()}
+        onExport={vi.fn()}
+      />,
+    );
+
+    expect(container.textContent).not.toContain("BR excluded from calls");
+    const btn = container.querySelector<HTMLButtonElement>(
+      ".ps-params-excluded-btn",
+    );
+    expect(btn).toBeTruthy();
+    expect(container.querySelector(".ps-params-excluded-pop")).toBeNull();
+
+    await act(async () => {
+      btn!.click();
+    });
+    const pop = container.querySelector(".ps-params-excluded-pop");
+    expect(pop?.textContent).toContain("BR");
+    expect(pop?.textContent).toContain("WHISTLE");
+    unmount();
+  });
+
   it("blocks Save when live validation fails and Cancel reverts text", async () => {
     const onValidate = vi.fn(async () => ({
       valid: false,
@@ -315,7 +350,7 @@ describe("ProjectParametersTab · m25", () => {
 });
 
 describe("Project drop zones · WAV / TXT hooks", () => {
-  it("WAV: enter highlights; drop filters to .wav and sorts by name", async () => {
+  it("WAV: enter highlights; drop forwards every file so a non-WAV can be reported", async () => {
     const onDropPaths = vi.fn();
     let api: WavApi | null = null;
     const { container, unmount } = renderWithProviders(
@@ -341,7 +376,11 @@ describe("Project drop zones · WAV / TXT hooks", () => {
         fakeDragEvent(fileListOf("/tmp/b.wav", "/tmp/notes.txt", "/tmp/a.wav")),
       );
     });
-    expect(onDropPaths).toHaveBeenCalledWith(["/tmp/a.wav", "/tmp/b.wav"]);
+    expect(onDropPaths).toHaveBeenCalledWith([
+      "/tmp/b.wav",
+      "/tmp/notes.txt",
+      "/tmp/a.wav",
+    ]);
     expect(container.querySelector(".is-drop-active")).toBeNull();
     unmount();
   });
@@ -362,7 +401,7 @@ describe("Project drop zones · WAV / TXT hooks", () => {
     unmount();
   });
 
-  it("annotations: drop keeps .txt and skips predicted/filtered/wav", async () => {
+  it("annotations: drop forwards every file so the page can report the rest", async () => {
     const onDropPaths = vi.fn();
     let api: AnnApi | null = null;
     const { unmount } = renderWithProviders(
@@ -387,7 +426,12 @@ describe("Project drop zones · WAV / TXT hooks", () => {
         ),
       );
     });
-    expect(onDropPaths).toHaveBeenCalledWith(["/tmp/01.txt"]);
+    expect(onDropPaths).toHaveBeenCalledWith([
+      "/tmp/01.txt",
+      "/tmp/01_predicted.txt",
+      "/tmp/01_filtered.txt",
+      "/tmp/02.wav",
+    ]);
     unmount();
   });
 

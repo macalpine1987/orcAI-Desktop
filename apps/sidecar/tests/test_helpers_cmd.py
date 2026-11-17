@@ -10,7 +10,11 @@ from unittest.mock import patch
 import numpy as np
 
 from orcai_desktop_sidecar import jobs
-from orcai_desktop_sidecar.adapters.helpers_cmd import run_create_recording_table
+from orcai_desktop_sidecar.adapters.helpers_cmd import (
+    _fill_call_possibility_columns,
+    resolve_fill_call_possibility,
+    run_create_recording_table,
+)
 from orcai_desktop_sidecar.jobs import create_job
 from orcai_desktop_sidecar.recording_table_params import resolve_update_table_path
 
@@ -23,6 +27,40 @@ def _write_wav(path: Path) -> None:
     import soundfile as sf
 
     sf.write(str(path), np.zeros(1600, dtype=np.float32), 16_000)
+
+
+class FillCallPossibilityTests(unittest.TestCase):
+    def test_resolve_defaults_true_and_honours_false(self) -> None:
+        self.assertTrue(resolve_fill_call_possibility({}))
+        self.assertTrue(resolve_fill_call_possibility({"fill_call_possibility": True}))
+        self.assertFalse(resolve_fill_call_possibility({"fill_call_possibility": False}))
+
+    def test_fill_marks_na_only_for_annotated_rows(self) -> None:
+        import pandas as pd
+
+        table = pd.DataFrame(
+            {
+                "recording": ["a", "b", "c"],
+                "channel": [1, 1, 1],
+                "duplicate": [False, False, False],
+                "base_dir_recording": ["/r", "/r", "/r"],
+                "rel_recording_path": ["a.wav", "b.wav", "c.wav"],
+                "base_dir_annotation": ["/a", None, "/a"],
+                "rel_annotation_path": ["a.txt", None, "c.txt"],
+                "recording_type": ["wav", "wav", "wav"],
+                "WHISTLE": [None, None, False],
+                "BUZZ": [None, None, None],
+            }
+        )
+        out = _fill_call_possibility_columns(table)
+        # Annotated + empty → True; unannotated stays NA; explicit False kept.
+        self.assertTrue(bool(out.loc[0, "WHISTLE"]))
+        self.assertTrue(bool(out.loc[0, "BUZZ"]))
+        self.assertTrue(pd.isna(out.loc[1, "WHISTLE"]))
+        self.assertFalse(bool(out.loc[2, "WHISTLE"]))
+        self.assertTrue(bool(out.loc[2, "BUZZ"]))
+        # recording_type is a table column, not a call class.
+        self.assertEqual(list(out["recording_type"]), ["wav", "wav", "wav"])
 
 
 class ResolveUpdateTablePathTests(unittest.TestCase):
@@ -156,6 +194,29 @@ class CreateRecordingTableMergeTests(unittest.TestCase):
         self.assertIn("zebra,2", csv.read_text(encoding="utf-8"))
         leftovers = list(root.glob(".*orcai-desktop-update-src"))
         self.assertEqual(leftovers, [])
+
+    def test_result_reports_fill_call_possibility_flag(self) -> None:
+        try:
+            import soundfile  # noqa: F401
+        except ImportError as exc:
+            raise unittest.SkipTest("soundfile not installed") from exc
+
+        root = self._home / "proj_fill"
+        rec = root / "recordings"
+        rec.mkdir(parents=True)
+        _write_wav(rec / "alpha.wav")
+        csv = root / "recording_table.csv"
+        params = {
+            "base_dir_recording": str(rec),
+            "output_path": str(csv),
+            "overwrite": True,
+            "verbosity": 0,
+            "fill_call_possibility": False,
+        }
+        job = create_job("create-recording-table", params)
+        result = run_create_recording_table(job.id, params)
+        self.assertFalse(result["fill_call_possibility"])
+        self.assertTrue(csv.is_file())
 
 
 if __name__ == "__main__":

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   loadProjectClassColors,
   saveProjectClassColors,
 } from "../lib/classColors";
+import { useSaveNotice } from "../ui/saveNotice";
 import { useWorkspace } from "./useWorkspace";
 
 /** Live project class-color overrides (empty when no project / file). */
@@ -12,6 +14,8 @@ export function useProjectClassColors(): {
   reload: () => void;
   ready: boolean;
 } {
+  const { t } = useTranslation();
+  const { notifyHeaderError } = useSaveNotice();
   const { projectDir } = useWorkspace();
   const [colors, setColors] = useState<Record<string, string>>({});
   const [ready, setReady] = useState(false);
@@ -41,13 +45,13 @@ export function useProjectClassColors(): {
         else next[classId] = hex;
         if (projectDir) {
           void saveProjectClassColors(projectDir, next).catch(() => {
-            /* keep UI state; next saveDraft/launch retries */
+            notifyHeaderError(t("projects.studio.classColors.saveFailed"));
           });
         }
         return next;
       });
     },
-    [projectDir],
+    [projectDir, notifyHeaderError, t],
   );
 
   return { colors, setColor, reload, ready };

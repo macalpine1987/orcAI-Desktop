@@ -1,0 +1,304 @@
+/*
+ * Lab scrollbars (mockup docs/mockups/scrollbar-dark-theme-options.html):
+ *   C · .lab-scroll        — recess track + raised thumb (Lab columns)
+ *   D · .lab-scroll-narrow — 5px hairline, no track (nested / narrow lists)
+ *
+ * Do NOT wrap hosts in :is(...) for ::-webkit-scrollbar — WKWebView/Safari
+ * skips those rules (legacy A/B used direct comma lists and were visible).
+ */
+
+/* —— C · Instrument recess + raised (columns) —— */
+.lab-scroll,
+.home-panel-body,
+.home-recent-jobs-panel,
+.home-recent-jobs .jobs-table-body,
+.projects-panel-body,
+.projects-panel-body--empty,
+.projects-panel-body--wizard,
+.ps-project-stage-body,
+.ps-table-wrap,
+.pp-params-scroll,
+.predict-panel-body,
+.predict-results-studio,
+.predict-filter-m05,
+.results-table-body,
+.analysis-detections-table-scroll,
+.jobs-work-panel .jobs-table-body,
+.lab-dock-pane-scroll,
+.lab-dock-log-pre,
+.lab-command-pre,
+.pp-body,
+.tw-main,
+.tw-nav,
+.tm-body,
+.settings-panel-body,
+.help-panel-body,
+.help-chapter-body,
+.help-cff-scroll,
+.help-license-pre,
+.models-body,
+.models-main .jobs-table-body.models-table-body,
+.models-desc-panel,
+.models-card,
+.mat-table-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: #4a4b4e #0e0f10;
+}
+
+.lab-scroll::-webkit-scrollbar,
+.home-panel-body::-webkit-scrollbar,
+.home-recent-jobs-panel::-webkit-scrollbar,
+.home-recent-jobs .jobs-table-body::-webkit-scrollbar,
+.projects-panel-body::-webkit-scrollbar,
+.projects-panel-body--empty::-webkit-scrollbar,
+.projects-panel-body--wizard::-webkit-scrollbar,
+.ps-project-stage-body::-webkit-scrollbar,
+.ps-table-wrap::-webkit-scrollbar,
+.pp-params-scroll::-webkit-scrollbar,
+.predict-panel-body::-webkit-scrollbar,
+.predict-results-studio::-webkit-scrollbar,
+.predict-filter-m05::-webkit-scrollbar,
+.results-table-body::-webkit-scrollbar,
+.analysis-detections-table-scroll::-webkit-scrollbar,
+.jobs-work-panel .jobs-table-body::-webkit-scrollbar,
+.lab-dock-pane-scroll::-webkit-scrollbar,
+.lab-dock-log-pre::-webkit-scrollbar,
+.lab-command-pre::-webkit-scrollbar,
+.pp-body::-webkit-scrollbar,
+.tw-main::-webkit-scrollbar,
+.tw-nav::-webkit-scrollbar,
+.tm-body::-webkit-scrollbar,
+.settings-panel-body::-webkit-scrollbar,
+.help-panel-body::-webkit-scrollbar,
+.help-chapter-body::-webkit-scrollbar,
+.help-cff-scroll::-webkit-scrollbar,
+.help-license-pre::-webkit-scrollbar,
+.models-body::-webkit-scrollbar,
+.models-main .jobs-table-body.models-table-body::-webkit-scrollbar,
+.models-desc-panel::-webkit-scrollbar,
+.models-card::-webkit-scrollbar,
+.mat-table-wrap::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.lab-scroll::-webkit-scrollbar-track,
+.home-panel-body::-webkit-scrollbar-track,
+.home-recent-jobs-panel::-webkit-scrollbar-track,
+.home-recent-jobs .jobs-table-body::-webkit-scrollbar-track,
+.projects-panel-body::-webkit-scrollbar-track,
+.projects-panel-body--empty::-webkit-scrollbar-track,
+.projects-panel-body--wizard::-webkit-scrollbar-track,
+.ps-project-stage-body::-webkit-scrollbar-track,
+.ps-table-wrap::-webkit-scrollbar-track,
+.pp-params-scroll::-webkit-scrollbar-track,
+.predict-panel-body::-webkit-scrollbar-track,
+.predict-results-studio::-webkit-scrollbar-track,
+.predict-filter-m05::-webkit-scrollbar-track,
+.results-table-body::-webkit-scrollbar-track,
+.analysis-detections-table-scroll::-webkit-scrollbar-track,
+.jobs-work-panel .jobs-table-body::-webkit-scrollbar-track,
+.lab-dock-pane-scroll::-webkit-scrollbar-track,
+.lab-dock-log-pre::-webkit-scrollbar-track,
+.lab-command-pre::-webkit-scrollbar-track,
+.pp-body::-webkit-scrollbar-track,
+.tw-main::-webkit-scrollbar-track,
+.tw-nav::-webkit-scrollbar-track,
+.tm-body::-webkit-scrollbar-track,
+.settings-panel-body::-webkit-scrollbar-track,
+.help-panel-body::-webkit-scrollbar-track,
+.help-chapter-body::-webkit-scrollbar-track,
+.help-cff-scroll::-webkit-scrollbar-track,
+.help-license-pre::-webkit-scrollbar-track,
+.models-body::-webkit-scrollbar-track,
+.models-main .jobs-table-body.models-table-body::-webkit-scrollbar-track,
+.models-desc-panel::-webkit-scrollbar-track,
+.models-card::-webkit-scrollbar-track,
+.mat-table-wrap::-webkit-scrollbar-track {
+  background: #0e0f10;
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.65),
+    inset 0 0 0 1px #1c1d1e;
+  margin: 2px 0;
+}
+
+.lab-scroll::-webkit-scrollbar-thumb,
+.home-panel-body::-webkit-scrollbar-thumb,
+.home-recent-jobs-panel::-webkit-scrollbar-thumb,
+.home-recent-jobs .jobs-table-body::-webkit-scrollbar-thumb,
+.projects-panel-body::-webkit-scrollbar-thumb,
+.projects-panel-body--empty::-webkit-scrollbar-thumb,
+.projects-panel-body--wizard::-webkit-scrollbar-thumb,
+.ps-project-stage-body::-webkit-scrollbar-thumb,
+.ps-table-wrap::-webkit-scrollbar-thumb,
+.pp-params-scroll::-webkit-scrollbar-thumb,
+.predict-panel-body::-webkit-scrollbar-thumb,
+.predict-results-studio::-webkit-scrollbar-thumb,
+.predict-filter-m05::-webkit-scrollbar-thumb,
+.results-table-body::-webkit-scrollbar-thumb,
+.analysis-detections-table-scroll::-webkit-scrollbar-thumb,
+.jobs-work-panel .jobs-table-body::-webkit-scrollbar-thumb,
+.lab-dock-pane-scroll::-webkit-scrollbar-thumb,
+.lab-dock-log-pre::-webkit-scrollbar-thumb,
+.lab-command-pre::-webkit-scrollbar-thumb,
+.pp-body::-webkit-scrollbar-thumb,
+.tw-main::-webkit-scrollbar-thumb,
+.tw-nav::-webkit-scrollbar-thumb,
+.tm-body::-webkit-scrollbar-thumb,
+.settings-panel-body::-webkit-scrollbar-thumb,
+.help-panel-body::-webkit-scrollbar-thumb,
+.help-chapter-body::-webkit-scrollbar-thumb,
+.help-cff-scroll::-webkit-scrollbar-thumb,
+.help-license-pre::-webkit-scrollbar-thumb,
+.models-body::-webkit-scrollbar-thumb,
+.models-main .jobs-table-body.models-table-body::-webkit-scrollbar-thumb,
+.models-desc-panel::-webkit-scrollbar-thumb,
+.models-card::-webkit-scrollbar-thumb,
+.mat-table-wrap::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3a3b3d 0%, #232425 100%);
+  border-radius: 5px;
+  border: 1px solid #4a4b4e;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 1px 2px rgb(0 0 0 / 0.35);
+}
+
+.lab-scroll::-webkit-scrollbar-thumb:hover,
+.home-panel-body::-webkit-scrollbar-thumb:hover,
+.home-recent-jobs-panel::-webkit-scrollbar-thumb:hover,
+.home-recent-jobs .jobs-table-body::-webkit-scrollbar-thumb:hover,
+.projects-panel-body::-webkit-scrollbar-thumb:hover,
+.projects-panel-body--empty::-webkit-scrollbar-thumb:hover,
+.projects-panel-body--wizard::-webkit-scrollbar-thumb:hover,
+.ps-project-stage-body::-webkit-scrollbar-thumb:hover,
+.ps-table-wrap::-webkit-scrollbar-thumb:hover,
+.pp-params-scroll::-webkit-scrollbar-thumb:hover,
+.predict-panel-body::-webkit-scrollbar-thumb:hover,
+.predict-results-studio::-webkit-scrollbar-thumb:hover,
+.predict-filter-m05::-webkit-scrollbar-thumb:hover,
+.results-table-body::-webkit-scrollbar-thumb:hover,
+.analysis-detections-table-scroll::-webkit-scrollbar-thumb:hover,
+.jobs-work-panel .jobs-table-body::-webkit-scrollbar-thumb:hover,
+.lab-dock-pane-scroll::-webkit-scrollbar-thumb:hover,
+.lab-dock-log-pre::-webkit-scrollbar-thumb:hover,
+.lab-command-pre::-webkit-scrollbar-thumb:hover,
+.pp-body::-webkit-scrollbar-thumb:hover,
+.tw-main::-webkit-scrollbar-thumb:hover,
+.tw-nav::-webkit-scrollbar-thumb:hover,
+.tm-body::-webkit-scrollbar-thumb:hover,
+.settings-panel-body::-webkit-scrollbar-thumb:hover,
+.help-panel-body::-webkit-scrollbar-thumb:hover,
+.help-chapter-body::-webkit-scrollbar-thumb:hover,
+.help-cff-scroll::-webkit-scrollbar-thumb:hover,
+.help-license-pre::-webkit-scrollbar-thumb:hover,
+.models-body::-webkit-scrollbar-thumb:hover,
+.models-main .jobs-table-body.models-table-body::-webkit-scrollbar-thumb:hover,
+.models-desc-panel::-webkit-scrollbar-thumb:hover,
+.models-card::-webkit-scrollbar-thumb:hover,
+.mat-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #4a4b4e 0%, #2c2d2f 100%);
+  border-color: #6a6b6e;
+}
+
+.lab-scroll::-webkit-scrollbar-corner,
+.pp-params-scroll::-webkit-scrollbar-corner,
+.predict-results-studio::-webkit-scrollbar-corner,
+.jobs-work-panel .jobs-table-body::-webkit-scrollbar-corner,
+.mat-table-wrap::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* —— D · Hairline flush (narrow nested lists) —— */
+.lab-scroll-narrow,
+.home-wizard-plan-scroll,
+.pp-queue-table-wrap,
+.predict-results-classes-tools-chips,
+.predict-results-class-sidebar,
+.predict-results-file-table-wrap,
+.predict-results-file-scroll,
+.predict-filter-m05-table-wrap,
+.tw-classes-m16 .tw-classes-table-body,
+.tw-syn-table-body,
+.analysis-detections-types-list,
+.ps-project-list,
+.help-toc,
+.help-md-table-wrap {
+  scrollbar-width: thin;
+  scrollbar-color: #2e2f32 transparent;
+}
+
+.lab-scroll-narrow::-webkit-scrollbar,
+.home-wizard-plan-scroll::-webkit-scrollbar,
+.pp-queue-table-wrap::-webkit-scrollbar,
+.predict-results-classes-tools-chips::-webkit-scrollbar,
+.predict-results-class-sidebar::-webkit-scrollbar,
+.predict-results-file-table-wrap::-webkit-scrollbar,
+.predict-results-file-scroll::-webkit-scrollbar,
+.predict-filter-m05-table-wrap::-webkit-scrollbar,
+.tw-classes-m16 .tw-classes-table-body::-webkit-scrollbar,
+.tw-syn-table-body::-webkit-scrollbar,
+.analysis-detections-types-list::-webkit-scrollbar,
+.ps-project-list::-webkit-scrollbar,
+.help-toc::-webkit-scrollbar,
+.help-md-table-wrap::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.lab-scroll-narrow::-webkit-scrollbar-track,
+.home-wizard-plan-scroll::-webkit-scrollbar-track,
+.pp-queue-table-wrap::-webkit-scrollbar-track,
+.predict-results-classes-tools-chips::-webkit-scrollbar-track,
+.predict-results-class-sidebar::-webkit-scrollbar-track,
+.predict-results-file-table-wrap::-webkit-scrollbar-track,
+.predict-results-file-scroll::-webkit-scrollbar-track,
+.predict-filter-m05-table-wrap::-webkit-scrollbar-track,
+.tw-classes-m16 .tw-classes-table-body::-webkit-scrollbar-track,
+.tw-syn-table-body::-webkit-scrollbar-track,
+.analysis-detections-types-list::-webkit-scrollbar-track,
+.ps-project-list::-webkit-scrollbar-track,
+.help-toc::-webkit-scrollbar-track,
+.help-md-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lab-scroll-narrow::-webkit-scrollbar-thumb,
+.home-wizard-plan-scroll::-webkit-scrollbar-thumb,
+.pp-queue-table-wrap::-webkit-scrollbar-thumb,
+.predict-results-classes-tools-chips::-webkit-scrollbar-thumb,
+.predict-results-class-sidebar::-webkit-scrollbar-thumb,
+.predict-results-file-table-wrap::-webkit-scrollbar-thumb,
+.predict-results-file-scroll::-webkit-scrollbar-thumb,
+.predict-filter-m05-table-wrap::-webkit-scrollbar-thumb,
+.tw-classes-m16 .tw-classes-table-body::-webkit-scrollbar-thumb,
+.tw-syn-table-body::-webkit-scrollbar-thumb,
+.analysis-detections-types-list::-webkit-scrollbar-thumb,
+.ps-project-list::-webkit-scrollbar-thumb,
+.help-toc::-webkit-scrollbar-thumb,
+.help-md-table-wrap::-webkit-scrollbar-thumb {
+  background: #2e2f32;
+  border-radius: 999px;
+}
+
+.lab-scroll-narrow::-webkit-scrollbar-thumb:hover,
+.home-wizard-plan-scroll::-webkit-scrollbar-thumb:hover,
+.pp-queue-table-wrap::-webkit-scrollbar-thumb:hover,
+.predict-results-classes-tools-chips::-webkit-scrollbar-thumb:hover,
+.predict-results-class-sidebar::-webkit-scrollbar-thumb:hover,
+.predict-results-file-table-wrap::-webkit-scrollbar-thumb:hover,
+.predict-results-file-scroll::-webkit-scrollbar-thumb:hover,
+.predict-filter-m05-table-wrap::-webkit-scrollbar-thumb:hover,
+.tw-classes-m16 .tw-classes-table-body::-webkit-scrollbar-thumb:hover,
+.tw-syn-table-body::-webkit-scrollbar-thumb:hover,
+.analysis-detections-types-list::-webkit-scrollbar-thumb:hover,
+.ps-project-list::-webkit-scrollbar-thumb:hover,
+.help-toc::-webkit-scrollbar-thumb:hover,
+.help-md-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: #4a4b4e;
+}
+
+.lab-scroll-narrow::-webkit-scrollbar-corner,
+.predict-results-classes-tools-chips::-webkit-scrollbar-corner {
+  background: transparent;
+}

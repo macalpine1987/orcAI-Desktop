@@ -26,9 +26,10 @@ describe("spectrogramPlayer", () => {
     expect(formatPlayerClock(3661)).toBe("1:01:01.0");
   });
 
-  it("formats m04 studio LCD clock without tenths", () => {
+  it("formats m04 studio LCD clock as MM:SS (no fractional seconds)", () => {
     expect(formatStudioLcdClock(287)).toBe("04:47");
-    expect(formatStudioLcdClock(1392)).toBe("23:12");
+    expect(formatStudioLcdClock(14.2)).toBe("00:14");
+    expect(formatStudioLcdClock(1392.567)).toBe("23:12");
     expect(formatStudioLcdClock(3661)).toBe("1:01:01");
   });
 

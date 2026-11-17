@@ -2,50 +2,58 @@
 
 ## The runtime does not start
 
-1. On **Home**, click **Restart**.
-2. Wait up to a minute: loading the neural network takes longer the first time.
-3. If the lamps still do not turn green, open **Tasks** and check the **Errors** tab in the console.
-4. If you moved the app to another computer, copy it in full. Everything it needs, including Python, is already inside; nothing else has to be installed.
+1. On the **Home** page, click **Restart**.
+2. Wait up to a minute: on the first launch, loading the neural network takes longer.
+3. If the indicators do not turn green, open the **Jobs** section and check the **Errors** tab in the console.
+4. If you move the application to another computer, copy the whole application. Python and the other components are included, so you do not need to install anything separately.
 
-## A recording is not added to the project
+## A recording cannot be added to a project
 
-The app accepts PCM WAV files from 16 to 32 bits. Floating-point files and other bit depths are rejected. If the header has no sample rate, or the file is damaged, the recording is not added to the table either: the app does not invent a sample rate.
+The application accepts WAV files in PCM format with a bit depth of 16 to 32 bits. Floating-point files and files with any other bit depth are rejected. A recording is also not added to the table if the file is damaged or its header does not specify a sampling rate: the application does not guess the rate.
 
-## A prediction job failed
+## Predictions ended with an error
 
-The most common causes are:
+The most likely causes are:
 
 - the WAV file was moved or deleted after it was added to the project;
 - the selected channel does not exist in the recording;
 - the model does not match the project parameters;
-- the disk is full.
+- the disk is out of free space.
 
-Open the job in **Tasks**: the **Log** tab describes the error.
+The description of the error is on the **Log** tab in the **Jobs** section.
 
-## The Snippets indicator is yellow
+## The “Snippets” indicator is yellow
 
-This means there are fewer snippets than the training settings require: each set needs the number of batches × the batch size.
+There are fewer snippets than the training settings require: each set needs at least `n_batch × batch size` snippets.
 
-If there are enough examples for at least one batch, training still starts — the app reduces the number of batches to what is available. The substituted numbers are shown in the job log. See the Training chapter, section "When there are not enough snippets".
+If there are enough examples for at least one batch, training will start: the application reduces the number of batches automatically. The adjusted values are shown in the task log. For details, see the “Training” chapter, section “If there are not enough snippets”.
 
-To turn the indicator green:
+To turn the indicator green, do one of the following:
 
-- in step 4 of the wizard, enter the number of batches from the job log, or smaller;
+- enter in wizard step 4 the number of batches from the task log, or a smaller number;
 - reduce the batch size;
 - add more annotated recordings.
 
 ## Not enough disk space
 
-Spectrograms and prepared training data take a lot of space. Delete unneeded outputs on the **Projects → Artifacts** tab or move the project to a drive with more free space.
+Spectrograms and prepared data take up a lot of space. Delete results you no longer need on the **Projects → Artifacts** tab, or move the project to a drive with more free space.
 
 ## Training was interrupted
 
-The best model saved before the stop remains in the project's `models/` folder. If you start training again with the same model name, that folder will be overwritten. To keep the result, give the new model a different name.
+The best model saved so far stays in the project’s `models/` folder. If you start training again with the same model name, that folder will be overwritten. To keep the result, give the new model a different name.
 
-## Filtering removes almost nothing
+## Filtering excludes almost nothing
 
-The default set is a minimum of 0 and no maximum, so nothing is removed. A class row with the same limits overrides **default**. On the **Filter** tab, set your own durations or click **orcAI-v1 example**.
+By default, the minimum is 0 and there is no maximum, so nothing is excluded. A row named after a class takes priority over the **default** row, even if the limits are the same. Set the durations you need on the **Filtering** tab. The **Example** button fills in the minimum values from the publication, and only for the classes of the built-in model.
 
-## Parts of the interface do not fit on screen
+## Interface elements do not fit on the screen
 
-Try a smaller scale in **Settings → Interface** or maximise the window. If controls are still cut off, let the developer know which section and scale it happens in.
+Reduce the scale in **Settings → Interface** or enlarge the window. If elements are still cut off, open an issue (see the section “Reporting a problem”) and say in which section and at which scale the problem occurs.
+
+## Reporting a problem
+
+Report problems with the application in the [Issues](https://github.com/macalpine1987/orcAI-Desktop/issues) section of the [orcAI Desktop](https://github.com/macalpine1987/orcAI-Desktop) repository on GitHub. In your report, include:
+
+- the application version (**Help & About → About**) and your operating system;
+- the section and the sequence of actions that led to the problem;
+- for a problem in a task: the task log (**Export log** in the **Jobs** section) and the command from the **Command** tab.

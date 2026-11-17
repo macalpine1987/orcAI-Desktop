@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
+import { installSidecarFetchProxy } from "./api/sidecarFetch";
 import App from "./App";
 import i18n from "./i18n";
 import { LabJobProvider } from "./lab/LabJobContext";
@@ -10,6 +11,8 @@ import { PreferencesProvider } from "./preferences/PreferencesContext";
 import { SidecarProvider } from "./sidecar/SidecarContext";
 import { SaveNoticeProvider } from "./ui/saveNotice";
 import "./index.css";
+
+installSidecarFetchProxy();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

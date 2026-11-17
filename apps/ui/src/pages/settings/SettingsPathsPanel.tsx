@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { clearSpectrogramCache, factoryResetDesktop } from "../../api/maintenance";
 import { useJobsListOptional } from "../../jobs/JobsListContext";
 import { pickDirectory } from "../../platform/dialog";
+import { formatUserFacingErrorRequired } from "../../lib/userFacingError";
 import {
   clearSpecCacheOnDisk,
   clearDesktopWebStorage,
@@ -79,6 +80,8 @@ export function SettingsPathsPanel() {
   const [logDisplay, setLogDisplay] = useState("");
   const [logAbs, setLogAbs] = useState("");
   const [busy, setBusy] = useState<"cache" | "reset" | null>(null);
+  /** Sync gate — blocks double Clear/Reset before React re-paints ``busy``. */
+  const busyRef = useRef(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -118,6 +121,8 @@ export function SettingsPathsPanel() {
   }, [setProjectsRoot, t]);
 
   const onClearCache = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy("cache");
     setActionError(null);
     try {
@@ -129,13 +134,16 @@ export function SettingsPathsPanel() {
       invalidateSpectrogramTileCache();
       notifySaved(t("settings.pathClearCacheDone"));
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : String(err));
+      setActionError(formatUserFacingErrorRequired(err, t));
     } finally {
+      busyRef.current = false;
       setBusy(null);
     }
   }, [notifySaved, sidecarRunning, t]);
 
   const onConfirmReset = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy("reset");
     setActionError(null);
     try {
@@ -155,8 +163,9 @@ export function SettingsPathsPanel() {
       await resetToFactoryDefaults();
       setConfirmReset(false);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : String(err));
+      setActionError(formatUserFacingErrorRequired(err, t));
     } finally {
+      busyRef.current = false;
       setBusy(null);
     }
   }, [jobsList, resetToFactoryDefaults, sidecarBusy, sidecarRunning, stopAll]);

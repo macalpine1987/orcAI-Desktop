@@ -20,9 +20,10 @@ describe("SpectrogramFileSegmentRail", () => {
     unmount();
   });
 
-  it("renders m04 studio strip: wave, file, muted meta, sep, segment, nav", () => {
+  it("renders m04 studio strip: fileframe with name+arrows, muted meta, sep, segment, nav", () => {
     const onFilePrev = vi.fn();
     const onFileNext = vi.fn();
+    const onFileMenuToggle = vi.fn();
     const { container, unmount } = renderWithProviders(
       <SpectrogramFileSegmentRail
         studioLayout
@@ -34,7 +35,7 @@ describe("SpectrogramFileSegmentRail", () => {
         onSegmentSelect={vi.fn()}
         fileName="01 Just Passing Through.wav"
         fileMeta="48 кГц · канал 1 · 23:12"
-        onFileMenuToggle={vi.fn()}
+        onFileMenuToggle={onFileMenuToggle}
         onFilePrev={onFilePrev}
         onFileNext={onFileNext}
         canFilePrev
@@ -45,26 +46,56 @@ describe("SpectrogramFileSegmentRail", () => {
       container.querySelector(".analysis-segment-rail-studio-head"),
     ).toBeTruthy();
     expect(
+      container.querySelector(".analysis-segment-rail-studio-fileframe"),
+    ).toBeTruthy();
+    expect(
       container.querySelector(".analysis-segment-rail-studio-wave"),
     ).toBeTruthy();
     expect(
       container.querySelector(".analysis-segment-rail-studio-filename")?.textContent,
     ).toBe("01 Just Passing Through.wav");
+    // Legacy separate filemenu / filenav clusters are gone from Analysis.
     expect(
       container.querySelector("button.analysis-segment-rail-studio-filemenu"),
-    ).toBeTruthy();
+    ).toBeNull();
+    expect(
+      container.querySelector(".analysis-segment-rail-studio-filenav"),
+    ).toBeNull();
     const fileNavBtns = container.querySelectorAll(
-      ".analysis-segment-rail-studio-filenav-btn",
+      ".analysis-segment-rail-studio-fileframe-nav",
     );
     expect(fileNavBtns.length).toBe(2);
+    for (const btn of fileNavBtns) {
+      const path = btn.querySelector("path");
+      expect(path?.getAttribute("fill")).toBe("currentColor");
+      expect(path?.getAttribute("stroke")).toBe("none");
+    }
     (fileNavBtns[0] as HTMLButtonElement).click();
     (fileNavBtns[1] as HTMLButtonElement).click();
     expect(onFilePrev).toHaveBeenCalledOnce();
     expect(onFileNext).toHaveBeenCalledOnce();
+    const main = container.querySelector(
+      "button.analysis-segment-rail-studio-fileframe-main",
+    ) as HTMLButtonElement;
+    expect(main).toBeTruthy();
+    expect(main.getAttribute("aria-expanded")).toBe("false");
     expect(
-      container.querySelector(".analysis-segment-rail-studio-filemeta-muted")
-        ?.textContent,
-    ).toBe("48 кГц · канал 1 · 23:12");
+      main.querySelector(".analysis-segment-rail-studio-fileframe-caret"),
+    ).toBeTruthy();
+    main.click();
+    expect(onFileMenuToggle).toHaveBeenCalledOnce();
+    const wrap = container.querySelector(
+      ".analysis-segment-rail-studio-fileframe-wrap",
+    );
+    const end = container.querySelector(
+      ".analysis-segment-rail-studio-file-end",
+    );
+    const meta = container.querySelector(
+      ".analysis-segment-rail-studio-filemeta-muted",
+    );
+    expect(meta?.textContent).toBe("48 кГц · канал 1 · 23:12");
+    expect(wrap?.nextElementSibling).toBe(end);
+    expect(end?.firstElementChild).toBe(meta);
     expect(
       container.querySelector(".analysis-segment-rail-studio-sep"),
     ).toBeTruthy();
@@ -96,6 +127,100 @@ describe("SpectrogramFileSegmentRail", () => {
     unmount();
   });
 
+  it("orders fileframe → rate meta → Исходные/Фильтр", () => {
+    const { container, unmount } = renderWithProviders(
+      <SpectrogramFileSegmentRail
+        studioLayout
+        durationSec={450}
+        viewStart={0}
+        viewSpan={200}
+        segmentIndex={0}
+        onViewStartChange={vi.fn()}
+        onSegmentSelect={vi.fn()}
+        fileName="track.wav"
+        fileMeta="48 кГц · канал 1 · 23:12"
+        onFileMenuToggle={vi.fn()}
+        labelSource={{
+          kind: "original",
+          originalAvailable: true,
+          filteredAvailable: true,
+          fileName: "track_predicted_filtered.txt",
+          onChange: vi.fn(),
+        }}
+      />,
+    );
+    const end = container.querySelector(
+      ".analysis-segment-rail-studio-file-end",
+    );
+    const children = Array.from(end?.children ?? []).map(
+      (el) => el.className,
+    );
+    expect(children[0]).toContain("analysis-segment-rail-studio-filemeta-muted");
+    expect(children[1]).toContain("analysis-segment-rail-studio-labels");
+    expect(
+      container.querySelector(".analysis-segment-rail-studio-fileframe-wrap")
+        ?.nextElementSibling,
+    ).toBe(end);
+    unmount();
+  });
+
+  it("opens a colormap-style file list under the frame (not a modal)", () => {
+    const onSelect = vi.fn();
+    const onClose = vi.fn();
+    const { container, unmount } = renderWithProviders(
+      <SpectrogramFileSegmentRail
+        studioLayout
+        durationSec={450}
+        viewStart={0}
+        viewSpan={200}
+        segmentIndex={0}
+        onViewStartChange={vi.fn()}
+        onSegmentSelect={vi.fn()}
+        fileName="track_b.wav"
+        onFileMenuToggle={vi.fn()}
+        onFileMenuClose={onClose}
+        fileMenuOpen
+        fileMenuFiles={[
+          { name: "track_a.wav" },
+          { name: "track_b.wav" },
+          { name: "track_c.wav" },
+        ]}
+        fileMenuActiveName="track_b.wav"
+        onFileMenuSelect={onSelect}
+        onFilePrev={vi.fn()}
+        onFileNext={vi.fn()}
+        canFilePrev={false}
+        canFileNext={false}
+      />,
+    );
+    expect(
+      container.querySelector(".predict-results-file-picker-modal"),
+    ).toBeNull();
+    const list = container.querySelector(
+      ".analysis-segment-rail-studio-filemenu-list",
+    );
+    expect(list).toBeTruthy();
+    const items = list?.querySelectorAll(
+      ".analysis-segment-rail-studio-filemenu-item",
+    );
+    expect(items?.length).toBe(3);
+    expect(items?.[1]?.classList.contains("is-selected")).toBe(true);
+    (items?.[0] as HTMLButtonElement).click();
+    expect(onSelect).toHaveBeenCalledWith("track_a.wav");
+    expect(onClose).toHaveBeenCalledOnce();
+    const main = container.querySelector(
+      "button.analysis-segment-rail-studio-fileframe-main",
+    );
+    expect(main?.classList.contains("is-open")).toBe(true);
+    expect(main?.getAttribute("aria-expanded")).toBe("true");
+    const nav = container.querySelectorAll(
+      ".analysis-segment-rail-studio-fileframe-nav",
+    );
+    expect((nav[0] as HTMLButtonElement).disabled).toBe(true);
+    expect((nav[1] as HTMLButtonElement).disabled).toBe(true);
+    unmount();
+  });
+
   it("opens the colormap menu on the right of the separator", () => {
     const onColormapChange = vi.fn();
     const { container, unmount } = renderWithProviders(
@@ -114,13 +239,12 @@ describe("SpectrogramFileSegmentRail", () => {
     const right = container.querySelector(".analysis-segment-rail-studio-right");
     const sep = container.querySelector(".analysis-segment-rail-studio-sep");
     expect(sep?.nextElementSibling).toBe(right);
+    const cmap = right?.querySelector(".analysis-segment-rail-studio-cmap");
     const button = right?.querySelector(
       ".analysis-segment-rail-studio-cmap-btn",
     ) as HTMLButtonElement;
     expect(button.textContent).toContain("Greys");
-    expect(right?.firstElementChild).toBe(
-      container.querySelector(".analysis-segment-rail-studio-cmap"),
-    );
+    expect(right?.firstElementChild).toBe(cmap);
     act(() => {
       button.click();
     });
@@ -132,6 +256,47 @@ describe("SpectrogramFileSegmentRail", () => {
       (items[2] as HTMLButtonElement).click();
     });
     expect(onColormapChange).toHaveBeenCalledWith("plasma");
+    unmount();
+  });
+
+  it("keeps Classes/Player separate from the colormap control", () => {
+    const onClasses = vi.fn();
+    const { container, unmount } = renderWithProviders(
+      <SpectrogramFileSegmentRail
+        studioLayout
+        durationSec={450}
+        viewStart={0}
+        viewSpan={200}
+        segmentIndex={0}
+        onViewStartChange={vi.fn()}
+        onSegmentSelect={vi.fn()}
+        colormap="gray"
+        onColormapChange={vi.fn()}
+        onClassesFilterToggle={onClasses}
+        classesFilterOpen={false}
+      />,
+    );
+    const right = container.querySelector(".analysis-segment-rail-studio-right");
+    const cmap = right?.querySelector(".analysis-segment-rail-studio-cmap");
+    const mode = right?.querySelector(".analysis-segment-rail-studio-mode");
+    expect(cmap).toBeTruthy();
+    expect(mode).toBeTruthy();
+    expect(cmap?.contains(mode as Node)).toBe(false);
+    expect(mode?.previousElementSibling).toBe(cmap);
+    const modeBtns = mode?.querySelectorAll(
+      ".analysis-segment-rail-studio-mode-btn",
+    );
+    expect(modeBtns?.length).toBe(2);
+    expect(modeBtns?.[0]?.getAttribute("aria-pressed")).toBe("false");
+    expect(modeBtns?.[1]?.getAttribute("aria-pressed")).toBe("true");
+    act(() => {
+      (modeBtns?.[0] as HTMLButtonElement).click();
+    });
+    expect(onClasses).toHaveBeenCalledOnce();
+    act(() => {
+      (modeBtns?.[1] as HTMLButtonElement).click();
+    });
+    expect(onClasses).toHaveBeenCalledOnce();
     unmount();
   });
 
@@ -156,6 +321,12 @@ describe("SpectrogramFileSegmentRail", () => {
     expect(nav.length).toBe(2);
     expect((nav[0] as HTMLButtonElement).disabled).toBe(true);
     expect((nav[1] as HTMLButtonElement).disabled).toBe(true);
+    // Option A: solid filled triangles (not outline chevrons).
+    for (const btn of nav) {
+      const path = btn.querySelector("path");
+      expect(path?.getAttribute("fill")).toBe("currentColor");
+      expect(path?.getAttribute("stroke")).toBe("none");
+    }
     unmount();
   });
 
@@ -172,6 +343,37 @@ describe("SpectrogramFileSegmentRail", () => {
       />,
     );
     expect(container.firstChild).toBeNull();
+    unmount();
+  });
+
+  it("fileNavOnly still renders without WAV duration (Filter track)", () => {
+    const { container, unmount } = renderWithProviders(
+      <SpectrogramFileSegmentRail
+        studioLayout
+        fileNavOnly
+        durationSec={0}
+        viewStart={0}
+        viewSpan={1}
+        segmentIndex={0}
+        onViewStartChange={vi.fn()}
+        onSegmentSelect={vi.fn()}
+        fileName="track.wav"
+        onFilePrev={vi.fn()}
+        onFileNext={vi.fn()}
+        canFilePrev={false}
+        canFileNext={true}
+      />,
+    );
+    expect(
+      container.querySelector(".analysis-segment-rail-studio.is-file-nav-only"),
+    ).toBeTruthy();
+    expect(
+      container.querySelector(".analysis-segment-rail-studio-filename")
+        ?.textContent,
+    ).toBe("track.wav");
+    expect(
+      container.querySelector(".analysis-segment-rail-studio-right"),
+    ).toBeNull();
     unmount();
   });
 

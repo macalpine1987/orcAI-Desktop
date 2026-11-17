@@ -1,53 +1,78 @@
-# Getting started
+# Getting Started
 
-## What is orcAI Desktop
+## About the application
 
-orcAI Desktop is a graphical interface for orcAI 3.0.4, a system that automatically detects killer whale sounds. From here you can create a project, run detection on recordings, review the results on a spectrogram and train your own model.
+orcAI Desktop is a graphical interface for orcAI 3.0.4, a tool for automatic recognition of killer whale acoustic signals. With the application you can:
 
-The original, unmodified orcAI runs underneath, so you get the same results as you would from the command line. If you need to repeat an action in the terminal or cite it in a paper, open the job's **Command** tab: it shows the exact `orcai` command the app ran.
+- create projects and add audio recordings to them;
+- recognize signals in recordings using pretrained models;
+- review results on a spectrogram and export them for further analysis;
+- train and fine-tune your own models.
+
+The computations are performed by the same orcAI that you use on the command line. Projects created in the application can be opened in a terminal, and the other way around. To see the exact command behind any run, open the **Command** tab in the console of the **Jobs** section.
+
+## System requirements and installation
+
+Application version: orcAI Desktop 1.0.4. The primary release targets macOS (Apple silicon); this build runs on Windows.
+
+Computations run on the central processor (CPU) by default. You can switch to the graphics processor (GPU; Metal on macOS) in **Settings → Runtime**. There is no fixed minimum for memory (RAM). Training a model takes from a few hours to a day and requires tens of gigabytes of free disk space (see the “Training” chapter).
+
+The application is distributed as a self-contained package: Python and all other components are included. On macOS, copy the whole application package (`.app`), for example to your Applications folder. On Windows, install or copy this build’s distribution as a whole (no separate system Python).
+
+## Conventions
+
+| Formatting | Meaning |
+|------------|---------|
+| **Bold** | Names of sections, tabs, buttons, and interface fields |
+| `Monospace` | File and folder names, orcAI commands and parameters, class codes |
+| “Quotation marks” | Chapter titles and values you select from a list |
+
+> **Note.** Additional information. You can complete the procedure without it.
+
+> **Important.** A condition without which the procedure fails or causes data loss.
 
 ## First launch
 
-1. Open the app. The computing components are off at startup, so the app does not use memory until you need it.
-2. On **Home**, click **Start**. The app turns on two parts: the Sidecar, an internal service the interface uses to talk to orcAI, and the orcAI engine — the neural network itself.
-3. Wait until both lamps in the Runtime panel turn green. This usually takes from a few seconds to a minute.
-4. Go to **Projects** and create a new project or open an existing one.
+When the application opens, the Sidecar service and the orcAI engine are stopped, so no heavy computation is running. To get started:
 
-To start the components every time the app opens, turn on **Start engine on launch** under **Settings → Runtime**. The switch is off by default.
+1. On the **Home** page, click **Start**. This launches the Sidecar service (the intermediary between the interface and orcAI) and the orcAI engine (the process that performs the computations).
+2. Wait until the indicators in the “Runtime” block turn green. This usually takes from a few seconds to a minute.
+3. Go to the **Projects** section and create a new project or open an existing one.
 
-The ready-made models `orcai-isl-v1` and `orcai-nor-v1` are included with the app — there is nothing to download.
+To start the runtime automatically when the application opens, turn on **Start engine on launch** (**Settings → Runtime**). This option is off by default.
 
-## Where to start
+The built-in models `orcai-isl-v1` and `orcai-nor-v1` are part of the application; you do not need to download them separately.
 
-Most work follows one of two paths.
+## Main workflows
 
-**Detect sounds in your recordings:**
+### Recognizing signals in recordings
 
-1. **Projects** — add your WAV files.
-2. **Predictions** — choose a model and start processing.
-3. **Analysis** tab — review the detected signals on the spectrogram.
-4. If needed, remove signals that are too short or too long on the **Filter** tab.
+1. In the **Projects** section, add your WAV files.
+2. In the **Predictions** section, on the **Parameters** tab, select a model and files, then click **Start recognition**.
+3. On the **Analysis** tab, review the detected signals on the spectrogram.
+4. If needed, remove signals that are too short or too long on the **Filtering** tab.
 
-**Train your own model:**
+### Training your own model
 
-1. **Projects** — create a project with the goal **Model training** or **Full cycle**, then add WAV files and `.txt` annotations whose names match the recordings.
-2. **Training** — open the wizard and go through its five steps. Until there is at least one annotation, the wizard is unavailable; spectrograms on the board can be built before that.
-3. **Models** — test the new model and start using it for predictions.
+1. In the **Projects** section, create a project with the goal “Model training” or “Full cycle”. Add WAV files and `.txt` annotation files; each annotation file must have the same name as its recording.
+2. In the **Training Pipeline** section, open the training wizard and complete its five steps.
+3. In the **Models** section, evaluate the model and assign it for recognition.
 
-The **Results** section summarises the whole project, and **Tasks** keeps the history of every run.
+> **Important.** The training wizard and the pipeline steps that need annotations are unavailable until the project contains at least one annotation whose name matches a recording. See the “Training” chapter, section “Preparing the data”.
 
-## Language
+A summary across all recordings in the project is available in the **Results** section. The history of runs is in the **Jobs** section.
 
-Switch the interface and help language in **Settings → Interface**. Sound class names (`WHISTLE`, `BUZZ` and others), file names and orcAI commands are never translated, so they always match the orcAI documentation and scientific papers.
+## Interface language
 
-## The Help button
+Select the interface and help language in **Settings → Interface**. Class codes (`WHISTLE`, `BUZZ`, and others), file names, and orcAI commands are not translated, so that you can match them with the orcAI documentation and scientific publications.
 
-Every section has a **Help** button in the top-right corner. It opens the manual chapter for the screen you are on.
+## Help & About {#help-section}
+The **Help & About** section in the sidebar has three tabs:
 
-## License and authors
+- **Manual**: this document;
+- **About**: version and authors;
+- **License**: terms of use.
 
-License information (CC BY-SA 4.0) and credits for orcAI Desktop and orcAI are on the **About** and **License** tabs. Third-party components are listed in the `THIRD_PARTY_LICENSES` file inside the app package.
+The **Help** button in the top right corner of every section opens the manual chapter for the current screen.
 
-## The Help section {#help-section}
-
-The **Help** section in the sidebar has three tabs: **Manual** (this documentation), **About** and **License**.
+The application is distributed under the CC BY-SA 4.0 license. Information about third-party components is in the `THIRD_PARTY_LICENSES` file in the application package.

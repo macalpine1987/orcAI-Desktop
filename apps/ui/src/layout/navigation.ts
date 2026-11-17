@@ -56,10 +56,47 @@ export function resolveShellFocus(
   return workspace.activeProjectKind === "training" ? "training" : "recognition";
 }
 
+const PROJECT_REQUIRED_NAV_IDS = new Set<NavItemId>([
+  "predict",
+  "pipeline",
+  "models",
+  "results",
+  "jobs",
+]);
+
+/** An active project is a selected id with a folder. None created is the same gap. */
+export function hasActiveProject(workspace: {
+  activeProjectId: string | null;
+  projectDir: string | null;
+}): boolean {
+  return Boolean(workspace.activeProjectId && workspace.projectDir);
+}
+
+/**
+ * Recognition, Training, Models, Results, and Tasks stay visible, but are
+ * not clickable until a project is active.
+ */
+export function projectRequiredNavInactive(
+  id: NavItemId,
+  workspace: {
+    activeProjectId: string | null;
+    projectDir: string | null;
+  },
+): boolean {
+  return PROJECT_REQUIRED_NAV_IDS.has(id) && !hasActiveProject(workspace);
+}
+
+export function isProjectRequiredPath(pathname: string): boolean {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  return NAV_ITEMS.some(
+    (item) => PROJECT_REQUIRED_NAV_IDS.has(item.id) && item.path === path,
+  );
+}
+
 /**
  * Sidebar «Обучение» stays visible, but is not clickable for a
  * recognition-only project. Training and full-cycle focuses keep it active.
- * No active project does not disable the item.
+ * A missing project is not a focus mismatch; the project gate covers that.
  */
 export function pipelineNavInactive(
   focus: ProjectFocus | null | undefined,
@@ -71,4 +108,21 @@ export function pipelineNavInactiveForWorkspace(
   workspace: ShellFocusInput,
 ): boolean {
   return pipelineNavInactive(resolveShellFocus(workspace));
+}
+
+/**
+ * Sidebar «Распознавание» stays visible, but is not clickable for a
+ * training-only project. Recognition and full-cycle focuses keep it active.
+ * A missing project is not a focus mismatch; the project gate covers that.
+ */
+export function predictNavInactive(
+  focus: ProjectFocus | null | undefined,
+): boolean {
+  return focus === "training";
+}
+
+export function predictNavInactiveForWorkspace(
+  workspace: ShellFocusInput,
+): boolean {
+  return predictNavInactive(resolveShellFocus(workspace));
 }

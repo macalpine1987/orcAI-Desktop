@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 import { fetchProjects } from "../api/projects";
-import { useSidecarStatus } from "./useSidecarStatus";
+import { WORKSPACE_RECONCILE_POLL_MS } from "../lib/pollIntervals";
+import { silentCatch } from "../lib/silentCatch";
 import { reconcileWorkspaceWithProjects } from "../workspace/project";
-
-const RECONCILE_POLL_MS = 12_000;
+import { useSidecarStatus } from "./useSidecarStatus";
 
 /**
  * When Sidecar is online, refresh the project registry (and periodically while
@@ -24,8 +24,9 @@ export function useReconcileWorkspaceOnRuntime(): void {
         const list = await fetchProjects();
         if (cancelled || gen !== genRef.current) return;
         reconcileWorkspaceWithProjects(list);
-      } catch {
+      } catch (err) {
         // Sidecar may still be warming; poll / next online retry covers it.
+        silentCatch("reconcileWorkspace")(err);
       }
     };
 
@@ -33,7 +34,7 @@ export function useReconcileWorkspaceOnRuntime(): void {
     const timer = window.setInterval(() => {
       if (document.visibilityState === "hidden") return;
       void run();
-    }, RECONCILE_POLL_MS);
+    }, WORKSPACE_RECONCILE_POLL_MS);
 
     const onFocus = () => {
       void run();

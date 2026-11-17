@@ -161,6 +161,11 @@ def normalize_job_params(command: str, params: dict[str, Any] | None) -> dict[st
     if command == "create-recording-table":
         out.pop("overwrite", None)
         out.pop("update_table_path", None)
+        # Desktop-only post-step; not an orcAI CLI flag.
+        out.pop("fill_call_possibility", None)
+    if command == "create-label-arrays":
+        # Wizard-only map when -ce file is absent; not a CLI flag.
+        out.pop("call_equivalences_fallback", None)
     if command == "create-tvt-data":
         out.pop("output_dir", None)
     if command == "test":

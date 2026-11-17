@@ -7,4 +7,5 @@ commands.allow = [
   "sidecar_is_running",
   "sidecar_get_port",
   "sidecar_engine_start",
+  "sidecar_http_exchange",
 ]

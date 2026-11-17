@@ -40,7 +40,7 @@ pip install --upgrade pip wheel
 ORCAI_REF="${ORCAI_GIT_REF:-v3.0.4}"
 
 install_sidecar() {
-  pip install "${SIDECAR}[analytics]"
+  pip install "${SIDECAR}"
 }
 
 install_sidecar_tarball() {
@@ -61,8 +61,8 @@ install_sidecar_tarball() {
   fi
   pip install "uv_build>=0.11.2,<0.14.0" wheel setuptools
   pip install "${tgz}"
-  pip install "${SIDECAR}[analytics]" --no-deps
-  pip install "fastapi>=0.115.0" "uvicorn[standard]>=0.32.0" "pydantic>=2.0" "pillow>=10.0" "soundfile>=0.12.0" "duckdb>=1.0"
+  pip install "${SIDECAR}" --no-deps
+  pip install "fastapi>=0.115.0" "uvicorn[standard]>=0.32.0" "pydantic>=2.0" "pillow>=10.0" "soundfile>=0.12.0"
 }
 
 if [[ "${ORCAI_BUNDLE_MODE:-}" == "tarball" ]] || [[ "${ORCAI_REF}" =~ ^v[0-9] ]]; then

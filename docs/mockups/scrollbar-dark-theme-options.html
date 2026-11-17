@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>orcAI · scrollbar mockups · dark Lab</title>
+<style>
+  :root {
+    --font: "IBM Plex Sans", Inter, system-ui, sans-serif;
+    --bg: #0c0c0c;
+    --panel: linear-gradient(180deg, #1c1d1f 0%, #151617 100%);
+    --text: #ececec;
+    --muted: #8a8b8e;
+    --border: #3a3a3c;
+    --border-strong: #4a4b4e;
+    --recess: #121314;
+    --face: #1c1d1e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+  }
+  .frame {
+    width: min(1100px, 100%);
+    margin: 1.25rem auto;
+    padding: 0 1rem 2.5rem;
+  }
+  h1 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    font-weight: 650;
+  }
+  .hint {
+    margin: 0 0 1.25rem;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+    max-width: 52rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.9rem;
+  }
+  .card {
+    border: 1px solid #2a2c2f;
+    border-radius: 0.5rem;
+    background: var(--panel);
+    box-shadow: 0 14px 36px rgb(0 0 0 / 0.4);
+    padding: 0.75rem 0.75rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    min-height: 0;
+  }
+  .card h2 {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .card .name {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--text);
+    font-weight: 550;
+  }
+  .card .desc {
+    margin: 0;
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .badge {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.08rem 0.35rem;
+    border-radius: 999px;
+    border: 1px solid #5a4a20;
+    background: #2a2410;
+    color: #f5de8a;
+    font-size: 10px;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  .stage {
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    background: var(--recess);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.55);
+    height: 11.5rem;
+    overflow: auto;
+    padding: 0.45rem 0.5rem;
+  }
+  .row {
+    height: 1.55rem;
+    margin-bottom: 0.28rem;
+    border-radius: 0.28rem;
+    border: 1px solid #2e2f32;
+    background: linear-gradient(180deg, #2a2b2d 0%, #1c1d1e 100%);
+  }
+  .row:last-child { margin-bottom: 0; }
+
+  /* A — Home plan (уже в коде) */
+  .sb-a {
+    scrollbar-width: thin;
+    scrollbar-color: #3a3c3f #161718;
+  }
+  .sb-a::-webkit-scrollbar { width: 7px; }
+  .sb-a::-webkit-scrollbar-track {
+    background: #161718;
+    border-radius: 999px;
+  }
+  .sb-a::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #4a4c50, #2e3033);
+    border: 1px solid #1a1b1c;
+    border-radius: 999px;
+  }
+
+  /* B — Analysis chips (уже в коде) */
+  .sb-b {
+    scrollbar-width: thin;
+    scrollbar-color: #6a6b6e #121314;
+  }
+  .sb-b::-webkit-scrollbar { width: 8px; }
+  .sb-b::-webkit-scrollbar-track {
+    background: #121314;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px #2a2a2c;
+  }
+  .sb-b::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #8a8b8e 0%, #3e3f42 100%);
+    border-radius: 999px;
+    border: 1px solid #2a2a2c;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
+  }
+  .sb-b::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #b0b1b4 0%, #4a4b4e 100%);
+  }
+
+  /* C — Instrument recess (предложение) */
+  .sb-c {
+    scrollbar-width: thin;
+    scrollbar-color: #4a4b4e #0e0f10;
+  }
+  .sb-c::-webkit-scrollbar { width: 9px; }
+  .sb-c::-webkit-scrollbar-track {
+    background: #0e0f10;
+    border-radius: 6px;
+    box-shadow:
+      inset 0 1px 2px rgb(0 0 0 / 0.65),
+      inset 0 0 0 1px #1c1d1e;
+    margin: 2px 0;
+  }
+  .sb-c::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #3a3b3d 0%, #232425 100%);
+    border-radius: 5px;
+    border: 1px solid #4a4b4e;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.1),
+      0 1px 2px rgb(0 0 0 / 0.35);
+  }
+  .sb-c::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #4a4b4e 0%, #2c2d2f 100%);
+    border-color: #6a6b6e;
+  }
+
+  /* D — Hairline flush (минимал) */
+  .sb-d {
+    scrollbar-width: thin;
+    scrollbar-color: #2e2f32 transparent;
+  }
+  .sb-d::-webkit-scrollbar { width: 5px; }
+  .sb-d::-webkit-scrollbar-track { background: transparent; }
+  .sb-d::-webkit-scrollbar-thumb {
+    background: #2e2f32;
+    border-radius: 999px;
+  }
+  .sb-d::-webkit-scrollbar-thumb:hover {
+    background: #4a4b4e;
+  }
+
+  /* E — LCD rail (тонкий «металл») */
+  .sb-e {
+    scrollbar-width: thin;
+    scrollbar-color: #5a5c60 #101112;
+  }
+  .sb-e::-webkit-scrollbar { width: 6px; }
+  .sb-e::-webkit-scrollbar-track {
+    background: #101112;
+    border-radius: 999px;
+    border: 1px solid #1c1d1e;
+  }
+  .sb-e::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #2a2b2d, #5a5c60 45%, #2a2b2d);
+    border-radius: 999px;
+    border: 1px solid #1a1b1c;
+  }
+  .sb-e::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #3a3b3d, #7a7c80 45%, #3a3b3d);
+  }
+
+  .legend {
+    margin-top: 1.35rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid #2a2c2f;
+    border-radius: 0.5rem;
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .legend strong { color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <h1>Вертикальные прокрутки · тёмная Lab-тема</h1>
+    <p class="hint">
+      Макеты под Instrument/DAW: recess track, charcoal thumb, без цветных акцентов.
+      Прокрутите каждую колонку. A/B — уже в коде; C–E — кандидаты на общий стиль.
+    </p>
+
+    <div class="grid">
+      <section class="card">
+        <h2>A · Home plan <span class="badge">в коде</span></h2>
+        <p class="name">Thin charcoal</p>
+        <p class="desc">7px, тихий градиент. Как рейка плана на Главной.</p>
+        <div class="stage sb-a" data-variant="A">
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>B · Analysis chips <span class="badge">в коде</span></h2>
+        <p class="name">Metal inset</p>
+        <p class="desc">8px, светлее thumb + inset highlight. Чипы классов.</p>
+        <div class="stage sb-b" data-variant="B">
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>C · Instrument <span class="badge">принято · колонки</span></h2>
+        <p class="name">Recess + raised</p>
+        <p class="desc">9px, track вдавлен, thumb как кнопка mat-raised. Lab columns (.lab-scroll).</p>
+        <div class="stage sb-c" data-variant="C">
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>D · Minimal <span class="badge">принято · узкие</span></h2>
+        <p class="name">Hairline flush</p>
+        <p class="desc">5px, без track. Узкие списки (.lab-scroll-narrow).</p>
+        <div class="stage sb-d" data-variant="D">
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>E · LCD rail</h2>
+        <p class="name">Brushed metal</p>
+        <p class="desc">6px, вертикальный «металл» на thumb. Ближе к LCD-хром.</p>
+        <div class="stage sb-e" data-variant="E">
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+          <div class="row"></div><div class="row"></div><div class="row"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="legend">
+      <strong>Принято (2026-11-17):</strong> Lab-колонки —
+      <strong>C</strong> (Instrument recess+raised) → класс <code>.lab-scroll</code>.
+      Узкие списки (рейка плана, чипы классов, очередь WAV) —
+      <strong>D</strong> (hairline) → <code>.lab-scroll-narrow</code>.
+      Реализация: <code>apps/ui/src/styles/scrollbars.css</code>.
+    </div>
+  </div>
+</body>
+</html>

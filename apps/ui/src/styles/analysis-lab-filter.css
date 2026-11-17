@@ -1,0 +1,2611 @@
+/* Extracted from analysis-lab.css (move-only, cascade order preserved) */
+@layer components {
+  .predict-filter-studio-header {
+    flex-shrink: 0;
+    padding: 0.875rem 1rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--mat-raised-gradient);
+    color: var(--text);
+  }
+
+  .predict-filter-studio-header .text-foreground {
+    color: var(--text);
+  }
+
+  .predict-filter-studio-header .text-foreground-muted {
+    color: var(--text-muted);
+  }
+
+  .predict-filter-studio-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-width: 48rem;
+    padding: 1rem;
+  }
+
+  .predict-filter-studio-empty {
+    border-radius: 0.5rem;
+    border: 1px dashed var(--border-strong);
+    padding: 2.5rem 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .predict-results-toolbar {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    align-self: stretch;
+    gap: 0;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 3.25rem;
+    padding: 0.375rem 0.5rem;
+    background: var(--mat-raised-gradient);
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.75rem;
+    box-shadow: var(--shadow-out);
+  }
+
+  .predict-results-toolbar-logic {
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .predict-logic-cluster {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--border);
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-in);
+  }
+
+  .predict-logic-cluster-end {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .predict-logic-sep {
+    width: 1px;
+    align-self: stretch;
+    margin: 0.25rem 0.5rem;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .predict-logic-counter {
+    padding: 0 0.375rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--text);
+  }
+
+  .predict-logic-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    padding: 0.25rem 0.4375rem;
+    border-radius: 0.3125rem;
+    border: 1px solid var(--border);
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-in);
+    cursor: pointer;
+    user-select: none;
+    color: var(--text-muted);
+    font-size: 0.6875rem;
+    white-space: nowrap;
+  }
+
+  .predict-logic-btn {
+    border-radius: 0.3125rem;
+    border: 1px solid var(--border-strong);
+    background: var(--mat-raised-gradient);
+    padding: 0.3125rem 0.625rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    transition: filter 0.12s ease;
+    box-shadow: var(--shadow-out);
+  }
+
+  .predict-logic-btn:hover:not(:disabled) {
+    filter: brightness(1.04);
+  }
+
+  .predict-logic-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+
+  .predict-logic-btn-accent {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+
+  .predict-logic-export-count {
+    margin-left: 0.375rem;
+    border-radius: 9999px;
+    background: var(--mat-recess);
+    border: 1px solid var(--border);
+    padding: 0.0625rem 0.375rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+
+  .predict-logic-transport-slot {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-start;
+    justify-self: start;
+    min-width: 0;
+  }
+
+  .predict-results-toolbar-right {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-self: end;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  /* Zoom + volume on the right; opacity sits after transport buttons. */
+  .predict-results-toolbar-tools-slot,
+  .predict-results-toolbar-volume-slot {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .predict-logic-studio-right-sliders {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .predict-logic-studio-view-tools {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .predict-logic-studio-view-tools .predict-logic-transport-btn {
+    width: var(--prs-ctrl, 2.125rem);
+    height: var(--prs-ctrl, 2.125rem);
+  }
+
+  /* Idle Hand = same chrome as Reset; no bright glyph / white face. */
+  .predict-logic-studio-view-tools
+    .predict-logic-hand-btn:not([aria-pressed="true"]) {
+    color: var(--prs-btn-icon, #e8e8e8);
+    border-color: var(--prs-btn-border, #353537);
+    background: var(--prs-btn-face, #28292b);
+    box-shadow: inset 0 1px 0 var(--prs-btn-hi, #4a4a4c);
+    filter: none;
+  }
+
+  .predict-logic-studio-view-tools .predict-logic-hand-btn svg {
+    display: block;
+    filter: none;
+  }
+
+  .predict-logic-studio-opacity {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .predict-results-toolbar-lcd-slot {
+    display: flex;
+    flex: 0 1 auto;
+    align-items: center;
+    justify-content: center;
+    justify-self: center;
+    min-width: 0;
+  }
+
+  .predict-logic-lcd-host {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .predict-logic-studio-sliders,
+  .predict-logic-studio-volume,
+  .predict-logic-studio-zoom,
+  .predict-logic-studio-opacity {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .predict-logic-studio-volume,
+  .predict-logic-studio-zoom,
+  .predict-logic-studio-opacity {
+    width: auto;
+  }
+
+  .predict-logic-studio-volume .predict-logic-volume,
+  .predict-logic-studio-zoom .predict-logic-zoom,
+  .predict-logic-studio-opacity .predict-logic-mark-opacity {
+    width: 10.5rem;
+    flex: 0 0 10.5rem;
+    max-width: none;
+    margin-right: 0;
+  }
+
+  .predict-logic-studio-zoom .predict-logic-zoom {
+    width: 11.625rem;
+    flex: 0 0 11.625rem;
+  }
+
+  /* Framed slider chrome (opacity / volume / zoom). */
+  .predict-logic-slider-frame {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    padding: 0.2rem 0.3rem 0.2rem 0.4rem;
+    border-radius: 0.4375rem;
+    border: 1px solid var(--border);
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-in);
+  }
+
+  .predict-logic-slider-frame:has(.predict-logic-slider-caption) {
+    padding-top: 0.55rem;
+  }
+
+  .predict-logic-slider-caption {
+    position: absolute;
+    top: 0.06rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.625rem; /* 10px — readable captions on transport sliders */
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+    color: rgb(255 255 255 / 0.42);
+    pointer-events: none;
+  }
+
+  .predict-logic-zoom-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--text-muted);
+  }
+
+  .predict-logic-zoom-icon svg {
+    display: block;
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .predict-logic-zoom-slider,
+  .predict-logic-mark-opacity-slider,
+  .predict-logic-volume-slider {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    min-width: 3.5rem;
+  }
+
+  /* Visible track + thumb (WKWebView / Tauri often hide native accent thumbs). */
+  .predict-logic-range-input {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 1.125rem;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .predict-logic-range-input:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .predict-logic-range-input::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text) 14%, transparent);
+    border: 1px solid var(--border);
+  }
+
+  .predict-logic-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0.8125rem;
+    height: 0.8125rem;
+    margin-top: -0.3125rem;
+    border-radius: 50%;
+    background: var(--text);
+    border: 1px solid color-mix(in srgb, var(--text) 35%, var(--border));
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+  }
+
+  .predict-logic-range-input::-moz-range-track {
+    width: 100%;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text) 14%, transparent);
+    border: 1px solid var(--border);
+  }
+
+  .predict-logic-range-input::-moz-range-thumb {
+    width: 0.8125rem;
+    height: 0.8125rem;
+    border-radius: 50%;
+    background: var(--text);
+    border: 1px solid color-mix(in srgb, var(--text) 35%, var(--border));
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+  }
+
+  .predict-logic-zoom-value,
+  .predict-logic-mark-opacity-value,
+  .predict-logic-volume-value {
+    flex-shrink: 0;
+    width: 2.25rem;
+    font-family: ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--text-muted);
+  }
+
+  .predict-logic-mark-opacity-icon,
+  .predict-logic-volume-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--text-muted);
+  }
+
+  .predict-logic-mark-opacity-glyph {
+    display: block;
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+
+  .predict-logic-mark-opacity-icon svg,
+  .predict-logic-volume-icon svg {
+    display: block;
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  /* Yellow–orange circular reset chip (screenshot style). */
+  .predict-logic-slider-reset-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    padding: 0;
+    border-radius: 50%;
+    border: 1.5px solid #fff;
+    background:
+      radial-gradient(
+        circle at 32% 28%,
+        #ffeb3b 0%,
+        #ffc107 38%,
+        #ef6c00 78%,
+        #e65100 100%
+      );
+    color: #5d4037;
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 0.4),
+      inset 0 1px 1px rgb(255 255 255 / 0.55),
+      inset 0 -1px 1px rgb(0 0 0 / 0.18);
+    cursor: pointer;
+    transition: filter 0.12s ease, transform 0.12s ease, opacity 0.12s ease;
+  }
+
+  .predict-logic-slider-reset-btn:hover:not(:disabled) {
+    filter: brightness(1.06);
+    transform: scale(1.06);
+  }
+
+  .predict-logic-slider-reset-btn:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  .predict-logic-slider-reset-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    filter: grayscale(0.25);
+  }
+
+  .predict-logic-slider-reset-btn svg {
+    display: block;
+    width: 0.6875rem;
+    height: 0.6875rem;
+  }
+
+  .predict-results-studio-tools-fallback {
+    display: flex;
+    justify-content: flex-start;
+    padding: 0.25rem 0.5rem;
+    background: var(--mat-raised-gradient);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .predict-logic-transport-host {
+    width: auto;
+  }
+
+  .predict-logic-transport {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.4rem;
+    width: auto;
+  }
+
+  .predict-logic-transport-cluster {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0.125rem;
+    border-radius: 0.4375rem;
+    border: 1px solid var(--border);
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-in);
+  }
+
+  .predict-logic-transport-cluster > .predict-logic-transport-btn + .predict-logic-transport-btn {
+    box-shadow: -1px 0 0 var(--border);
+  }
+
+  .predict-logic-transport-cluster > .predict-logic-transport-divider {
+    width: 1px;
+    align-self: stretch;
+    margin: 0.1875rem 0.0625rem;
+    background: var(--border);
+  }
+
+  .predict-logic-transport-cluster-end {
+    gap: 0.375rem;
+    padding-right: 0.3125rem;
+  }
+
+  .predict-logic-transport-cluster-zoom {
+    margin-right: 0.125rem;
+    padding-right: 0.125rem;
+  }
+
+  .predict-logic-transport-export {
+    display: inline-flex;
+    align-items: center;
+    height: 1.75rem;
+    margin-left: 0.125rem;
+    padding: 0 0.5rem;
+    border-radius: 0.3125rem;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: var(--accent-fg);
+    white-space: nowrap;
+    transition: filter 0.12s ease;
+    box-shadow: var(--shadow-out);
+  }
+
+  .predict-logic-transport-export:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
+
+  .predict-logic-transport-export:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+
+  .predict-logic-transport-export .predict-logic-export-count {
+    margin-left: 0.3125rem;
+    background: color-mix(in srgb, var(--accent-fg) 18%, transparent);
+    border-color: transparent;
+    color: var(--accent-fg);
+  }
+
+  .predict-logic-transport-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.875rem;
+    height: 1.75rem;
+    padding: 0;
+    border-radius: 0.3125rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    transition:
+      background 0.12s ease,
+      border-color 0.12s ease,
+      color 0.12s ease,
+      box-shadow 0.12s ease,
+      transform 0.1s ease;
+  }
+
+  .predict-logic-transport-btn svg {
+    display: block;
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  /* Loop — same optical size as Hand / Reset (IconCircularReset). */
+  .predict-logic-transport-btn.predict-logic-loop-btn svg {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  .predict-logic-transport-btn:hover:not(:disabled):not([aria-pressed="true"]) {
+    background: var(--mat-raised);
+    border-color: var(--border);
+    color: var(--text);
+  }
+
+  .predict-logic-transport-btn:active:not(:disabled):not([aria-pressed="true"]) {
+    transform: translateY(1px);
+    background: var(--mat-recess);
+    border-color: var(--border-strong);
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.35);
+  }
+
+  .predict-logic-transport-btn:disabled {
+    opacity: 0.32;
+    cursor: not-allowed;
+  }
+
+  .predict-logic-transport-btn[aria-pressed="true"],
+  .predict-logic-transport-btn[aria-pressed="true"]:hover:not(:disabled),
+  .predict-logic-transport-btn[aria-pressed="true"]:active:not(:disabled) {
+    background: var(--mat-raised-gradient);
+    border-color: var(--border-strong);
+    color: var(--text);
+    box-shadow: var(--shadow-out);
+  }
+
+  .predict-logic-transport-btn[aria-pressed="true"]:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.4);
+  }
+
+  .predict-logic-lcd {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0;
+    min-width: 16rem;
+    padding: 0.3rem 0.55rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--border-strong);
+    background:
+      linear-gradient(180deg, #141820 0%, #0a0c10 55%, #07080a 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      inset 0 -1px 0 rgb(0 0 0 / 0.55),
+      inset 0 2px 6px rgb(0 0 0 / 0.65);
+    color: var(--lcd-fg);
+  }
+
+  /* m04 Results: one LCD window — position / duration / channel. */
+  .predict-logic-lcd--m04 {
+    gap: 0;
+    width: 100%;
+    min-width: 22rem;
+    max-width: 100%;
+    padding: 0.22rem 0.2rem;
+    border: 1px solid var(--m16-table-rim-outer);
+    border-radius: 0.5rem;
+    background:
+      linear-gradient(180deg, #161a22 0%, #0a0c10 52%, #060708 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      inset 0 -1px 0 rgb(0 0 0 / 0.55),
+      inset 0 2px 10px rgb(0 0 0 / 0.72),
+      0 0 0 1px rgb(125 255 163 / 0.07),
+      0 1px 0 rgb(255 255 255 / 0.03);
+  }
+
+  .predict-logic-lcd-panel {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    min-width: 0;
+    padding: 0.32rem 1.1rem 0.38rem;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .predict-logic-lcd-panel + .predict-logic-lcd-panel {
+    border-left: 1px solid rgb(125 255 163 / 0.14);
+    box-shadow: inset 1px 0 0 rgb(0 0 0 / 0.35);
+  }
+
+  .predict-logic-lcd-panel.is-channel {
+    flex: 0.72 1 0;
+    min-width: 4.25rem;
+    padding-inline: 0.9rem;
+  }
+
+  .predict-logic-lcd-panel-title {
+    font-size: 0.625rem; /* 10px — match slider captions */
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: rgb(190 210 225 / 0.72);
+    white-space: nowrap;
+  }
+
+  .predict-logic-lcd-panel-value {
+    box-sizing: border-box;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 1.25rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    text-align: center;
+    color: var(--lcd-accent);
+    text-shadow: 0 0 10px rgb(125 255 163 / 0.22);
+  }
+
+  /* Play/pause on «Позиция»: overlays left edge; clock stays centered. */
+  .predict-logic-lcd-transport {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 1em;
+    height: 1em;
+    line-height: 0;
+    color: var(--lcd-accent);
+    pointer-events: none;
+  }
+
+  .predict-logic-lcd-transport.is-idle {
+    visibility: hidden;
+  }
+
+  .predict-logic-lcd-transport svg {
+    display: block;
+    width: 1em;
+    height: 1em;
+  }
+
+  .predict-logic-lcd-panel-clock {
+    min-width: 0;
+  }
+
+  .predict-logic-lcd-panel.is-dim .predict-logic-lcd-panel-value {
+    color: #5fd989;
+    text-shadow: 0 0 8px rgb(125 255 163 / 0.12);
+  }
+
+  .predict-logic-lcd-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.15rem 0.55rem;
+  }
+
+  .predict-logic-lcd-group-title {
+    font-size: 0.4375rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(170 200 220 / 0.72);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .predict-logic-lcd-group.is-dim .predict-logic-lcd-group-title {
+    color: rgb(150 175 195 / 0.55);
+  }
+
+  .predict-logic-lcd-group-cells {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.45rem;
+  }
+
+  .predict-logic-lcd-divider {
+    width: 1px;
+    align-self: stretch;
+    margin: 0.15rem 0;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgb(120 160 190 / 0.28) 20%,
+      rgb(120 160 190 / 0.28) 80%,
+      transparent 100%
+    );
+  }
+
+  .predict-logic-lcd-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 1.35rem;
+    line-height: 1;
+  }
+
+  .predict-logic-lcd-cell.is-wide {
+    min-width: 3.25rem;
+  }
+
+  .predict-logic-lcd-group.is-view {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+  }
+
+  .predict-logic-lcd-group.is-view .predict-logic-lcd-group-title {
+    font-size: 0.375rem;
+    letter-spacing: 0.1em;
+  }
+
+  .predict-logic-lcd-group.is-view .predict-logic-lcd-cell-value {
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+  }
+
+  .predict-logic-lcd-group.is-view .predict-logic-lcd-cell-label {
+    font-size: 0.375rem;
+    margin-top: 0.12rem;
+  }
+
+  .predict-logic-lcd-group.is-view .predict-logic-lcd-cell.is-wide {
+    min-width: 2.75rem;
+  }
+
+  .predict-logic-lcd-cell-value {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    color: #d7ebf7;
+    text-shadow: 0 0 10px rgb(120 190 230 / 0.18);
+  }
+
+  .predict-logic-lcd-cell.is-dim .predict-logic-lcd-cell-value {
+    color: #9bb4c4;
+    font-size: 0.95rem;
+    text-shadow: none;
+  }
+
+  .predict-logic-lcd-cell-label {
+    margin-top: 0.2rem;
+    font-size: 0.4375rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgb(150 175 195 / 0.55);
+  }
+
+  .predict-logic-lcd-digits {
+    display: flex;
+    align-items: baseline;
+    gap: 0.375rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .predict-logic-lcd-primary {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--lcd-fg);
+  }
+
+  .predict-logic-lcd-sep {
+    font-size: 0.875rem;
+    color: var(--text-faint);
+  }
+
+  .predict-logic-lcd-secondary {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .predict-logic-lcd-labels {
+    display: flex;
+    gap: 1.25rem;
+    margin-top: 0.125rem;
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  .predict-logic-lcd-meta {
+    margin-top: 0.1875rem;
+    font-size: 0.5625rem;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .predict-logic-transport-status {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  .predict-logic-transport-error {
+    margin-top: 0.25rem;
+    font-size: 0.625rem;
+    color: var(--text);
+  }
+
+  .predict-results-transport-host {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .predict-results-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .predict-results-toolbar-label {
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .predict-results-toolbar-sep {
+    width: 1px;
+    height: 1.25rem;
+    background: var(--border);
+  }
+
+  .predict-results-toolbar-spacer {
+    flex: 1 1 auto;
+    min-width: 0.5rem;
+  }
+
+  .predict-results-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
+    user-select: none;
+    color: rgb(255 255 255 / 0.78);
+  }
+
+  .predict-results-tool-btn {
+    border-radius: 0.375rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    background: rgb(255 255 255 / 0.06);
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgb(255 255 255 / 0.92);
+    transition: background-color 0.15s ease;
+  }
+
+  .predict-results-tool-btn:hover:not(:disabled) {
+    background: rgb(255 255 255 / 0.12);
+  }
+
+  .predict-results-tool-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .predict-results-tool-btn-primary {
+    border-color: rgb(255 255 255 / 0.22);
+    background: rgb(255 255 255 / 0.14);
+  }
+
+  .predict-results-file-strip {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--mat-recess);
+    box-shadow: var(--shadow-in);
+  }
+
+  .predict-results-studio .predict-results-strip-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.35rem 0.75rem 0.2rem;
+    border-bottom: 1px solid #2a2a2a;
+    background: #121212;
+  }
+
+  .predict-results-studio .predict-results-only-labels {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.6875rem;
+    color: rgb(255 255 255 / 0.72);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .predict-results-studio .predict-results-only-labels input {
+    accent-color: var(--lcd-accent);
+  }
+
+  .predict-results-studio .predict-results-strip-count {
+    font-size: 0.625rem;
+    font-variant-numeric: tabular-nums;
+    color: rgb(255 255 255 / 0.45);
+  }
+
+  .predict-results-studio .predict-results-file-strip {
+    border-bottom-color: #2a2a2a;
+    background: #161616;
+    box-shadow: none;
+  }
+
+  .predict-results-file-table-wrap {
+    max-height: 9.5rem;
+    overflow: auto;
+    border-bottom: 1px solid var(--border);
+    background: var(--mat-recess);
+    scrollbar-width: thin;
+    box-shadow: var(--shadow-in);
+  }
+
+  .predict-results-file-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.6875rem;
+    text-align: left;
+  }
+
+  .predict-results-file-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--mat-raised-gradient);
+    box-shadow: 0 1px 0 var(--border);
+  }
+
+  .predict-results-file-table th {
+    padding: 0.375rem 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgb(255 255 255 / 0.62);
+    white-space: nowrap;
+  }
+
+  .predict-results-file-table td {
+    padding: 0.3125rem 0.75rem;
+    color: rgb(255 255 255 / 0.86);
+    border-top: 1px solid rgb(255 255 255 / 0.06);
+    white-space: nowrap;
+  }
+
+  .predict-results-file-table-col-check {
+    width: 2rem;
+    padding-left: 0.5rem;
+    padding-right: 0.25rem;
+    text-align: center;
+  }
+
+  .predict-results-file-table-check {
+    margin: 0;
+    vertical-align: middle;
+    cursor: pointer;
+  }
+
+  .predict-results-file-table-col-file {
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.625rem;
+  }
+
+  .predict-results-file-table-col-bit,
+  .predict-results-file-table-col-rate {
+    width: 4.5rem;
+    font-variant-numeric: tabular-nums;
+    color: rgb(255 255 255 / 0.58);
+  }
+
+  .predict-results-file-table-row {
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+  }
+
+  .predict-results-file-table-row:hover {
+    background: rgb(255 255 255 / 0.05);
+  }
+
+  .predict-results-file-table-row.is-active {
+    background: rgb(255 255 255 / 0.1);
+  }
+
+  .predict-results-file-table-row.is-active td {
+    color: #fff;
+  }
+
+  .predict-results-file-table-row.is-active .predict-results-file-table-col-bit,
+  .predict-results-file-table-row.is-active .predict-results-file-table-col-rate {
+    color: rgb(255 255 255 / 0.78);
+  }
+
+  .predict-results-file-table-row:focus-visible {
+    outline: 2px solid var(--border-strong);
+    outline-offset: -2px;
+  }
+
+  .predict-results-file-table-empty {
+    width: 100%;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--mat-recess);
+  }
+
+  .predict-results-file-strip-light {
+    border: 1px solid var(--border);
+    background: var(--bg-subtle);
+  }
+
+  .predict-results-file-strip-light .predict-results-file-pill {
+    border-color: var(--border);
+    background: var(--bg);
+    color: var(--foreground);
+  }
+
+  .predict-results-file-strip-light .predict-results-file-pill.is-active {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    background: color-mix(in srgb, var(--accent) 12%, var(--bg));
+    color: var(--foreground);
+  }
+
+  .predict-results-file-strip-light .predict-results-strip-nav {
+    border-color: var(--border);
+    color: var(--foreground-muted);
+  }
+
+  .predict-results-file-strip-empty {
+    width: 100%;
+    text-align: center;
+  }
+
+  .predict-results-file-scroll {
+    scrollbar-width: thin;
+  }
+
+  .predict-results-strip-nav {
+    width: 2rem;
+    shrink: 0;
+    border: none;
+    border-right: 1px solid var(--border);
+    background: var(--mat-raised-gradient);
+    color: var(--text-muted);
+    font-size: 1.125rem;
+    line-height: 1;
+    box-shadow: var(--shadow-out);
+  }
+
+  .predict-results-strip-nav:last-child {
+    border-right: none;
+    border-left: 1px solid var(--border);
+  }
+
+  .predict-results-strip-nav:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .predict-results-file-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--border);
+    background: var(--mat-raised-gradient);
+    padding: 0.3125rem 0.625rem;
+    font-size: 0.6875rem;
+    color: var(--text);
+    white-space: nowrap;
+    transition: filter 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: var(--shadow-out);
+  }
+
+  .predict-results-file-pill:hover {
+    filter: brightness(1.04);
+  }
+
+  .predict-results-file-pill.is-active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-fg);
+    box-shadow: var(--shadow-out);
+  }
+
+  .predict-results-stage {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-self: stretch;
+    width: 100%;
+    min-width: 0;
+    /* Fill the studio column so the detections table can grow on tall windows. */
+    min-height: 0;
+    overflow: visible;
+    box-sizing: border-box;
+    /* Left meets the Параметры/Анализ tabs. Right meets «Результаты»
+       (same 8px as .predict-results-page-actions / Filter studio). */
+    padding: 0 var(--pp-params-scroll-pad-end, 8px) 0.4rem 0;
+    /* Transparent — a solid #1a1a1a stage read as a second gray bezel around
+       player / segment / plot / table inside the outer studio-panel. */
+    background: transparent;
+  }
+
+  /* Tools panel: single packed row — transport · contrast · LCD · zoom · volume.
+     Classes mode reuses this chrome box (same padding / fixed height / ctrl scale). */
+  .predict-results-studio .predict-results-stage > .predict-results-tools-panel.predict-results-toolbar {
+    /* Above segment (z-index 5) so classes titles / player chrome stay on top. */
+    position: relative;
+    z-index: 6;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    /* m04 design: controls centered in the chrome; LCDs set the row height. */
+    align-items: center;
+    align-self: stretch;
+    justify-self: stretch;
+    column-gap: 0.75rem;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    margin: 0.1rem 0 0;
+    /* Top: room for slider captions (tight); bottom keeps buttons off the edge. */
+    --prs-tools-pad-top: 0.88rem;
+    --prs-tools-pad-x: 0.65rem;
+    --prs-tools-pad-bottom: 0.55rem;
+    /* LCD floor — locked so Classes ↔ Player does not resize the chrome. */
+    --prs-tools-content-min: 3rem;
+    --prs-tools-chrome-h: calc(
+      var(--prs-tools-pad-top) + var(--prs-tools-content-min) + var(--prs-tools-pad-bottom)
+    );
+    padding: var(--prs-tools-pad-top) var(--prs-tools-pad-x) var(--prs-tools-pad-bottom);
+    height: var(--prs-tools-chrome-h);
+    min-height: var(--prs-tools-chrome-h);
+    max-height: var(--prs-tools-chrome-h);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    border: 1px solid var(--prs-chrome-border);
+    background: var(--prs-chrome-bg);
+    color: var(--prs-chrome-text);
+    box-shadow: none;
+    border-radius: var(--prs-chrome-radius);
+    /* Transport / view-tool hit targets — panel has room; was 28×28. */
+    --prs-ctrl: 2.125rem; /* 34px */
+    --prs-ctrl-icon: 1.25rem; /* 20px */
+    --prs-ctrl-radius: 0.375rem; /* 6px */
+  }
+
+  /* Hide player grid cells while Classes tools fills the chrome (v1.0.3 grid intact). */
+  .predict-results-studio
+    .predict-results-stage
+    > .predict-results-tools-panel.predict-results-toolbar
+    .is-hidden-for-classes,
+  .predict-results-classes-tools-host.is-hidden {
+    display: none !important;
+  }
+
+  .predict-results-studio
+    .predict-results-stage
+    > .predict-results-tools-panel.predict-results-toolbar.is-classes-mode {
+    display: block;
+    grid-template-columns: none;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    /* padding / min-height / --prs-ctrl inherited from player chrome — do not override. */
+  }
+
+  .predict-results-classes-tools-host {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+  }
+
+  .predict-results-classes-tools {
+    display: flex;
+    /* Stretch so chips-wrap fills chrome (~2 rows). Prob/display center beside it. */
+    align-items: stretch;
+    gap: 0.55rem;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    /* visible — absolute titles sit in --prs-tools-pad-top; chips clip themselves. */
+    overflow: visible;
+  }
+
+  .predict-results-classes-tools-sec {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .predict-results-classes-tools-label {
+    font-size: 9px;
+    font-weight: 650;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8a8b8e;
+    white-space: nowrap;
+  }
+
+  .predict-results-classes-tools-lcd {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--lcd-accent);
+    white-space: nowrap;
+  }
+
+  .predict-results-classes-tools-chips-wrap {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-self: stretch;
+    min-width: 0;
+    max-width: none;
+    /* Fill chrome height — do not size to shorter prob/display siblings. */
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+  }
+
+  /* 6 columns: wrap to the next row. Viewport = full chrome (~2 rows);
+     scroll only when a 3rd+ row is needed (2nd row already full). */
+  .predict-results-classes-tools-chips {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-auto-rows: min-content;
+    align-content: start;
+    gap: 0.22rem 0.35rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0;
+    /* Scrollbar chrome: .lab-scroll-narrow (D) in scrollbars.css */
+  }
+
+  .predict-results-classes-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+    padding: 0.18rem 0.32rem;
+    border: 1px solid #2e2f32;
+    border-radius: 0.55rem;
+    background: #121314;
+    color: var(--prs-chrome-text, #ececec);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+  }
+
+  .predict-results-classes-chip:hover:not(:disabled) {
+    border-color: #4a4a4c;
+    background: #18191a;
+  }
+
+  .predict-results-classes-chip.is-off {
+    opacity: 0.55;
+  }
+
+  .predict-results-classes-chip.is-empty {
+    opacity: 0.38;
+    cursor: default;
+  }
+
+  .predict-results-classes-chip-check {
+    display: block;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 1px solid #f0f0f2;
+    border-radius: 0.2rem;
+    background: #f0f0f2;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23121214' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M2.5 6.2 5 8.7 9.5 3.5'/%3E%3C/svg%3E");
+    background-size: 0.65rem;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* Unchecked with detections: keep white square, drop only the checkmark. */
+  .predict-results-classes-chip.is-off .predict-results-classes-chip-check {
+    background-image: none;
+    background-color: #f0f0f2;
+    border-color: #f0f0f2;
+  }
+
+  /* No detections: dark square. */
+  .predict-results-classes-chip.is-empty .predict-results-classes-chip-check {
+    background-color: #121314;
+    background-image: none;
+    border-color: #3a3a3e;
+  }
+
+  .predict-results-classes-chip-swatch {
+    display: block;
+    flex: 0 0 auto;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 0.15rem;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.35);
+  }
+
+  .predict-results-classes-chip-code {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    line-height: 0.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .predict-results-classes-chip-n {
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 0.8rem;
+    color: #8a8b8e;
+  }
+
+  .predict-results-classes-tools-sep {
+    flex: 0 0 1px;
+    align-self: center;
+    width: 1px;
+    height: 2rem;
+    margin: 0;
+    background: #2e2f32;
+  }
+
+  .predict-results-classes-tools-prob,
+  .predict-results-classes-tools-display {
+    position: relative;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    /* Same top edge → absolute «Вероятность» / «Отображение» share one baseline. */
+    align-self: flex-start;
+    box-sizing: border-box;
+    /* Titles stay in pad; this only drops slider + Подписи/Метки together. */
+    padding-top: 0.48rem;
+    gap: 0.2rem;
+    min-height: 0;
+  }
+
+  .predict-results-classes-tools-prob {
+    /* Title sits in pad (absolute) — must not inflate the flex line or chips scroll. */
+    min-width: 10rem;
+    max-width: 11.5rem;
+  }
+
+  /* Shared pad title row — same top / type / height for Вероятность + Отображение. */
+  .predict-results-classes-tools-prob-head,
+  .predict-results-classes-tools-display > .predict-results-classes-tools-label {
+    position: absolute;
+    top: calc(-1 * var(--prs-tools-pad-top) + 0.34rem);
+    left: 0;
+    display: flex;
+    align-items: center;
+    min-height: 0.7rem;
+    height: 0.7rem;
+    margin: 0;
+    padding: 0;
+    line-height: 0.7rem;
+    font-size: 9px;
+    font-weight: 650;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8a8b8e;
+    white-space: nowrap;
+  }
+
+  .predict-results-classes-tools-prob-head {
+    right: 0;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .predict-results-classes-tools-prob-head .predict-results-classes-tools-label {
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
+    color: inherit;
+  }
+
+  .predict-results-classes-tools-prob-head .predict-results-classes-tools-lcd {
+    /* LCD value must not optically lift «Вероятность» vs «Отображение». */
+    font-size: 9px;
+    font-weight: 650;
+    line-height: 0.7rem;
+    letter-spacing: 0.04em;
+  }
+
+  .predict-results-classes-tools-prob-slider {
+    position: relative;
+    display: block;
+    width: 100%;
+    line-height: 0;
+  }
+
+  .predict-results-classes-tools-prob-slider .predict-logic-range-input {
+    width: 100%;
+    height: 1rem;
+  }
+
+  .predict-results-classes-tools-prob-slider .predict-logic-range-input::-webkit-slider-runnable-track,
+  .predict-results-classes-tools-prob-slider .predict-logic-range-input::-moz-range-track {
+    height: 0.22rem;
+  }
+
+  .predict-results-classes-tools-prob-slider .predict-logic-range-input::-webkit-slider-thumb {
+    width: 0.72rem;
+    height: 0.72rem;
+    margin-top: -0.28rem;
+  }
+
+  .predict-results-classes-tools-prob-slider .predict-logic-range-input::-moz-range-thumb {
+    width: 0.72rem;
+    height: 0.72rem;
+  }
+
+  .predict-results-classes-tools-prob-ticks {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 0.55rem;
+    margin-top: 0.02rem;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: #6a6b6e;
+    pointer-events: none;
+  }
+
+  .predict-results-classes-tools-prob-ticks span:nth-child(1) {
+    position: absolute;
+    left: 0;
+  }
+
+  .predict-results-classes-tools-prob-ticks span:nth-child(2) {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .predict-results-classes-tools-prob-ticks span:nth-child(3) {
+    position: absolute;
+    right: 0;
+  }
+
+  .predict-results-classes-tools-display {
+    min-width: 7.75rem;
+  }
+
+  .predict-results-classes-tools-display-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .predict-results-classes-tools-display-row {
+    display: grid;
+    grid-template-columns: 4.25rem 1.6rem;
+    align-items: center;
+    column-gap: 0.45rem;
+    margin: 0;
+    min-height: 0.9rem;
+    font-size: 10px;
+    color: #9a9b9e;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .predict-results-classes-tools-display-row.is-disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .predict-results-classes-tools-display-row > span:first-child {
+    line-height: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .predict-results-classes-tools-switch {
+    appearance: none;
+    position: relative;
+    box-sizing: border-box;
+    width: 1.6rem;
+    height: 0.9rem;
+    margin: 0;
+    border-radius: 999px;
+    border: 1px solid #2e2e30;
+    background: #121314;
+    justify-self: end;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .predict-results-classes-tools-switch::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 0.68rem;
+    height: 0.68rem;
+    border-radius: 999px;
+    background: #5a5b5e;
+    transition: transform 0.15s ease, background-color 0.15s ease;
+  }
+
+  .predict-results-classes-tools-switch:checked {
+    background: #d0d0d4;
+    border-color: #d0d0d4;
+  }
+
+  .predict-results-classes-tools-switch:checked::after {
+    transform: translateX(0.62rem);
+    background: #fff;
+  }
+
+  .predict-results-classes-tools-switch:disabled {
+    cursor: default;
+  }
+
+  .predict-results-classes-tools-reset {
+    box-sizing: border-box;
+    width: var(--prs-ctrl, 2.125rem);
+    height: var(--prs-ctrl, 2.125rem);
+    margin-left: auto;
+    align-self: center;
+    flex-shrink: 0;
+    border-radius: var(--prs-ctrl-radius, 0.375rem);
+    border: 1px solid #353537;
+    background: #28292b;
+    color: #e8e8e8;
+    box-shadow: inset 0 1px 0 #4a4a4c;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .predict-results-classes-tools-reset:hover:not(:disabled) {
+    border-color: #4a4a4c;
+    background: #303133;
+    color: #fff;
+  }
+
+  .predict-results-classes-tools-reset:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .predict-results-classes-tools-reset svg {
+    display: block;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-slot {
+    display: flex;
+    align-items: center;
+    justify-self: start;
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-host,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.55rem;
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-cluster {
+    flex: 0 0 auto;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-results-toolbar-lcd-slot {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    justify-self: stretch;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-results-toolbar-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    justify-self: end;
+    min-width: 0;
+    width: max-content;
+    max-width: 100%;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-results-toolbar-tools-slot {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+    width: max-content;
+    max-width: 100%;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-host {
+    width: 100%;
+    max-width: 100%;
+    justify-content: stretch;
+  }
+
+  /* m04 transport buttons — crop 18.26.20-a08b0d3c:
+     flat dark face ~#28292b, thin border, top inset highlight, white icons, no outer drop shadow */
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-cluster {
+    gap: 0.25rem; /* 4px — crop a08b0d3c */
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-cluster > .predict-logic-transport-btn + .predict-logic-transport-btn {
+    box-shadow: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-cluster > .predict-logic-transport-divider {
+    display: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-btn svg {
+    width: var(--prs-ctrl-icon, 1.25rem);
+    height: var(--prs-ctrl-icon, 1.25rem);
+  }
+
+  /* Hand / Reset glyphs — keep 1.4rem (studioAlign / WINDOWS §11). */
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-view-tools .predict-logic-transport-btn svg {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  /* Loop — match Hand / Reset 1.4rem (studioAlign / WINDOWS §11 / §81). */
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-btn.predict-logic-loop-btn svg {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-btn,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-btn {
+    box-sizing: border-box;
+    width: var(--prs-ctrl, 2.125rem);
+    height: var(--prs-ctrl, 2.125rem);
+    border-radius: var(--prs-ctrl-radius, 0.375rem);
+    border: 1px solid var(--prs-btn-border);
+    background: var(--prs-btn-face);
+    color: var(--prs-btn-icon);
+    box-shadow: inset 0 1px 0 var(--prs-btn-hi); /* top highlight */
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-btn:hover:not(:disabled):not([aria-pressed="true"]),
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-btn:hover:not(:disabled):not([aria-pressed="true"]) {
+    filter: none;
+    border-color: var(--prs-btn-hi);
+    background: var(--prs-btn-hover);
+    color: #ffffff;
+    box-shadow: inset 0 1px 0 var(--prs-btn-hi);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-btn:active:not(:disabled):not([aria-pressed="true"]) {
+    filter: none;
+    transform: translateY(0);
+    border-color: #2a2a2a;
+    background: #1c1c1e;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
+  }
+
+  /* Pressed must win over :hover/:active (same or higher specificity). */
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-btn[aria-pressed="true"],
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-btn[aria-pressed="true"]:hover:not(:disabled),
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-btn[aria-pressed="true"]:active:not(:disabled) {
+    border-color: #e8e8e8;
+    background: #ececec;
+    color: #121212;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.85),
+      inset 0 -1px 0 rgb(0 0 0 / 0.12);
+    filter: none;
+    transform: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-btn[aria-pressed="true"]:hover:not(:disabled) {
+    background: #f4f4f4;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-btn[aria-pressed="true"]:active:not(:disabled) {
+    background: #d8d8d8;
+    box-shadow: inset 0 2px 3px rgb(0 0 0 / 0.22);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-cluster {
+    border-color: #3a3a3a;
+    background: #1f1f1f;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.35);
+  }
+
+  /* m04: contrast / zoom / volume — captions float above; tracks align with buttons */
+  .predict-results-stage .predict-results-tools-panel .predict-logic-slider-frame {
+    position: relative;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    height: var(--prs-ctrl, 2.125rem);
+    min-height: var(--prs-ctrl, 2.125rem);
+    max-height: var(--prs-ctrl, 2.125rem);
+    padding: 0 0.1rem;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-slider-frame:has(.predict-logic-slider-caption) {
+    padding-top: 0;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-volume .predict-logic-slider-frame {
+    padding-top: 0;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-slider-caption {
+    position: absolute;
+    top: auto;
+    bottom: calc(100% + 0.08rem);
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--prs-chrome-muted);
+    font-size: 0.5625rem; /* 9px */
+    letter-spacing: 0.05em;
+    line-height: 1;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  /* Opacity: the percent column is wider than the icon, so the frame
+     midpoint sits right of the track. Center the caption on the track. */
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-slider-caption {
+    left: calc(0.1rem + 0.875rem + 0.3rem);
+    right: calc(0.1rem + 2.25rem + 0.3rem);
+    width: auto;
+    transform: none;
+    text-align: center;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-cluster,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd--m04,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-volume,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-right-sliders {
+    align-self: center;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd--m04 {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--prs-tools-content-min, 3rem);
+    min-height: var(--prs-tools-content-min, 3rem);
+    max-height: var(--prs-tools-content-min, 3rem);
+    min-width: 22rem;
+    max-width: min(36rem, 100%);
+    margin-inline: auto;
+    padding: 0.12rem 0.2rem;
+    border: 1px solid var(--m16-table-rim-outer);
+    border-radius: 0.5rem;
+    background:
+      linear-gradient(180deg, #161a22 0%, #0a0c10 52%, #060708 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      inset 0 -1px 0 rgb(0 0 0 / 0.55),
+      inset 0 2px 10px rgb(0 0 0 / 0.72),
+      0 0 0 1px rgb(125 255 163 / 0.07),
+      0 1px 0 rgb(255 255 255 / 0.03);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-panel {
+    box-sizing: border-box;
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.18rem;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    padding: 0.18rem 1.15rem 0.2rem;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .predict-results-stage
+    .predict-results-tools-panel
+    .predict-logic-lcd-panel
+    + .predict-logic-lcd-panel {
+    border-left: 1px solid rgb(125 255 163 / 0.14);
+    box-shadow: inset 1px 0 0 rgb(0 0 0 / 0.35);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-panel.is-channel {
+    flex: 0.72 1 0;
+    min-width: 4.5rem;
+    padding-inline: 0.95rem;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-panel-title {
+    font-size: 0.5625rem; /* 9px */
+    letter-spacing: 0.12em;
+    color: var(--prs-lcd-title);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-panel-value {
+    /* MM:SS centered; play/pause on Position overlays left without shifting digits. */
+    box-sizing: border-box;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: 1.12rem;
+    line-height: 1;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    text-align: center;
+    color: var(--prs-lcd-mint);
+    text-shadow: 0 0 12px rgb(125 255 163 / 0.22);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-transport {
+    color: var(--prs-lcd-mint);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-transport svg {
+    width: 1em;
+    height: 1em;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-panel.is-dim .predict-logic-lcd-panel-value {
+    color: #6fdc9a;
+    text-shadow: 0 0 8px rgb(125 255 163 / 0.12);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-cell-value {
+    font-size: 0.95rem;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-cell.is-dim .predict-logic-lcd-cell-value {
+    font-size: 0.85rem;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-cell-label {
+    color: rgb(150 175 195 / 0.5);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-primary {
+    color: #d7ebf7;
+    font-size: 0.9375rem;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-secondary {
+    font-size: 0.75rem;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-meta {
+    font-size: 0.5625rem;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-secondary,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-meta,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-lcd-labels,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-mark-opacity-value,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-volume-value,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-zoom-value,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-mark-opacity-icon,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-volume-icon,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-zoom-icon {
+    color: var(--prs-chrome-muted);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-volume {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  /* Fixed compact sliders — one packed row, no stretch into empty 1fr gaps. */
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-volume .predict-logic-volume,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-mark-opacity {
+    width: 9rem;
+    flex: 0 0 9rem;
+    min-width: 9rem;
+    max-width: 9rem;
+    height: var(--prs-ctrl, 2.125rem);
+    min-height: var(--prs-ctrl, 2.125rem);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-mark-opacity,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-zoom {
+    min-height: var(--prs-ctrl, 2.125rem);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-right-sliders {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    column-gap: 1rem;
+    flex: 0 0 auto;
+    min-width: 0;
+    width: max-content;
+    max-width: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-volume {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: auto;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-zoom {
+    width: 9rem;
+    flex: 0 0 9rem;
+    min-width: 9rem;
+    max-width: 9rem;
+    height: var(--prs-ctrl, 2.125rem);
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-volume .predict-logic-volume {
+    width: 8.25rem;
+    flex: 0 0 8.25rem;
+    min-width: 8.25rem;
+    max-width: 8.25rem;
+  }
+
+  /* m04: hide reset chips and zoom % on Results transport. */
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-slider-reset-btn,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-slider-reset-btn,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-zoom-value {
+    display: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-transport-export,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-btn-accent {
+    border-color: #525252;
+    background: #fafafa;
+    color: #0a0a0a;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-export-count {
+    background: rgb(0 0 0 / 0.12);
+    border-color: transparent;
+    color: #0a0a0a;
+  }
+
+  /* m04 design ref: flat 4px visible track + 11px white thumb (frameless). */
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-volume .predict-logic-range-input::-webkit-slider-runnable-track,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-volume .predict-logic-range-input::-moz-range-track,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-range-input::-webkit-slider-runnable-track,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-range-input::-moz-range-track,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-range-input::-webkit-slider-runnable-track,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-range-input::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: #3f3f3f;
+    border: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-volume .predict-logic-range-input::-webkit-slider-thumb,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-volume .predict-logic-range-input::-moz-range-thumb,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-range-input::-webkit-slider-thumb,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-range-input::-moz-range-thumb,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-range-input::-webkit-slider-thumb,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-range-input::-moz-range-thumb {
+    width: 11px;
+    height: 11px;
+    margin-top: -3.5px;
+    border-radius: 50%;
+    background: #e8e8ea;
+    border: none;
+    box-shadow: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-slider-reset-btn,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-slider-reset-btn {
+    width: 18px;
+    height: 18px;
+    border: 1px solid #525252;
+    background: linear-gradient(180deg, #5a5a5a 0%, #3f3f3f 100%);
+    color: rgb(255 255 255 / 0.78);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 1px 1px rgb(0 0 0 / 0.35);
+    filter: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-slider-reset-btn:disabled,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-slider-reset-btn:disabled {
+    filter: none;
+    opacity: 0.35;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-opacity .predict-logic-slider-reset-btn svg,
+  .predict-results-stage .predict-results-tools-panel .predict-logic-studio-zoom .predict-logic-slider-reset-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-slider-reset-btn {
+    width: 18px;
+    height: 18px;
+    border: 1px solid #525252;
+    background: linear-gradient(180deg, #5a5a5a 0%, #3f3f3f 100%);
+    color: rgb(255 255 255 / 0.78);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 1px 1px rgb(0 0 0 / 0.35);
+    filter: none;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-slider-reset-btn:disabled {
+    filter: none;
+    opacity: 0.35;
+  }
+
+  .predict-results-stage .predict-results-tools-panel .predict-logic-slider-reset-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  /* Studio spectrogram — single plot + instrument bezel (class rail removed).
+     Height tracks the studio container (up to 32rem); leave room for ≥3 table rows. */
+  .predict-results-stage .analysis-spectrogram-studio-with-sidebar,
+  .predict-results-stage
+    .analysis-spectrogram-studio-with-sidebar.is-single-plot {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    height: min(32rem, 48cqh);
+    min-height: 10rem;
+    max-height: min(32rem, 48cqh);
+    max-width: none;
+    margin: var(--prs-chrome-stack-gap, 0.2rem) 0 0;
+    align-self: stretch;
+    box-sizing: border-box;
+    /* Plot + slim right terminator rail. */
+    grid-template-columns: minmax(0, 1fr) 0.4rem;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--prs-chrome-border, #3a3a3c);
+    border-radius: var(--prs-chrome-radius, 0.625rem);
+    background: #0c0e0f;
+    /* One rim only — inset 0 0 0 1px looked like a second gray frame. */
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  }
+
+  .predict-results-stage
+    .analysis-spectrogram-studio-with-sidebar.is-single-plot::after {
+    content: "";
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+    min-height: 100%;
+    box-sizing: border-box;
+    border-left: 1px solid var(--m16-table-rim-outer);
+    background:
+      linear-gradient(
+        90deg,
+        #121314 0%,
+        #191a1b 55%,
+        var(--m16-table-head-bot) 100%
+      );
+    box-shadow:
+      inset 1px 0 0 rgb(255 255 255 / 0.04),
+      inset -1px 0 0 rgb(0 0 0 / 0.35);
+    pointer-events: none;
+  }
+
+  .predict-results-stage .predict-results-segment-panel {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: none;
+    align-self: stretch;
+    box-sizing: border-box;
+    border-left: none;
+    border-right: none;
+  }
+
+  .predict-results-stage .analysis-spectrogram-scientific.analysis-spectrogram-plot-assembly {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    margin: 0;
+    border: 1px solid #1a1a1a;
+    background: #0c0e0f;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .predict-results-stage
+    .analysis-spectrogram-studio-with-sidebar.is-single-plot
+    .analysis-spectrogram-scientific.analysis-spectrogram-plot-assembly {
+    grid-column: 1;
+    grid-row: 1;
+    /* Outer bezel owns the rim — avoid double hairline. */
+    border: none;
+    border-radius: 0;
+    min-width: 0;
+  }
+
+  .predict-results-stage .analysis-spectrogram-scientific .analysis-spectrogram-plot-frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    grid-template-rows: minmax(9rem, 1fr) var(--spectrogram-time-axis-height);
+    border: none;
+    border-color: transparent;
+  }
+
+  .predict-results-studio .analysis-spectrogram-canvas,
+  .predict-results-studio .analysis-spectrogram-stage,
+  .predict-results-studio .analysis-spectrogram-media,
+  .predict-results-studio .analysis-spectrogram-media > [data-spectrogram-plot],
+  .predict-results-studio .analysis-spectrogram-media > [data-spectrogram-plot] > .relative {
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* Stretch painted tile to the CSS box while ResizeObserver / STFT catch up —
+     avoids white empty bands on window / UI-scale resize. */
+  .predict-results-studio .analysis-spectrogram-media canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .predict-results-studio .analysis-frequency-axis-width {
+    height: 100%;
+    align-self: stretch;
+  }
+
+  .predict-results-studio .analysis-spectrogram-studio-host,
+  .predict-results-studio .analysis-lab-stack.analysis-scientific-stack {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    /* Equal gutters: segment↔plot and plot↔table use --prs-chrome-stack-gap
+       margins only — do not add .analysis-lab-stack’s 0.75rem gap here. */
+    gap: 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .predict-results-studio .analysis-spectrogram-studio-stack {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* SpecHeaderBar — filename · sample rate (chip hugs content; rate stays adjacent). */
+  .analysis-spectrogram-spec-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 0.375rem 0.625rem;
+    background: #2a2a2a;
+    border-bottom: 1px solid #3a3a3a;
+  }
+
+  .analysis-spectrogram-spec-file {
+    display: inline-flex;
+    flex: 0 1 auto;
+    align-items: center;
+    gap: 0;
+    width: fit-content;
+    min-width: 0;
+    max-width: 100%;
+    height: 1.75rem;
+    padding: 0 0.5rem;
+    overflow: hidden;
+    border-radius: 0.375rem;
+    border: 1px solid #3a3a3a;
+    background: linear-gradient(180deg, #303030 0%, #242424 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.05),
+      0 1px 2px rgb(0 0 0 / 0.25);
+    color: rgb(255 255 255 / 0.92);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  .analysis-spectrogram-spec-file-name {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .analysis-spectrogram-spec-file-rate {
+    flex: 0 0 auto;
+    color: rgb(255 255 255 / 0.58);
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  .analysis-spectrogram-spec-sliders {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .analysis-spectrogram-spec-sliders .predict-logic-slider-frame,
+  .analysis-spectrogram-spec-zoom-slot .predict-logic-slider-frame {
+    /* Mockup SpecHeaderBar: opacity 168×28 */
+    width: 10.5rem;
+    flex: 0 0 10.5rem;
+    height: 1.75rem;
+    gap: 0.4375rem;
+    padding: 0 0.375rem 0 0.5rem;
+    border-radius: 0.375rem;
+    border-color: #3a3a3a;
+    background: linear-gradient(180deg, #303030 0%, #242424 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.05),
+      0 1px 2px rgb(0 0 0 / 0.25);
+  }
+
+  .analysis-spectrogram-spec-header .predict-logic-range-input {
+    height: 1rem;
+  }
+
+  /* SpecHeader Range — mockup: 3px track #151515 + fill, 10px gradient thumb */
+  .analysis-spectrogram-spec-header .predict-logic-range-input::-webkit-slider-runnable-track,
+  .analysis-spectrogram-spec-header .predict-logic-range-input::-moz-range-track {
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      rgb(255 255 255 / 0.28) 0,
+      rgb(255 255 255 / 0.28) var(--slider-pct, 0%),
+      #151515 var(--slider-pct, 0%),
+      #151515 100%
+    );
+    border: 1px solid #2e2e2e;
+  }
+
+  .analysis-spectrogram-spec-header .predict-logic-range-input::-webkit-slider-thumb,
+  .analysis-spectrogram-spec-header .predict-logic-range-input::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    margin-top: -4.5px;
+    background: linear-gradient(180deg, #f5f5f5 0%, #d4d4d4 100%);
+    border: 1px solid #6a6a6a;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+  }
+
+  .analysis-spectrogram-spec-header .predict-logic-mark-opacity-value,
+  .analysis-spectrogram-spec-header .predict-logic-zoom-value {
+    width: 1.75rem;
+    font-size: 0.625rem;
+    color: rgb(255 255 255 / 0.58);
+  }
+
+  .analysis-spectrogram-spec-header .predict-logic-mark-opacity-icon,
+  .analysis-spectrogram-spec-header .predict-logic-zoom-icon {
+    color: rgb(255 255 255 / 0.55);
+  }
+
+  .analysis-spectrogram-spec-header .predict-logic-mark-opacity-glyph {
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .analysis-spectrogram-spec-header .predict-logic-mark-opacity-icon svg,
+  .analysis-spectrogram-spec-header .predict-logic-zoom-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .analysis-spectrogram-spec-sliders .predict-logic-mark-opacity.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .analysis-spectrogram-spec-zoom-slot {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .analysis-spectrogram-spec-zoom-slot .predict-logic-slider-frame {
+    /* Mockup zoom frame 186×28 */
+    width: 11.625rem;
+    flex: 0 0 11.625rem;
+  }
+
+  .analysis-spectrogram-spec-zoom-slot:empty {
+    display: none;
+  }
+
+  .predict-results-stage .analysis-spectrogram-spec-header .predict-logic-slider-reset-btn {
+    width: 18px;
+    height: 18px;
+    border: 1px solid #525252;
+    background: linear-gradient(180deg, #5a5a5a 0%, #3f3f3f 100%);
+    color: rgb(255 255 255 / 0.78);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 1px 1px rgb(0 0 0 / 0.35);
+    filter: none;
+  }
+
+  .predict-results-stage .analysis-spectrogram-spec-header .predict-logic-slider-reset-btn:disabled {
+    filter: none;
+    opacity: 0.35;
+  }
+
+  .predict-results-stage .analysis-spectrogram-spec-header .predict-logic-slider-reset-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .predict-results-stage .analysis-spectrogram-studio .analysis-playhead {
+    width: 1.5px;
+    margin-left: 0;
+    transform: translateX(-50%);
+    background: #ff4d4d;
+    box-shadow: none;
+  }
+
+  .predict-results-stage .analysis-spectrogram-studio .analysis-playhead::before {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 0;
+    height: 0;
+    margin-left: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid #ff4d4d;
+    transform: translate(-50%, 0);
+  }
+
+  .predict-results-stage .analysis-spectrogram-studio .analysis-playhead::after {
+    content: none;
+    display: none;
+  }
+
+  .analysis-segment-rail-studio-meta-row {
+    display: none;
+  }
+
+  .analysis-segment-rail-studio-top {
+    display: none;
+  }
+
+  .analysis-segment-rail-studio-meta-frames {
+    display: none;
+  }
+
+  .predict-results-stage .analysis-spectrogram-scientific .predict-results-segment-rail-row {
+    margin-bottom: 0;
+  }
+
+  /* Detections — floor ~3 rows; preferred ~28cqh; grow only into space left after the plot. */
+  .predict-results-studio .analysis-detections-panel {
+    --studio-det-head: 1.7rem;
+    --studio-det-row: 1.7rem;
+    --studio-det-foot: 1.55rem;
+    --studio-det-body: max(
+      calc(var(--studio-det-head) + (3 * var(--studio-det-row))),
+      calc(var(--studio-det-head) + 28cqh)
+    );
+    display: flex;
+    flex: 1 1 var(--studio-det-body);
+    flex-direction: column;
+    min-height: calc(
+      var(--studio-det-head) + (3 * var(--studio-det-row)) + var(--studio-det-foot)
+    );
+    max-height: none;
+    margin: var(--prs-chrome-stack-gap, 0.2rem) 0 0;
+    border: 1px solid var(--prs-chrome-border, #3a3a3c);
+    border-radius: var(--prs-chrome-radius, 0.625rem);
+    background: #141414;
+    color: rgb(255 255 255 / 0.92);
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  /* Settings → Show spectrogram off: detections table fills the plot hero.
+     No empty studio-stack spacer between the segment rail and the table. */
+  .predict-results-studio.is-table-hero .predict-results-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .predict-results-studio.is-table-hero .analysis-spectrogram-studio-host,
+  .predict-results-studio.is-table-hero .analysis-lab-stack.analysis-scientific-stack {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .predict-results-studio.is-table-hero .analysis-spectrogram-studio-stack {
+    display: none;
+  }
+
+  .predict-results-studio.is-table-hero .predict-results-segment-panel {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .predict-results-studio.is-table-hero .analysis-detections-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    margin-top: var(--prs-chrome-stack-gap, 0.2rem);
+  }
+
+  .predict-results-studio.is-table-hero .analysis-detections-table-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .predict-results-studio .analysis-detections-header {
+    display: none;
+  }
+
+  .predict-results-studio .analysis-detections-empty,
+  .predict-results-studio .analysis-detections-footer {
+    color: rgb(255 255 255 / 0.45);
+  }
+
+  .predict-results-studio .analysis-detections-footer {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    gap: 0;
+    border-top-color: #2a2a2a;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.625rem;
+  }
+
+  .predict-results-studio .analysis-detections-footer-sep {
+    opacity: 0.85;
+  }
+
+  .predict-results-studio .analysis-detections-table {
+    font-size: 0.6875rem; /* 11px */
+    min-width: 0;
+    width: 100%;
+    table-layout: auto;
+  }
+}

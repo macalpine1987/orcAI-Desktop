@@ -1,9 +1,10 @@
+import { SIDECAR_HTTP_SHORT_MS } from "../lib/timeouts";
 import { getSidecarBase } from "./sidecar";
 
 export async function pathExists(path: string): Promise<boolean> {
   const url = new URL(`${getSidecarBase()}/v1/fs/exists`);
   url.searchParams.set("path", path);
-  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(SIDECAR_HTTP_SHORT_MS) });
   if (!res.ok) return false;
   const data = (await res.json()) as { exists?: boolean };
   return Boolean(data.exists);
@@ -18,7 +19,7 @@ export async function resolveOrcaiParameterPath(
 ): Promise<string | null> {
   const url = new URL(`${getSidecarBase()}/v1/fs/orcai-parameter`);
   url.searchParams.set("project_dir", projectDir);
-  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(SIDECAR_HTTP_SHORT_MS) });
   if (!res.ok) return null;
   const data = (await res.json()) as { path?: string | null; exists?: boolean };
   const path = typeof data.path === "string" ? data.path.trim() : "";

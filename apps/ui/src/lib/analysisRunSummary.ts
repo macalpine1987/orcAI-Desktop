@@ -1,3 +1,5 @@
+import type { TFunction } from "i18next";
+
 export type AnalysisRunSummary = {
   succeeded: number;
   failed: number;
@@ -37,4 +39,33 @@ export function analysisRunBannerI18nKey(
   }
   if (summary.failed > 0) return "predict.analysis.runCompletePartial";
   return "predict.analysis.runCompleteBanner";
+}
+
+export function analysisRunBannerMessage(
+  summary: AnalysisRunSummary,
+  t: TFunction,
+): string {
+  return t(analysisRunBannerI18nKey(summary), {
+    succeeded: summary.succeeded,
+    failed: summary.failed,
+    total: summary.total,
+    preexisting: summary.preexisting ?? 0,
+  });
+}
+
+/** Show the batch outcome in the app header (info flash / sticky error). */
+export function notifyAnalysisRunComplete(
+  summary: AnalysisRunSummary,
+  opts: {
+    t: TFunction;
+    notifySaved: (message?: string) => void;
+    notifyHeaderError: (message: string) => void;
+  },
+): void {
+  const message = analysisRunBannerMessage(summary, opts.t);
+  if (analysisRunBannerTone(summary) === "error") {
+    opts.notifyHeaderError(message);
+  } else {
+    opts.notifySaved(message);
+  }
 }

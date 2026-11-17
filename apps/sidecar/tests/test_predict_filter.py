@@ -11,7 +11,8 @@ from pathlib import Path
 
 from orcai_desktop_sidecar.adapters.predict import (
     PREDICT_SELECTION_CSV_NAME,
-    _collect_csv_batch_files,
+    collect_csv_batch_files,
+    _collect_csv_batch_files,  # compat
     _normalize_recording_names,
     predict_selection_csv_path,
     prepare_predict_recording_path,
@@ -237,7 +238,7 @@ class TestCsvBatchMtime(unittest.TestCase):
             new_label.write_text("y", encoding="utf-8")
             now = old_label.stat().st_mtime
             os.utime(old_label, (now - 120, now - 120))
-            rows = _collect_csv_batch_files(
+            rows = collect_csv_batch_files(
                 table,
                 model_dir=Path("/models/orcai-isl-v1"),
                 output_param=str(out_dir),
@@ -259,7 +260,7 @@ class TestCsvBatchMtime(unittest.TestCase):
             label.write_text("x", encoding="utf-8")
             job_started = label.stat().st_mtime
             os.utime(label, (job_started - 0.2, job_started - 0.2))
-            rows = _collect_csv_batch_files(
+            rows = collect_csv_batch_files(
                 table,
                 model_dir=Path("/models/orcai-isl-v1"),
                 output_param=str(out_dir),

@@ -16,6 +16,8 @@ import {
 } from "../lib/spectrogramDetections";
 import { scaleMarkOpacity } from "../lib/spectrogramMarkOpacity";
 import { hitOverlaySegment } from "../lib/spectrogramOverlayHit";
+import { selectVisibleProbLabelIndices } from "../lib/spectrogramProbLabels";
+import { spectrogramOverlayBoxSize } from "../lib/spectrogramView";
 
 export type OverlaySegment = LabelSegment & {
   source: LabelLayerSource;
@@ -44,7 +46,10 @@ type Props = {
    * (MMS flat bands), not TF box geometry.
    */
   nyquistHz: number;
-  /** Optional fixed layout (tests / Storybook). */
+  /**
+   * First-paint / jsdom hint only. Live size always prefers the CSS box so
+   * bands stay aligned while the canvas fillContainer-stretches on resize.
+   */
   layoutSize?: { w: number; h: number };
   onSegmentClick?: (seg: OverlaySegment) => void;
 };
@@ -76,13 +81,41 @@ export function SpectrogramOverlay({
 }: Props) {
   const publicationNames = useClassPublicationNames();
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const [size, setSize] = useState(layoutSize ?? { w: 0, h: 0 });
+  const layoutHintRef = useRef(layoutSize);
+  layoutHintRef.current = layoutSize;
+  const [size, setSize] = useState(() =>
+    spectrogramOverlayBoxSize({ width: 0, height: 0 }, layoutSize),
+  );
 
-  const measure = () => {
+  const applyMeasured = (
+    width: number,
+    height: number,
+  ): boolean => {
+    const next = spectrogramOverlayBoxSize(
+      { width, height },
+      layoutHintRef.current,
+    );
+    if (!(next.w > 0 && next.h > 0)) return false;
+    setSize((prev) =>
+      prev.w === next.w && prev.h === next.h ? prev : next,
+    );
+    return true;
+  };
+
+  const measureHost = (entry?: ResizeObserverEntry) => {
     const el = hostRef.current;
-    if (!el) return;
+    if (!el) {
+      if (layoutHintRef.current) {
+        applyMeasured(0, 0);
+      }
+      return;
+    }
     let width = el.clientWidth;
     let height = el.clientHeight;
+    if ((width <= 0 || height <= 0) && entry) {
+      width = entry.contentRect.width;
+      height = entry.contentRect.height;
+    }
     if (width <= 0 || height <= 0) {
       const parent = el.parentElement;
       if (parent && parent.clientWidth > 0 && parent.clientHeight > 0) {
@@ -90,27 +123,23 @@ export function SpectrogramOverlay({
         height = parent.clientHeight;
       }
     }
-    if (width > 0 && height > 0) {
-      setSize({ w: width, h: height });
-    }
+    applyMeasured(width, height);
   };
 
   useLayoutEffect(() => {
-    if (layoutSize) {
-      setSize(layoutSize);
-      return;
-    }
-    measure();
+    measureHost();
   }, [layoutSize, segments.length, viewStart, viewSpan]);
 
   useEffect(() => {
-    if (layoutSize) return;
     const el = hostRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => measure());
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      measureHost(entries[0]);
+    });
     ro.observe(el);
+    if (el.parentElement) ro.observe(el.parentElement);
     return () => ro.disconnect();
-  }, [layoutSize]);
+  }, []);
 
   const viewEnd = viewStart + viewSpan;
   const safeSpan = viewSpan > 0 ? viewSpan : 1;
@@ -158,21 +187,49 @@ export function SpectrogramOverlay({
     });
   };
 
-  return (
-    <div
-      ref={hostRef}
-      className="analysis-spectrogram-overlay-layer h-full w-full overflow-hidden"
-      aria-hidden={!onSegmentClick}
-    >
-      {size.h > 0 &&
-        visible.map((seg, i) => {
+  const painted =
+    size.h > 0
+      ? visible.map((seg, i) => {
           const { t0, t1 } = segmentTimeSec(seg, deltaT, durationSec, timeUnit);
           const leftPct =
             ((Math.max(t0, viewStart) - viewStart) / safeSpan) * 100;
           const widthPct =
             ((Math.min(t1, viewEnd) - Math.max(t0, viewStart)) / safeSpan) *
             100;
+          const isSelected = detectionIntervalMatchesSelection(
+            t0,
+            t1,
+            selectedSegment,
+            0.05,
+            seg.label,
+          );
+          return { seg, i, leftPct, widthPct, isSelected, t0, t1 };
+        })
+      : [];
 
+  const showProbAt = showProbabilityLabels
+    ? selectVisibleProbLabelIndices(
+        painted
+          .filter(({ seg }) => seg.mean_p != null)
+          .map(({ seg, i, leftPct, widthPct, isSelected }) => ({
+            index: i,
+            centerPct: leftPct + Math.max(MIN_WIDTH_PCT, widthPct) / 2,
+            widthPct: Math.max(MIN_WIDTH_PCT, widthPct),
+            laneKey: `${seg.source}:${seg.label}`,
+            forceShow: isSelected,
+          })),
+      )
+    : null;
+
+  return (
+    <div
+      ref={hostRef}
+      className="analysis-spectrogram-overlay-layer h-full w-full overflow-hidden"
+      data-overlay-layout-w={size.w || undefined}
+      data-overlay-layout-h={size.h || undefined}
+      aria-hidden={!onSegmentClick}
+    >
+      {painted.map(({ seg, i, leftPct, widthPct, isSelected }) => {
           const { y, bandHeight } = labelBandLayout(
             seg.label,
             labelNames,
@@ -182,13 +239,6 @@ export function SpectrogramOverlay({
           const heightPct = (bandHeight / size.h) * 100;
 
           const dimmedBySolo = soloLabel != null && seg.label !== soloLabel;
-          const isSelected = detectionIntervalMatchesSelection(
-            t0,
-            t1,
-            selectedSegment,
-            0.05,
-            seg.label,
-          );
           const softDimBySelection =
             selectedSegment != null && !isSelected;
           const style = styleForSegment(seg.label, seg.source, {
@@ -218,6 +268,8 @@ export function SpectrogramOverlay({
           const confLabel =
             seg.mean_p != null ? seg.mean_p.toFixed(2) : null;
           const tooltip = `${formatDetectionTypeLabel(seg.label, publicationNames)} (${confPct})`;
+          const paintProb =
+            showProbAt != null && confLabel != null && showProbAt.has(i);
 
           return (
             <div
@@ -261,12 +313,14 @@ export function SpectrogramOverlay({
                   ? (e) => {
                       e.stopPropagation();
                       const hit = pickFromPointer(e.clientX, e.clientY);
-                      onSegmentClick(hit ?? seg);
+                      onSegmentClick(
+                        hit != null && hit.label !== seg.label ? hit : seg,
+                      );
                     }
                   : undefined
               }
             >
-              {showProbabilityLabels && confLabel ? (
+              {paintProb ? (
                 <span className="analysis-overlay-prob" aria-hidden>
                   {confLabel}
                 </span>

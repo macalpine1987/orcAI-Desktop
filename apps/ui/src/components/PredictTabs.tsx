@@ -27,6 +27,8 @@ export function PredictTabs({
     badgeTitle?: string;
     disabled?: boolean;
     disabledTitle?: string;
+    /** Amber pulse (pipeline / train-wizard hint style). */
+    hint?: boolean;
   }[];
   disabled?: boolean;
   ariaLabel: string;
@@ -93,12 +95,12 @@ export function PredictTabs({
             onKeyDown={(e) => onTabKeyDown(e, tab.id)}
             className={
               isM03
-                ? "predict-tab"
+                ? `predict-tab${tab.hint && !selected ? " predict-tab--hint" : ""}`
                 : `mat-btn flex min-w-[7.5rem] flex-1 items-center justify-center gap-2 px-3 py-2.5 text-center text-sm sm:flex-initial ${
                     selected
                       ? "mat-btn-primary border-accent"
                       : "text-foreground-muted"
-                  } disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40`
+                  }${tab.hint && !selected ? " predict-tab--hint" : ""} disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40`
             }
           >
             <span className="truncate">{tab.label}</span>

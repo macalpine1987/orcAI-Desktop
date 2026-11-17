@@ -59,16 +59,17 @@ class BuiltinModelsTests(unittest.TestCase):
         """Regression: FastAPI return type must not be dict[str, str] (calls is a list)."""
         from pathlib import Path
 
-        main_src = (
+        models_src = (
             Path(__file__).resolve().parents[1]
             / "src"
             / "orcai_desktop_sidecar"
-            / "main.py"
+            / "routes"
+            / "models.py"
         ).read_text(encoding="utf-8")
-        self.assertIn("def models_list", main_src)
+        self.assertIn("def models_list", models_src)
         # Must not force every model field to str (breaks ``calls: list[str]``).
         self.assertNotIn(
             "-> dict[str, list[dict[str, str]]]",
-            main_src,
+            models_src,
         )
-        self.assertIn("-> dict[str, Any]", main_src)
+        self.assertIn("-> dict[str, Any]", models_src)

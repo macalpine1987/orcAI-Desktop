@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { readAnalysisLabCss } from "./readAnalysisLabCss";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -9,46 +10,80 @@ function read(rel: string): string {
   return readFileSync(join(root, "src", rel), "utf8");
 }
 
+/** Window page + extracted model hook (string-gate after split). */
+function readTrainMonitor(): string {
+  return [
+    read("trainMonitor/TrainMonitor.tsx"),
+    read("trainMonitor/useTrainMonitorModel.ts"),
+  ].join("\n");
+}
+
 describe("train monitor gate", () => {
-  it("PipelinePage opens TrainMonitor as modal over board", () => {
-    const page = read("pages/PipelinePage.tsx");
-    expect(page).toContain('from "../trainMonitor/TrainMonitor"');
-    expect(page).toContain('view === "monitor"');
-    expect(page).toContain(
-      '<TrainMonitor open={view === "monitor"} onClose={() => setView("board")} />',
-    );
+  it("PipelinePage opens TrainMonitor as a detached window", () => {
+    const page = [read("pages/PipelinePage.tsx"), read("hooks/usePipelineBoard.ts"), read("hooks/usePipelineBoardActions.ts")].join("\n");
+    expect(page).toContain('from "../platform/trainMonitorWindow"');
+    expect(page).toContain("openOrFocusTrainMonitorWindow");
+    expect(page).toContain("openMonitorWindow");
+    expect(page).toContain('view !== "monitor"');
+    expect(page).toContain('params.get("view") === "monitor"');
+    expect(page).toContain("isTrainMonitorEntryEnabled");
+    expect(page).toContain("isTrainMonitorLive");
+    expect(page).toContain("monitorAvailable");
+    expect(page).toContain("monitorLive");
+    expect(page).toContain("pipeline.monitorIdleHint");
+    expect(page).toContain('state={monitorLive ? "running" : "off"}');
+    expect(page).not.toContain('from "../trainMonitor/TrainMonitor"');
+    expect(page).not.toContain("open={view === \"monitor\" && monitorAvailable}");
     expect(page).not.toContain("pipeline.monitorSoon");
-    expect(page).not.toContain('if (view === "monitor")');
+    const css = read("styles/instrument.css");
+    expect(css).toContain(".runtime-ready-lamp.is-running");
+    expect(css).toContain("runtime-ready-lamp-running-pulse");
+    const app = read("App.tsx");
+    expect(app).toContain('path="train-monitor"');
+    expect(app).toContain("<TrainMonitor");
   });
 
-  it("TrainMonitor is portaled modal with Close, Stop, Open folder", () => {
-    const mon = read("trainMonitor/TrainMonitor.tsx");
-    expect(mon).toContain("PredictAppModalPortal");
-    expect(mon).toContain("PREDICT_APP_MODAL_OVERLAY_CLASS");
-    // QA-H1: overlays must portal into the zoomed shell, not document.body alone.
-    const portal = read("lib/predictAppModal.tsx");
-    expect(portal).toContain("getAppShellPortalHost");
-    expect(portal).not.toMatch(/createPortal\(\s*children,\s*document\.body\s*\)/);
-    const host = read("lib/appShellPortal.ts");
-    expect(host).toContain(".app-shell-root");
-    const fieldHint = read("components/FieldHint.tsx");
-    expect(fieldHint).toContain("getAppShellPortalHost");
-    expect(fieldHint).not.toMatch(/createPortal\([\s\S]*,\s*document\.body\s*\)/);
-    const ctxMenu = read("components/PredictAnalysisPackageContextMenu.tsx");
-    expect(ctxMenu).toContain("getAppShellPortalHost");
-    expect(mon).toContain("<ModalCloseButton");
-    expect(mon).toContain('aria-label={t("common.close")}');
+  it("TrainMonitor is a window page with Stop, Open folder (OS chrome closes)", () => {
+    const mon = readTrainMonitor();
+    expect(mon).not.toContain("PredictAppModalPortal");
+    expect(mon).not.toContain("PREDICT_APP_MODAL_OVERLAY_CLASS");
+    expect(mon).toContain("tm-window");
+    expect(mon).toContain("closeTrainMonitorWindow");
+    expect(mon).not.toContain("ModalCloseButton");
     expect(mon).toContain('t("monitor.done")');
     expect(mon).toContain('snap?.phase === "done"');
-    expect(read("components/ModalCloseButton.tsx")).toContain("modal-close");
     expect(mon).not.toContain('className="settings-path-btn"');
     expect(mon).not.toContain('t("monitor.back")');
     expect(mon).toContain("onClose");
-    expect(mon).toContain("open: boolean");
     expect(mon).toContain('t("monitor.stop")');
     expect(mon).toContain('t("monitor.openFolder")');
     expect(mon).toContain('topic="train.monitor"');
+    expect(mon).toContain("openHelpInMainShell");
+    expect(mon).toContain('from "../platform/shellNavigate"');
+    expect(read("platform/shellNavigate.ts")).toContain("emitTo");
+    expect(read("platform/shellNavigate.ts")).toContain(
+      "SHELL_NAVIGATE_EVENT",
+    );
+    expect(read("hooks/useShellNavigateListener.ts")).toContain(
+      "SHELL_NAVIGATE_EVENT",
+    );
+    expect(read("layout/AppShell.tsx")).toContain("useShellNavigateListener");
+    expect(read("platform/localeSync.ts")).toContain("LOCALE_CHANGED_EVENT");
+    expect(read("platform/localeSync.ts")).toContain(
+      "broadcastLocaleToTrainMonitor",
+    );
+    expect(read("hooks/useTrainMonitorLocaleListener.ts")).toContain(
+      "LOCALE_CHANGED_EVENT",
+    );
+    expect(read("preferences/PreferencesContext.tsx")).toContain(
+      "useTrainMonitorLocaleListener",
+    );
+    expect(read("i18n.ts")).toContain("broadcastLocaleToTrainMonitor");
     expect(mon).toContain("fetchProjectTrainMonitor");
+    expect(mon).toContain("hasRuntimeSidecarBase");
+    expect(mon).toContain("useSidecarStatus");
+    expect(mon).toContain("isTransientRuntimeBindError");
+    expect(mon).toContain("runtimeReady");
     expect(mon).toContain("cancelJob");
     expect(mon).toContain("PipelineErrorAlert");
     expect(mon).toContain('stepId="train"');
@@ -58,29 +93,56 @@ describe("train monitor gate", () => {
     expect(mon).toContain("estimateRemainingSec");
     expect(mon).toContain("fetchJobLogSince");
     expect(mon).toContain("provisionalTrain");
+    const win = read("platform/trainMonitorWindow.ts");
+    expect(win).toContain("WebviewWindow");
+    expect(win).toContain("train-monitor");
+    expect(win).toContain("openOrFocusTrainMonitorWindow");
+    expect(win).toContain('TRAIN_MONITOR_WINDOW_TITLE = "orcAI - train"');
+    expect(win).not.toContain("title?: string");
+    expect(win).toContain("applyTrainMonitorIcon");
+    expect(win).toContain("train-monitor-icon.png");
+    expect(mon).not.toContain("setTitle");
+    expect(mon).not.toContain("phaseRunning");
+    expect(mon).not.toContain("windowTitle");
+    expect(win).toContain("setIcon");
+    /* Floor above CSS stack breakpoint (1100) so open size needs no window scroll. */
+    expect(win).toContain("TRAIN_MONITOR_MIN_WIDTH = 1120");
+    expect(win).toContain("TRAIN_MONITOR_MIN_HEIGHT = 720");
+    expect(win).toContain("ensureTrainMonitorFloor");
+    expect(win).toContain("setMinSize");
+    expect(read("styles/train-monitor.css")).toContain("max-width: 1100px");
     const chart = read("trainMonitor/MetricChart.tsx");
     expect(chart).toContain("getContext(\"2d\")");
     expect(chart).toContain("tm-chart-canvas");
     expect(chart).toContain("TRAIN_STROKE");
     expect(chart).toContain("VAL_STROKE");
     expect(chart).toContain("LINE_WIDTH");
-    // Per-epoch vertex fills caused fat “sausage” strokes on flat val_MBA.
     expect(chart).toContain("no per-epoch vertex fills");
     expect(chart).toContain("completedEpochCount");
     expect(chart).toContain("isValStagnant");
     expect(chart).toContain("chartLiveEpoch");
     expect(chart).toContain("chartValFlat");
-    // m14: clean polylines — butt caps, no live marker / best ring on the canvas.
     expect(chart).toContain('lineCap = "butt"');
     expect(chart).not.toContain("Live marker at the last");
     expect(chart).not.toContain("ctx.arc(bx, by");
   });
 
+  it("main hide-on-close does not apply to child windows", () => {
+    const rust = readFileSync(
+      join(root, "../../src-tauri/src/lib.rs"),
+      "utf8",
+    );
+    expect(rust).toContain('window.label() == "main"');
+    expect(rust).toContain("hide_on_close_enabled");
+    const healthPoll = read("sidecar/useSidecarHealthPolling.ts");
+    expect(healthPoll).toContain("isMainShellWindow");
+    expect(healthPoll).toContain("Child windows (train-monitor)");
+  });
+
   it("modal overlay keeps backdrop blur off the dialog subtree (SVG strokes)", () => {
-    const css = readFileSync(join(root, "src/styles/analysis-lab.css"), "utf8");
+    const css = readAnalysisLabCss();
     expect(css).toContain(".predict-app-modal-overlay::before");
     expect(css).toContain("Do NOT put backdrop-filter on this element");
-    // Filter must not sit on the overlay itself (breaks WKWebView SVG strokes).
     const overlayBlock = css.slice(
       css.indexOf(".predict-app-modal-overlay {"),
       css.indexOf(".predict-app-modal-overlay::before"),
@@ -89,7 +151,12 @@ describe("train monitor gate", () => {
   });
 
   it("PipelinePage yellow-hints the next manual step instead of reasonHelp banners", () => {
-    const page = read("pages/PipelinePage.tsx");
+    const page = [
+      read("pages/PipelinePage.tsx"),
+      read("hooks/usePipelineBoard.ts"),
+      read("hooks/usePipelineBoardActions.ts"),
+      read("components/pipeline/PipelineBoardSteps.tsx"),
+    ].join("\n");
     expect(page).toContain("PipelineErrorAlert");
     expect(page).not.toContain("PipelineReasonAlert");
     expect(page).toContain("hintStepForPipelineReason");
@@ -107,7 +174,7 @@ describe("train monitor gate", () => {
   });
 
   it("stop paints Остановлено before the cancel request returns", () => {
-    const mon = read("trainMonitor/TrainMonitor.tsx");
+    const mon = readTrainMonitor();
     const stop = mon.slice(mon.indexOf("const stopTrain"), mon.indexOf("const openFolder"));
     expect(stop.indexOf('phase: "cancelled"')).toBeGreaterThan(-1);
     expect(stop.indexOf('phase: "cancelled"')).toBeLessThan(stop.indexOf("await cancelJob"));
@@ -131,11 +198,14 @@ describe("train monitor gate", () => {
     expect(load).toContain("epoch: prev.epoch");
     expect(load).toContain("elapsed_sec: prev.elapsed_sec");
     expect(load).toContain("remaining_sec: null");
-    const closed = mon.slice(mon.indexOf("if (!open)"), mon.indexOf("void load()"));
-    expect(closed.indexOf("stopJobIdRef.current = null")).toBeGreaterThan(-1);
-    expect(closed.indexOf("stopJobIdRef.current = null")).toBeLessThan(
-      closed.indexOf("setSnap(null)"),
+    const projectReset = mon.slice(
+      mon.indexOf("}, [projectId]);"),
+      mon.indexOf("void load();"),
     );
+    // stop latch clears when the project changes, before the next load cycle.
+    expect(mon).toContain("stopJobIdRef.current = null");
+    expect(mon).toContain("}, [projectId]);");
+    expect(projectReset.length).toBeGreaterThanOrEqual(0);
     expect(mon).toContain('t("monitor.stopped")');
     expect(mon).toContain("tm-batch-stopped");
     expect(mon).toContain('snap?.phase === "done"');
@@ -156,7 +226,11 @@ describe("train monitor gate", () => {
   });
 
   it("API client exposes train-monitor", () => {
-    const api = read("api/projects.ts");
+    const api = [
+      read("api/projects/index.ts"),
+      read("api/projects/trainMonitor.ts"),
+      read("api/projects/types.ts"),
+    ].join("\n");
     expect(api).toContain("fetchProjectTrainMonitor");
     expect(api).toContain("/train-monitor");
     expect(api).toContain("TrainMonitorSnapshot");
@@ -166,9 +240,9 @@ describe("train monitor gate", () => {
     const css = readFileSync(join(root, "src/index.css"), "utf8");
     expect(css).toContain("train-monitor.css");
     const tm = read("styles/train-monitor.css");
-    // Content-sized modal: size containment collapses it to zero height.
-    expect(tm).not.toMatch(/\.tm-modal \{[^}]*container-type:\s*size/);
+    expect(tm).not.toMatch(/\.tm-window-frame \{[^}]*container-type:\s*size/);
     expect(tm).toContain("max-height: min(22rem, 45cqh)");
+    expect(tm).toContain(".tm-window");
     const ru = JSON.parse(
       readFileSync(join(root, "public/locales/ru/ru.json"), "utf8"),
     ) as { monitor: { title: string; stop: string } };

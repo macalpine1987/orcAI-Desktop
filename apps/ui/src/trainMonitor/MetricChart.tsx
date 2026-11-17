@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { chartYDomain, formatTick } from "../lib/chartScale";
+import { LCD_ACCENT_HEX } from "../lib/lcdAccent";
 
 const TRAIN_STROKE = "#9aa0a6";
-const VAL_STROKE = "#7dffa3";
+const VAL_STROKE = LCD_ACCENT_HEX;
 const GRID_STROKE = "#25272a";
 const AXIS_STROKE = "#2f3236";
 const LABEL_FILL = "#6b7280";

@@ -36,8 +36,7 @@ def apply_worker_memory_guard(command: str | None = None) -> None:
     """Call at the start of a job worker process (before importing TensorFlow).
 
     Caps address space (~fraction of RAM) so the *worker* OOMs instead of the host.
-    Also sets ``TF_FORCE_GPU_ALLOW_GROWTH``; call :func:`configure_tensorflow_memory_growth`
-    again after TF is imported for Metal/CUDA growth.
+    Also sets ``TF_FORCE_GPU_ALLOW_GROWTH`` for Metal/CUDA growth after TF import.
     """
     os.environ.setdefault("TF_FORCE_GPU_ALLOW_GROWTH", "true")
     _apply_address_space_limit(command)
@@ -85,24 +84,3 @@ def _apply_address_space_limit(command: str | None) -> None:
         )
     except (ValueError, OSError) as exc:
         _log.debug("RLIMIT_AS not applied: %s", exc)
-
-
-def configure_tensorflow_memory_growth() -> None:
-    """Idempotent; safe after tensorflow may already be imported."""
-    try:
-        import tensorflow as tf
-    except Exception:  # noqa: BLE001 — TF optional at import time
-        _log.debug("tensorflow not importable for memory growth", exc_info=True)
-        return
-    config = getattr(tf, "config", None)
-    if config is None:
-        return
-    try:
-        gpus = config.list_physical_devices("GPU")
-    except Exception:  # noqa: BLE001 — TF memory probe optional
-        return
-    for gpu in gpus or []:
-        try:
-            config.experimental.set_memory_growth(gpu, True)
-        except Exception:  # noqa: BLE001 — already initialized / unsupported
-            _log.debug("set_memory_growth failed for %s", gpu, exc_info=True)

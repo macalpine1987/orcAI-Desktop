@@ -19,9 +19,33 @@ import numpy as np
 # v2: float32 (bit-exact vs make_spectrogram); invalidates v1 float16 caches.
 _CACHE_VERSION = 2
 _DEFAULT_CACHE_ROOT = Path.home() / ".orcai-desktop" / "spec-cache" / f"v{_CACHE_VERSION}"
-_MAX_CACHE_BYTES = 2 * 1024 * 1024 * 1024  # 2 GiB
-# Keep more full matrices in RAM while browsing Results file strip.
-_RAM_MAX = 8
+
+
+def _env_int(name: str, default: int, *, minimum: int = 1) -> int:
+    raw = os.environ.get(name)
+    if raw is None or not str(raw).strip():
+        return default
+    try:
+        value = int(str(raw).strip(), 10)
+    except ValueError:
+        return default
+    return max(minimum, value)
+
+
+# Override via ORCAI_SPEC_CACHE_MAX_BYTES / ORCAI_SPEC_RAM_MAX_BYTES /
+# ORCAI_SPEC_RAM_MAX_ENTRIES (bytes / count). Defaults fit 8–16 GiB Macs.
+_MAX_CACHE_BYTES = _env_int(
+    "ORCAI_SPEC_CACHE_MAX_BYTES",
+    1 * 1024 * 1024 * 1024,  # 1 GiB default; override via env for larger disks
+    minimum=64 * 1024 * 1024,
+)
+# Soft count + hard byte budget (long float32 WAVs can be hundreds of MiB each).
+_RAM_MAX_ENTRIES = _env_int("ORCAI_SPEC_RAM_MAX_ENTRIES", 6, minimum=1)
+_RAM_MAX_BYTES = _env_int(
+    "ORCAI_SPEC_RAM_MAX_BYTES",
+    256 * 1024 * 1024,
+    minimum=32 * 1024 * 1024,
+)
 
 _ram_spec: dict[str, tuple[np.ndarray, np.ndarray]] = {}
 _ram_order: list[str] = []
@@ -181,12 +205,41 @@ def _ram_touch(key: str) -> None:
     _ram_order.append(key)
 
 
+def _ram_entry_nbytes(spec: np.ndarray, times: np.ndarray) -> int:
+    return int(getattr(spec, "nbytes", 0)) + int(getattr(times, "nbytes", 0))
+
+
+def _ram_total_bytes_unlocked() -> int:
+    total = 0
+    for spec, times in _ram_spec.values():
+        total += _ram_entry_nbytes(spec, times)
+    return total
+
+
 def _ram_put(key: str, spec: np.ndarray, times: np.ndarray) -> None:
+    nbytes = _ram_entry_nbytes(spec, times)
     with _ram_lock:
+        # A single matrix larger than the RAM budget must not stick in the
+        # in-process cache (disk cache can still hold it). Drop any prior copy.
+        if nbytes > _RAM_MAX_BYTES:
+            if key in _ram_spec:
+                _ram_spec.pop(key, None)
+            if key in _ram_order:
+                _ram_order.remove(key)
+            return
         _ram_spec[key] = (spec, times)
         _ram_touch(key)
-        while len(_ram_order) > _RAM_MAX:
+        while _ram_order and (
+            len(_ram_order) > _RAM_MAX_ENTRIES
+            or _ram_total_bytes_unlocked() > _RAM_MAX_BYTES
+        ):
+            if len(_ram_order) <= 1:
+                break
             old = _ram_order.pop(0)
+            if old == key:
+                # Keep the entry we just inserted; stop if nothing else to drop.
+                _ram_order.append(old)
+                break
             _ram_spec.pop(old, None)
 
 

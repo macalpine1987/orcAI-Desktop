@@ -81,14 +81,92 @@ describe("SpectrogramAudioPlayer", () => {
         {...baseProps}
         studioTransport
         transportSlot={slot}
+        lcdSlot={slot}
       />,
     );
-    // m04 studio LCD: compact MM:SS without tenths (120s → 02:00)
+    // m04 studio LCD: MM:SS, no fractional seconds (120s → 02:00)
     expect(slot.textContent).toContain("02:00");
-    expect(slot.textContent).not.toMatch(/\d:\d{2}:\d{2}\.\d/);
+    expect(slot.textContent).not.toMatch(/\d{2}:\d{2}\.\d/);
     expect(slot.textContent).not.toMatch(/loading/i);
+    expect(slot.querySelector("[data-lcd-transport='idle']")).toBeTruthy();
     unmount();
     slot.remove();
+  });
+
+  it("shows play/pause on studio LCD position and clears on stop", async () => {
+    const transportSlot = document.createElement("div");
+    const lcdSlot = document.createElement("div");
+    document.body.appendChild(transportSlot);
+    document.body.appendChild(lcdSlot);
+    const { unmount } = renderWithProviders(
+      <SpectrogramAudioPlayer
+        {...baseProps}
+        studioTransport
+        transportSlot={transportSlot}
+        lcdSlot={lcdSlot}
+      />,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(lcdSlot.querySelector("[data-lcd-transport='idle']")).toBeTruthy();
+    // Transport overlay only on «Позиция»; clocks stay centered (absolute, no flex gap).
+    expect(lcdSlot.querySelectorAll(".predict-logic-lcd-transport")).toHaveLength(1);
+    expect(
+      lcdSlot.querySelector(".predict-logic-lcd-transport.is-idle"),
+    ).toBeTruthy();
+    expect(lcdSlot.querySelectorAll(".predict-logic-lcd-panel-clock")).toHaveLength(
+      3,
+    );
+    const positionClock = lcdSlot.querySelectorAll(
+      ".predict-logic-lcd-panel-clock",
+    )[0];
+    const durationClock = lcdSlot.querySelectorAll(
+      ".predict-logic-lcd-panel-clock",
+    )[1];
+    expect(positionClock?.textContent).toMatch(/\d{2}:\d{2}/);
+    expect(
+      positionClock?.parentElement?.querySelector(".predict-logic-lcd-transport"),
+    ).toBeTruthy();
+    expect(
+      durationClock?.parentElement?.querySelector(".predict-logic-lcd-transport"),
+    ).toBeNull();
+
+    await act(async () => {
+      transportSlot
+        .querySelector<HTMLButtonElement>('[aria-label="Play"]')
+        ?.click();
+    });
+    expect(lcdSlot.querySelector("[data-lcd-transport='playing']")).toBeTruthy();
+    expect(lcdSlot.querySelectorAll(".predict-logic-lcd-transport")).toHaveLength(1);
+    expect(
+      lcdSlot.querySelector(".predict-logic-lcd-transport.is-playing"),
+    ).toBeTruthy();
+
+    await act(async () => {
+      transportSlot
+        .querySelector<HTMLButtonElement>('[aria-label="Pause"]')
+        ?.click();
+    });
+    expect(lcdSlot.querySelector("[data-lcd-transport='paused']")).toBeTruthy();
+    expect(
+      lcdSlot.querySelector(".predict-logic-lcd-transport.is-paused"),
+    ).toBeTruthy();
+
+    await act(async () => {
+      transportSlot
+        .querySelector<HTMLButtonElement>('[aria-label="Stop"]')
+        ?.click();
+    });
+    expect(lcdSlot.querySelector("[data-lcd-transport='idle']")).toBeTruthy();
+    expect(lcdSlot.querySelectorAll(".predict-logic-lcd-transport")).toHaveLength(1);
+    expect(
+      lcdSlot.querySelector(".predict-logic-lcd-transport.is-idle"),
+    ).toBeTruthy();
+
+    unmount();
+    transportSlot.remove();
+    lcdSlot.remove();
   });
 
   it("stops playback and seeks to start on stop button", () => {
@@ -126,6 +204,42 @@ describe("SpectrogramAudioPlayer", () => {
     );
     btn?.click();
     expect(onPlayheadChange).toHaveBeenCalledWith(15);
+    unmount();
+  });
+
+  it("seeks audio currentTime when playhead moves during playback", async () => {
+    const { container, root, unmount } = renderWithProviders(
+      <SpectrogramAudioPlayer {...baseProps} playheadSec={10} />,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[aria-label="Play"]')?.click();
+    });
+    const audio = container.querySelector("audio");
+    expect(audio).toBeTruthy();
+    let currentTime = 10;
+    Object.defineProperty(audio!, "currentTime", {
+      configurable: true,
+      get: () => currentTime,
+      set: (v: number) => {
+        currentTime = v;
+      },
+    });
+    const { I18nextProvider } = await import("react-i18next");
+    const i18n = (await import("../i18n")).default;
+    const { SaveNoticeProvider } = await import("../ui/saveNotice");
+    await act(async () => {
+      root.render(
+        <I18nextProvider i18n={i18n}>
+          <SaveNoticeProvider>
+            <SpectrogramAudioPlayer {...baseProps} playheadSec={55} />
+          </SaveNoticeProvider>
+        </I18nextProvider>,
+      );
+    });
+    expect(currentTime).toBe(55);
     unmount();
   });
 });

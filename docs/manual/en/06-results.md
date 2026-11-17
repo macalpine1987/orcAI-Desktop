@@ -1,28 +1,41 @@
 # Results
 
-This section gathers every signal found in every recording of the project into a single table. Search signals across the project here and export them for further analysis.
+The **Results** section combines the signals from all recordings in the project in a single table. Use it to search across the project and to export data for analysis in other tools.
+
+To view the signals of a single recording on the spectrogram, use the **Predictions → Analysis** tab.
 
 ## Data sources
 
-Choose what to show at the top:
+At the top of the section, choose a data source:
 
-- **Predicted** — prediction results (`*_predicted.txt` files);
-- **Filtered** — results after duration filtering (`*_predicted_filtered.txt`);
-- **Annotations** — your manual labels (`annotations/*.txt`). You can compare them with what the model found.
+| Source | Files |
+|--------|-------|
+| **Predicted** | Prediction results (`*_predicted.txt`) |
+| **Filtered** | Results after filtering by duration (`*_predicted_filtered.txt`) |
+| **Annotations** | Manual annotations (`annotations/*.txt`). Lets you compare the annotations with the model’s results |
 
-The app only reads these files and never changes them.
+The application only reads these files and never changes them.
 
-## Summary
+## Summary figures
 
-The figures above the table show how many signals were found and in how many files, their total duration, the mean probability and the threshold used for prediction. If a file could not be read, the app tells you.
+Above the table you see:
+
+- the number of detected signals and the number of files they were found in;
+- the total duration of the signals;
+- the mean probability;
+- the threshold used for recognition.
+
+If a file cannot be read, the application shows a message.
 
 ## Table
 
-You can filter the table by file, class and minimum probability, and search for a recording by name. The probability filter does not apply to annotations, since manual labels have none.
+You can filter the table by file, class, and minimum probability, and search for a recording by name. The probability filter does not apply to annotations, because manual annotations have no probabilities.
 
-Clicking a row or **Open** takes you to **Predictions → Analysis**, right to that signal on the spectrogram.
+Clicking a row, or the **Open** button, takes you to the **Predictions → Analysis** tab at the selected signal on the spectrogram.
 
 ## Export
 
-- **Export CSV** — saves the rows currently visible in the table to a file for Excel, R or Python.
-- **Export to Audacity** — saves the visible rows as Audacity label tracks, one per recording.
+| Action | Result |
+|--------|--------|
+| **Export CSV** | Saves the visible table rows to a CSV file for Excel, R, or Python |
+| **Export to Audacity** | Saves the visible rows as Audacity label tracks, one per recording |

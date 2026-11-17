@@ -49,8 +49,69 @@ describe("projectSummaryFormat", () => {
 
   it("formats readiness line details from summary", () => {
     const summary = baseSummary();
+    expect(readinessLineDetail(summary, "recordings", t)).toBe(
+      "home.readinessDetail.recordingsWav:12",
+    );
     expect(readinessLineDetail(summary, "annotations", t)).toBe("9/12");
+    expect(readinessLineDetail(summary, "predict", t)).toBe("7/12");
     expect(readinessLineDetail(summary, "model", t)).toBe("isl-v1");
+  });
+
+  it("counts WAV files, paired annotations, and predictions against those files", () => {
+    const summary = baseSummary();
+    summary.metrics.recordings = 20;
+    summary.metrics.annotations = 9;
+    summary.readiness_lines.recordings = {
+      state: "needed",
+      wav_count: 12,
+      table_rows: 20,
+    };
+    summary.readiness_lines.annotations = {
+      state: "ready",
+      annotated: 9,
+      total: 20,
+      paired_files: 5,
+    };
+    summary.readiness_lines.predict = { state: "ready", predicted: 7, total: 20 };
+    expect(readinessLineDetail(summary, "recordings", t)).toBe(
+      "home.readinessDetail.recordingsWav:12",
+    );
+    expect(readinessLineDetail(summary, "annotations", t)).toBe("5/12");
+    expect(readinessLineDetail(summary, "predict", t)).toBe("7/12");
+  });
+
+  it("shows zero paired annotations instead of the table count", () => {
+    const summary = baseSummary();
+    summary.readiness_lines.annotations = {
+      state: "ready",
+      annotated: 9,
+      total: 12,
+      paired_files: 0,
+    };
+    expect(readinessLineDetail(summary, "annotations", t)).toBe("0/12");
+  });
+
+  it("keeps the table annotation count when paired_files is absent", () => {
+    const summary = baseSummary();
+    summary.readiness_lines.recordings.wav_count = 0;
+    summary.readiness_lines.recordings.table_rows = 20;
+    summary.readiness_lines.predict.total = 20;
+    expect(readinessLineDetail(summary, "recordings", t)).toBe(
+      "home.readinessDetail.recordingsWav:0",
+    );
+    expect(readinessLineDetail(summary, "annotations", t)).toBe("9/12");
+    expect(readinessLineDetail(summary, "predict", t)).toBe("7/20");
+  });
+
+  it("home hint keeps remaining predict next to filter and missing labels", () => {
+    expect(
+      formatNextActionsHint(
+        ["predict", "filter", "annotate", "results"],
+        t,
+      ),
+    ).toBe(
+      "steps:home.nextAction.predict · home.nextAction.filter · home.nextAction.annotate · home.nextAction.results",
+    );
   });
 
   it("formats focus and next-step hints", () => {

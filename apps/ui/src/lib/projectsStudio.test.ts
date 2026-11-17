@@ -11,8 +11,10 @@ import {
   projectsPageMode,
   projectsTabsForFocus,
   tabForNextAction,
+  attentionCardForStep,
   readinessAttentionKey,
   readinessCardDetail,
+  readinessCardState,
   readinessCardDetailKey,
   readinessCardInactiveForFocus,
   trainWizardBlockedByAnnotations,
@@ -53,7 +55,7 @@ const summary = (over: Partial<ProjectSummary> = {}): ProjectSummary => ({
   readiness_lines: {
     recordings: { state: "ready", wav_count: 12, table_rows: 12 },
     annotations: { state: "ready", annotated: 9, total: 12 },
-    predict: { state: "ready", predicted: 7, total: 12 },
+    predict: { state: "ready", predicted: 7, total: 12, unfiltered: 7 },
     datasets: { state: "ready", file_count: 3, has_tvt_dir: true },
     model: { state: "ready", checkpoint_count: 1, model_name: "orcai-isl-v1" },
   },
@@ -126,13 +128,19 @@ describe("projectsStudio · page mode (m33/m34/m35)", () => {
 });
 
 describe("projectsStudio · m36 next steps", () => {
-  it("full focus: predict, train, filter when annotations already ready", () => {
+  it("full focus lists the unlabeled recordings before predict, train, and filter", () => {
     const steps = nextStepsFromSummary(summary(), "full");
-    expect(steps.map((s) => s.action)).toEqual(["predict", "train", "filter"]);
-    expect(steps[0].count).toBe(5);
-    expect(steps[0].command).toBe("predict · orcai-isl-v1");
-    expect(steps[1].count).toBe(9);
-    expect(steps[2].count).toBe(7);
+    expect(steps.map((s) => s.action)).toEqual([
+      "annotate",
+      "predict",
+      "train",
+      "filter",
+    ]);
+    expect(steps[0].count).toBe(3);
+    expect(steps[1].count).toBe(5);
+    expect(steps[1].command).toBe("predict · orcai-isl-v1");
+    expect(steps[2].count).toBe(9);
+    expect(steps[3].count).toBe(7);
   });
 
   it("full focus: annotate before create_tvt before predict (BUG-P-02/04)", () => {
@@ -173,6 +181,33 @@ describe("projectsStudio · m36 next steps", () => {
     const filter = steps.find((s) => s.action === "filter");
     expect(filter?.route).toBe("/predict");
     expect(filter?.routeState).toEqual({ tab: "filter" });
+    expect(filter?.count).toBe(7);
+  });
+
+  it("hides filter when every prediction already has an up-to-date filtered file", () => {
+    const steps = nextStepsFromSummary(
+      summary({
+        readiness_lines: {
+          ...summary().readiness_lines,
+          predict: { state: "ready", predicted: 7, total: 12, unfiltered: 0 },
+        },
+      }),
+      "recognition",
+    );
+    expect(steps.map((s) => s.action)).toEqual(["predict"]);
+  });
+
+  it("filter count uses unfiltered (re-predict leaves stale filtered siblings)", () => {
+    const steps = nextStepsFromSummary(
+      summary({
+        readiness_lines: {
+          ...summary().readiness_lines,
+          predict: { state: "ready", predicted: 7, total: 12, unfiltered: 2 },
+        },
+      }),
+      "full",
+    );
+    expect(steps.find((s) => s.action === "filter")?.count).toBe(2);
   });
 
   it("training focus: annotate when annotations needed (BUG-P-02)", () => {
@@ -190,7 +225,7 @@ describe("projectsStudio · m36 next steps", () => {
     expect(steps.map((s) => s.action)).toEqual(["annotate"]);
   });
 
-  it("training focus: create_tvt when datasets not ready", () => {
+  it("training focus: create_tvt when datasets not ready, and still lists the gap", () => {
     const steps = nextStepsFromSummary(
       summary({
         readiness: { ...summary().readiness, datasets: "needed" },
@@ -201,15 +236,61 @@ describe("projectsStudio · m36 next steps", () => {
       }),
       "training",
     );
-    expect(steps.map((s) => s.action)).toEqual(["create_tvt"]);
-    expect(steps[0].route).toBe("/pipeline?view=wizard");
+    expect(steps.map((s) => s.action)).toEqual(["annotate", "create_tvt"]);
+    expect(steps[0].count).toBe(3);
+    expect(steps[1].count).toBe(9);
+    expect(steps[1].route).toBe("/pipeline?view=wizard");
   });
 
-  it("training focus: train when datasets ready", () => {
+  it("training focus: train when datasets ready, and still lists the gap", () => {
     const steps = nextStepsFromSummary(summary(), "training");
+    expect(steps.map((s) => s.action)).toEqual(["annotate", "train"]);
+    expect(steps[1].command).toBe("train · -lmf");
+    expect(steps[1].count).toBe(9);
+    expect(steps[1].route).toBe("/pipeline?view=wizard");
+  });
+
+  it("does not offer the wizard when no annotation shares a WAV name", () => {
+    const steps = nextStepsFromSummary(
+      summary({
+        readiness_lines: {
+          ...summary().readiness_lines,
+          annotations: { state: "ready", annotated: 9, total: 12, paired_files: 0 },
+        },
+      }),
+      "training",
+    );
+    expect(steps.map((s) => s.action)).toEqual(["annotate"]);
+    expect(steps[0].count).toBe(12);
+  });
+
+  it("counts the wizard from stem-matched files and the gap from the rest", () => {
+    const steps = nextStepsFromSummary(
+      summary({
+        readiness_lines: {
+          ...summary().readiness_lines,
+          annotations: { state: "ready", annotated: 8, total: 12, paired_files: 5 },
+        },
+      }),
+      "training",
+    );
+    expect(steps.map((s) => s.action)).toEqual(["annotate", "train"]);
+    expect(steps[0].count).toBe(7);
+    expect(steps[1].count).toBe(5);
+  });
+
+  it("omits annotate when every WAV has a matching annotation", () => {
+    const steps = nextStepsFromSummary(
+      summary({
+        readiness_lines: {
+          ...summary().readiness_lines,
+          annotations: { state: "ready", annotated: 12, total: 12, paired_files: 12 },
+        },
+      }),
+      "training",
+    );
     expect(steps.map((s) => s.action)).toEqual(["train"]);
-    expect(steps[0].command).toBe("train · -lmf");
-    expect(steps[0].route).toBe("/pipeline?view=wizard");
+    expect(steps[0].count).toBe(12);
   });
 
   it("stale table adds sync_table first for every focus", () => {
@@ -228,11 +309,50 @@ describe("projectsStudio · m36 next steps", () => {
     expect(tabForNextAction("filter")).toBeNull();
   });
 
-  it("full-cycle line when predict + model ready", () => {
-    expect(isFullCycleReady(summary())).toBe(true);
+  it("full-cycle line only when every recording is predicted and a model is present", () => {
+    expect(isFullCycleReady(summary())).toBe(false);
+    const done = summary({
+      readiness_lines: {
+        ...summary().readiness_lines,
+        predict: { state: "ready", predicted: 12, total: 12 },
+      },
+    });
+    expect(isFullCycleReady(done)).toBe(true);
+    expect(nextStepsFromSummary(done, "full").some((step) => step.action === "predict")).toBe(
+      false,
+    );
     expect(
       isFullCycleReady(
-        summary({ readiness: { ...summary().readiness, model: "empty" } }),
+        summary({
+          readiness: { ...summary().readiness, model: "empty" },
+          readiness_lines: {
+            ...summary().readiness_lines,
+            predict: { state: "ready", predicted: 12, total: 12 },
+          },
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isFullCycleReady(
+        summary({
+          readiness: { ...summary().readiness, recordings: "needed" },
+          recording_table: { path: "/p/recording_table.csv", sync_status: "stale" },
+          readiness_lines: {
+            ...summary().readiness_lines,
+            recordings: { state: "needed", wav_count: 12, table_rows: 12 },
+            predict: { state: "ready", predicted: 12, total: 12 },
+          },
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isFullCycleReady(
+        summary({
+          readiness_lines: {
+            ...summary().readiness_lines,
+            predict: { state: "empty", predicted: 0, total: 0 },
+          },
+        }),
       ),
     ).toBe(false);
   });
@@ -258,6 +378,7 @@ describe("projectsStudio · readiness cards", () => {
       "projects.studio.readiness.addWav",
     );
     expect(readinessCardTone("needed", true)).toBe("attention");
+    expect(readinessCardTone("ready", true)).toBe("attention");
     expect(readinessCardTone("ready", false)).toBe("ready");
   });
 
@@ -287,7 +408,7 @@ describe("projectsStudio · readiness cards", () => {
     const s = summary({
       readiness: { ...summary().readiness, datasets: "needed", predict: "empty" },
     });
-    expect(readinessAttentionKey(s, "training")).toBe("datasets");
+    expect(readinessAttentionKey(s, "training")).toBe("annotations");
     expect(readinessCardDetail(s, "predict", "training", t)).toBe(
       "projects.studio.readiness.notRequiredForFocus",
     );
@@ -313,6 +434,105 @@ describe("projectsStudio · readiness cards", () => {
     expect(readinessCardDetail(s, "model", "full", t)).toBe(
       "projects.studio.readiness.model:isl-v1",
     );
+  });
+
+  it("annotation lamp counts stem-matched files against WAV files", () => {
+    const s = summary({
+      readiness_lines: {
+        ...summary().readiness_lines,
+        recordings: { state: "ready", wav_count: 12, table_rows: 20 },
+        annotations: {
+          state: "ready",
+          annotated: 9,
+          total: 20,
+          paired_files: 5,
+        },
+      },
+    });
+    expect(readinessCardDetail(s, "annotations", "full", t)).toBe(
+      "projects.studio.readiness.annotations:5,12",
+    );
+    expect(readinessCardState(s, "annotations")).toBe("ready");
+    expect(readinessCardTone(readinessCardState(s, "annotations"), false)).toBe("ready");
+    const steps = nextStepsFromSummary(s, "full");
+    expect(steps.find((step) => step.action === "annotate")?.count).toBe(7);
+  });
+
+  it("annotation lamp stays dark when no txt shares a WAV name", () => {
+    const s = summary({
+      readiness: { ...summary().readiness, annotations: "ready" },
+      readiness_lines: {
+        ...summary().readiness_lines,
+        annotations: { state: "ready", annotated: 9, total: 12, paired_files: 0 },
+      },
+    });
+    expect(readinessCardDetail(s, "annotations", "training", t)).toBe(
+      "projects.studio.readiness.noAnnotations",
+    );
+    expect(readinessCardState(s, "annotations")).toBe("needed");
+    expect(readinessCardTone(readinessCardState(s, "annotations"), false)).toBe("empty");
+    expect(readinessCardDetail(s, "annotations", "recognition", t)).toBe(
+      "projects.studio.readiness.notRequiredForFocus",
+    );
+  });
+
+  it("annotation lamp keeps the table count when paired_files is absent", () => {
+    const s = summary();
+    expect(readinessCardState(s, "annotations")).toBe("ready");
+    expect(readinessCardDetail(s, "annotations", "full", t)).toBe(
+      "projects.studio.readiness.annotations:9,12",
+    );
+    expect(readinessCardState(s, "predict")).toBe("ready");
+  });
+
+  it("yellow lamp follows the first step, and a stale table stays ahead of annotations", () => {
+    const partial = summary({
+      readiness: { ...summary().readiness, datasets: "needed" },
+      readiness_lines: {
+        ...summary().readiness_lines,
+        annotations: { state: "ready", annotated: 9, total: 12, paired_files: 5 },
+        datasets: { state: "needed", file_count: 0, has_tvt_dir: false },
+      },
+    });
+    expect(nextStepsFromSummary(partial, "full")[0].action).toBe("annotate");
+    expect(readinessAttentionKey(partial, "full")).toBe("annotations");
+    expect(readinessAttentionKey(partial, "training")).toBe("annotations");
+    expect(
+      readinessCardTone(readinessCardState(partial, "annotations"), true),
+    ).toBe("attention");
+
+    const stale = summary({
+      ...partial,
+      recording_table: { path: "/p/recording_table.csv", sync_status: "stale" },
+    });
+    expect(nextStepsFromSummary(stale, "training")[0].action).toBe("sync_table");
+    expect(readinessAttentionKey(stale, "training")).toBe("recordings");
+    expect(readinessAttentionKey(stale, "recognition")).toBe("recordings");
+  });
+
+  it("yellow lamp moves to datasets only after every WAV has a matching annotation", () => {
+    const s = summary({
+      readiness: { ...summary().readiness, datasets: "needed" },
+      readiness_lines: {
+        ...summary().readiness_lines,
+        annotations: { state: "ready", annotated: 12, total: 12, paired_files: 12 },
+        datasets: { state: "needed", file_count: 0, has_tvt_dir: false },
+      },
+    });
+    expect(nextStepsFromSummary(s, "training")[0].action).toBe("create_tvt");
+    expect(readinessAttentionKey(s, "training")).toBe("datasets");
+    expect(attentionCardForStep("filter")).toBeNull();
+    expect(attentionCardForStep("train")).toBe("model");
+  });
+
+  it("recognition highlights predict, not the annotation gap", () => {
+    const s = summary({
+      readiness_lines: {
+        ...summary().readiness_lines,
+        annotations: { state: "ready", annotated: 9, total: 12, paired_files: 5 },
+      },
+    });
+    expect(readinessAttentionKey(s, "recognition")).toBe("predict");
   });
 });
 
@@ -372,6 +592,24 @@ describe("projectsStudio · table formatting (m02)", () => {
         }),
       ),
     ).toBe(false);
+  });
+
+  it("empty project (0 paired) blocks the Projects wizard like Pipeline", () => {
+    expect(
+      trainWizardBlockedByAnnotations(
+        summary({
+          readiness_lines: {
+            ...summary().readiness_lines,
+            annotations: {
+              state: "needed",
+              annotated: 0,
+              total: 0,
+              paired_files: 0,
+            },
+          },
+        }),
+      ),
+    ).toBe(true);
   });
 
   it("classes label follows parameters vs annotations", () => {

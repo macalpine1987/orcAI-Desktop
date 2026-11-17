@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { renderWithProviders } from "../../test/render";
 import type { JobRecord } from "../../api/jobs";
+import { resetWorkspace, saveWorkspace } from "../../workspace/storage";
 import {
   HOME_RECENT_JOBS_LIMIT,
   HomeRecentJobs,
@@ -56,6 +57,10 @@ function makeJob(
 }
 
 describe("HomeRecentJobs · D-01", () => {
+  beforeEach(() => {
+    resetWorkspace();
+  });
+
   it("exports adaptive HOME_RECENT_JOBS_LIMIT (max ≥ 4)", () => {
     expect(HOME_RECENT_JOBS_LIMIT).toBeGreaterThanOrEqual(4);
   });
@@ -63,6 +68,7 @@ describe("HomeRecentJobs · D-01", () => {
   it("renders a bounded recent list and five columns (jsdom: min 4)", () => {
     sidecarMock.online = true;
     sidecarMock.engineReady = true;
+    saveWorkspace({ activeProjectId: "proj", projectDir: "/proj" });
     jobsMock.jobs = Array.from({ length: 6 }, (_, i) =>
       makeJob({
         id: `j${i}`,
@@ -105,9 +111,26 @@ describe("HomeRecentJobs · D-01", () => {
     unmount();
   });
 
+  it("disables All jobs link when no project is active", () => {
+    sidecarMock.online = true;
+    sidecarMock.engineReady = true;
+    jobsMock.jobs = [];
+    const { container, unmount } = renderWithProviders(
+      <MemoryRouter>
+        <HomeRecentJobs />
+      </MemoryRouter>,
+    );
+    expect(container.querySelector("a.jobs-action-link")).toBeNull();
+    const disabled = container.querySelector(".jobs-action-link--disabled");
+    expect(disabled).toBeTruthy();
+    expect(disabled?.getAttribute("title")).toMatch(/проект|project/i);
+    unmount();
+  });
+
   it("running job has no finished timestamp; completed does", () => {
     sidecarMock.online = true;
     sidecarMock.engineReady = true;
+    saveWorkspace({ activeProjectId: "proj", projectDir: "/proj" });
     jobsMock.jobs = [
       makeJob({
         id: "run",
@@ -154,7 +177,25 @@ describe("HomeRecentJobs · D-01", () => {
     );
     expect(container.querySelectorAll("tbody tr")).toHaveLength(1);
     expect(container.querySelector("table.jobs-table")).toBeTruthy();
-    expect(container.textContent).toMatch(/Sidecar|offline|не подключ|остановлен/i);
+    // With jobs already listed, do not show the “start Sidecar” offline tip.
+    expect(container.textContent).not.toMatch(
+      /Запустите Sidecar|Start Sidecar to see the job queue/i,
+    );
+    unmount();
+  });
+
+  it("shows the offline tip only when the recent list is empty", () => {
+    jobsMock.jobs = [];
+    sidecarMock.online = false;
+    const { container, unmount } = renderWithProviders(
+      <MemoryRouter>
+        <HomeRecentJobs />
+      </MemoryRouter>,
+    );
+    expect(container.querySelector("table.jobs-table")).toBeNull();
+    expect(container.textContent).toMatch(
+      /Запустите Sidecar|Start Sidecar to see the job queue/i,
+    );
     unmount();
   });
 });

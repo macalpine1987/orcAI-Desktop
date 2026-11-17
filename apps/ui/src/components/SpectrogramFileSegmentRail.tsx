@@ -6,22 +6,15 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { formatSpectrogramAxisTime } from "../lib/spectrogramTimeTicks";
 import {
-  SPECTROGRAM_COLORMAP_LABEL,
-  SPECTROGRAM_COLORMAPS,
-  spectrogramSegmentCount,
-  spectrogramSegmentIndexForStart,
   spectrogramSegmentWindow,
   type SpectrogramColormap,
 } from "../lib/spectrogramView";
 import {
-  IconAudioFiles,
-  IconChevronLeft,
-  IconChevronRight,
-  IconLayers,
-  IconWaveform,
-} from "./SpectrogramIcons";
+  segmentRailSeekFromClientX,
+  segmentRailViewport,
+} from "./spectrogram/segmentRailHelpers";
+import { SegmentRailStudioChrome } from "./spectrogram/SegmentRailStudioChrome";
 import type { AnalysisLabelKind } from "../lib/predictQueueUi";
 
 type Props = {
@@ -37,18 +30,26 @@ type Props = {
   fileName?: string | null;
   /** m04: muted meta after filename — `48 кГц · канал 1 · 23:12`. */
   fileMeta?: string | null;
-  /** File-picker toggle — replaces the old chevron on the left. */
+  /** File-picker toggle — opens the dropdown under the track-name frame. */
   onFileMenuToggle?: (() => void) | null;
+  onFileMenuClose?: (() => void) | null;
   fileMenuOpen?: boolean;
   fileMenuDisabled?: boolean;
-  /** Switch among recognized WAV files (before the file-list button). */
+  /** Names for the dropdown (colormap-style list, not a modal). */
+  fileMenuFiles?: readonly { name: string }[] | null;
+  fileMenuActiveName?: string | null;
+  onFileMenuSelect?: ((name: string) => void) | null;
+  /** Switch among recognized WAV files (sides of the track-name frame). */
   onFilePrev?: (() => void) | null;
   onFileNext?: (() => void) | null;
   canFilePrev?: boolean;
   canFileNext?: boolean;
   /** Table-hero mode: file/label nav only (hide spectrogram window segment controls). */
   fileNavOnly?: boolean;
-  /** Table-hero: open classes filter modal (same controls as the sidebar). */
+  /**
+   * Classes filter toggle.
+   * Table-hero → modal; spectrogram studio → swap tools panel (transport ↔ classes).
+   */
   onClassesFilterToggle?: (() => void) | null;
   classesFilterOpen?: boolean;
   labelSource?: {
@@ -74,8 +75,12 @@ export function SpectrogramFileSegmentRail({
   fileName = null,
   fileMeta = null,
   onFileMenuToggle = null,
+  onFileMenuClose = null,
   fileMenuOpen = false,
   fileMenuDisabled = false,
+  fileMenuFiles = null,
+  fileMenuActiveName = null,
+  onFileMenuSelect = null,
   onFilePrev = null,
   onFileNext = null,
   canFilePrev = false,
@@ -90,6 +95,7 @@ export function SpectrogramFileSegmentRail({
   const { t } = useTranslation();
   const trackRef = useRef<HTMLDivElement>(null);
   const cmapRef = useRef<HTMLDivElement>(null);
+  const fileMenuRef = useRef<HTMLDivElement>(null);
   const [cmapOpen, setCmapOpen] = useState(false);
 
   useEffect(() => {
@@ -104,29 +110,52 @@ export function SpectrogramFileSegmentRail({
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [cmapOpen]);
 
-  const safeDuration = Math.max(durationSec, 0.01);
-  const segmentTotal = spectrogramSegmentCount(safeDuration);
-  const maxStart = Math.max(0, durationSec - viewSpan);
-  const canScroll = durationSec > 0 && viewSpan < durationSec - 0.01;
-  const canPrev = segmentIndex > 0;
-  const canNext = segmentIndex < segmentTotal - 1;
+  useEffect(() => {
+    if (!fileMenuOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (fileMenuRef.current?.contains(target)) return;
+      onFileMenuClose?.();
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onFileMenuClose?.();
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [fileMenuOpen, onFileMenuClose]);
 
-  const viewportLeftPct = (viewStart / safeDuration) * 100;
-  const viewportWidthPct = (viewSpan / safeDuration) * 100;
+  const {
+    safeDuration,
+    segmentTotal,
+    maxStart,
+    canScroll,
+    canPrev,
+    canNext,
+    viewportLeftPct,
+    viewportWidthPct,
+  } = segmentRailViewport({ durationSec, viewStart, viewSpan, segmentIndex });
 
   const seekFromClientX = useCallback(
     (clientX: number) => {
       const el = trackRef.current;
-      if (!el || durationSec <= 0) return;
-      const rect = el.getBoundingClientRect();
-      if (rect.width <= 0) return;
-      const frac = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      if (studioLayout) {
-        const sec = frac * durationSec;
-        onSegmentSelect(spectrogramSegmentIndexForStart(sec, durationSec));
-        return;
-      }
-      onViewStartChange(frac * durationSec);
+      if (!el) return;
+      const hit = segmentRailSeekFromClientX({
+        clientX,
+        trackEl: el,
+        durationSec,
+        studioLayout,
+      });
+      if (!hit) return;
+      if (hit.kind === "segment") onSegmentSelect(hit.index);
+      else onViewStartChange(hit.start);
     },
     [durationSec, onViewStartChange, onSegmentSelect, studioLayout],
   );
@@ -254,248 +283,41 @@ export function SpectrogramFileSegmentRail({
   );
 
   if (studioLayout) {
-    if (durationSec <= 0) return null;
-
-    const t0Label = formatSpectrogramAxisTime(viewStart);
-    const t1Label = formatSpectrogramAxisTime(
-      Math.min(durationSec, viewStart + viewSpan),
-    );
-    const segmentRangeLabel = `${t0Label} — ${t1Label}`;
-    const segmentDurationLabel = t("spectrogram.segment.fileDuration", {
-      sec: Math.max(1, Math.round(viewSpan)),
-    });
-
     return (
-      <div
-        className={`analysis-segment-rail-studio${
-          fileNavOnly ? " is-file-nav-only" : ""
-        }`}
-        role="group"
-        aria-label={t("spectrogram.segment.studioSliderAria")}
-        data-spectrogram-chrome=""
-        data-file-nav-only={fileNavOnly ? "" : undefined}
-      >
-        <div className="analysis-segment-rail-studio-head">
-          <div className="analysis-segment-rail-studio-file">
-            <span className="analysis-segment-rail-studio-wave" aria-hidden>
-              <IconWaveform />
-            </span>
-            {fileName ? (
-              <span
-                className="analysis-segment-rail-studio-filename"
-                title={fileName}
-              >
-                {fileName}
-              </span>
-            ) : null}
-            {labelSource ? (
-              <div
-                className="analysis-segment-rail-studio-labels"
-                role="group"
-                aria-label={t("predict.results.labelSourceAria")}
-              >
-                <button
-                  type="button"
-                  className="analysis-segment-rail-studio-label-btn"
-                  aria-pressed={labelSource.kind === "original"}
-                  disabled={!labelSource.originalAvailable}
-                  title={t("predict.results.labelSourceOriginalHint")}
-                  onClick={() => labelSource.onChange("original")}
-                >
-                  {t("predict.results.labelSourceOriginal")}
-                </button>
-                <button
-                  type="button"
-                  className="analysis-segment-rail-studio-label-btn"
-                  aria-pressed={labelSource.kind === "filtered"}
-                  disabled={!labelSource.filteredAvailable}
-                  title={
-                    labelSource.fileName && labelSource.kind === "filtered"
-                      ? labelSource.fileName
-                      : t("predict.results.labelSourceFilteredHint")
-                  }
-                  onClick={() => labelSource.onChange("filtered")}
-                >
-                  {t("predict.results.labelSourceFiltered")}
-                </button>
-              </div>
-            ) : null}
-            <div className="analysis-segment-rail-studio-file-end">
-              {onFilePrev || onFileNext ? (
-                <div
-                  className="analysis-segment-rail-studio-filenav"
-                  role="group"
-                  aria-label={t("predict.results.fileNavAria")}
-                >
-                  <button
-                    type="button"
-                    className="analysis-segment-rail-studio-filenav-btn"
-                    disabled={!canFilePrev || fileMenuDisabled}
-                    aria-label={t("predict.results.filePrev")}
-                    title={t("predict.results.filePrevHint")}
-                    onClick={() => onFilePrev?.()}
-                  >
-                    <IconChevronLeft />
-                  </button>
-                  <button
-                    type="button"
-                    className="analysis-segment-rail-studio-filenav-btn"
-                    disabled={!canFileNext || fileMenuDisabled}
-                    aria-label={t("predict.results.fileNext")}
-                    title={t("predict.results.fileNextHint")}
-                    onClick={() => onFileNext?.()}
-                  >
-                    <IconChevronRight />
-                  </button>
-                </div>
-              ) : null}
-              {onFileMenuToggle ? (
-                <button
-                  type="button"
-                  className={`analysis-segment-rail-studio-filemenu${
-                    fileMenuOpen ? " is-open" : ""
-                  }`}
-                  disabled={fileMenuDisabled}
-                  aria-label={t("predict.results.filePicker")}
-                  title={
-                    fileMenuOpen
-                      ? t("predict.results.filePickerCloseHint")
-                      : t("predict.results.filePickerHint")
-                  }
-                  aria-expanded={fileMenuOpen}
-                  onClick={onFileMenuToggle}
-                >
-                  <IconAudioFiles size={18} />
-                </button>
-              ) : null}
-              {fileNavOnly && onClassesFilterToggle ? (
-                <button
-                  type="button"
-                  className={`analysis-segment-rail-studio-classes${
-                    classesFilterOpen ? " is-open" : ""
-                  }`}
-                  aria-label={t("predict.results.classesFilter")}
-                  title={
-                    classesFilterOpen
-                      ? t("predict.results.classesFilterCloseHint")
-                      : t("predict.results.classesFilterHint")
-                  }
-                  aria-expanded={classesFilterOpen}
-                  onClick={onClassesFilterToggle}
-                >
-                  <IconLayers />
-                </button>
-              ) : null}
-              {fileMeta ? (
-                <span className="analysis-segment-rail-studio-filemeta-muted">
-                  {fileMeta}
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          {!fileNavOnly ? (
-            <>
-              <div className="analysis-segment-rail-studio-sep" aria-hidden />
-
-              <div className="analysis-segment-rail-studio-right">
-                {onColormapChange ? (
-                  <div
-                    className="analysis-segment-rail-studio-cmap"
-                    ref={cmapRef}
-                  >
-                    <button
-                      type="button"
-                      className={`analysis-segment-rail-studio-cmap-btn${
-                        cmapOpen ? " is-open" : ""
-                      }`}
-                      aria-label={t("spectrogram.toolbar.colormapLabel")}
-                      aria-haspopup="listbox"
-                      aria-expanded={cmapOpen}
-                      onClick={() => setCmapOpen((open) => !open)}
-                    >
-                      <span
-                        className={`analysis-segment-rail-studio-cmap-swatch is-${colormap}`}
-                        aria-hidden
-                      />
-                      <span className="analysis-segment-rail-studio-cmap-name">
-                        {SPECTROGRAM_COLORMAP_LABEL[colormap]}
-                      </span>
-                    </button>
-                    {cmapOpen ? (
-                      <ul
-                        className="analysis-segment-rail-studio-cmap-menu"
-                        role="listbox"
-                        aria-label={t("spectrogram.toolbar.colormapLabel")}
-                      >
-                        {SPECTROGRAM_COLORMAPS.map((name) => (
-                          <li key={name}>
-                            <button
-                              type="button"
-                              role="option"
-                              aria-selected={name === colormap}
-                              className={`analysis-segment-rail-studio-cmap-item${
-                                name === colormap ? " is-selected" : ""
-                              }`}
-                              onClick={() => {
-                                onColormapChange(name);
-                                setCmapOpen(false);
-                              }}
-                            >
-                              <span
-                                className={`analysis-segment-rail-studio-cmap-swatch is-${name}`}
-                                aria-hidden
-                              />
-                              {SPECTROGRAM_COLORMAP_LABEL[name]}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                ) : null}
-                <div className="analysis-segment-rail-studio-meta">
-                  <span className="analysis-segment-rail-studio-title">
-                    {t("spectrogram.segment.counter", {
-                      index: segmentIndex + 1,
-                      total: segmentTotal,
-                    })}
-                  </span>
-                  <span className="analysis-segment-rail-studio-range">
-                    {segmentRangeLabel}
-                  </span>
-                  <span className="analysis-segment-rail-studio-duration">
-                    · {segmentDurationLabel}
-                  </span>
-                </div>
-
-                <div className="analysis-segment-rail-studio-nav">
-                  <button
-                    type="button"
-                    className="analysis-segment-rail-studio-nav-btn"
-                    disabled={!canPrev}
-                    aria-label={t("spectrogram.segment.navPrev")}
-                    title={t("spectrogram.segment.navPrev")}
-                    onClick={() => onSegmentSelect(segmentIndex - 1)}
-                  >
-                    <IconChevronLeft />
-                  </button>
-                  <button
-                    type="button"
-                    className="analysis-segment-rail-studio-nav-btn"
-                    disabled={!canNext}
-                    aria-label={t("spectrogram.segment.navNext")}
-                    title={t("spectrogram.segment.navNext")}
-                    onClick={() => onSegmentSelect(segmentIndex + 1)}
-                  >
-                    <IconChevronRight />
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : null}
-        </div>
-      </div>
+      <SegmentRailStudioChrome
+        t={t}
+        durationSec={durationSec}
+        viewStart={viewStart}
+        viewSpan={viewSpan}
+        segmentIndex={segmentIndex}
+        segmentTotal={segmentTotal}
+        canPrev={canPrev}
+        canNext={canNext}
+        fileName={fileName}
+        fileMeta={fileMeta}
+        onFileMenuToggle={onFileMenuToggle}
+        onFileMenuClose={onFileMenuClose}
+        fileMenuOpen={fileMenuOpen}
+        fileMenuDisabled={fileMenuDisabled}
+        fileMenuFiles={fileMenuFiles}
+        fileMenuActiveName={fileMenuActiveName}
+        onFileMenuSelect={onFileMenuSelect}
+        onFilePrev={onFilePrev}
+        onFileNext={onFileNext}
+        canFilePrev={canFilePrev}
+        canFileNext={canFileNext}
+        fileNavOnly={fileNavOnly}
+        onClassesFilterToggle={onClassesFilterToggle}
+        classesFilterOpen={classesFilterOpen}
+        labelSource={labelSource}
+        colormap={colormap}
+        onColormapChange={onColormapChange}
+        cmapOpen={cmapOpen}
+        setCmapOpen={setCmapOpen}
+        cmapRef={cmapRef}
+        fileMenuRef={fileMenuRef}
+        onSegmentSelect={onSegmentSelect}
+      />
     );
   }
 

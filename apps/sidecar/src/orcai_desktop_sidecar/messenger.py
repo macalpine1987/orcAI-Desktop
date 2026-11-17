@@ -10,9 +10,14 @@ from orcai.auxiliary import Messenger
 
 from orcai_desktop_sidecar.jobs import append_log, set_progress
 
-_PCT_RE = re.compile(
-    r"(?:^|[^\d])(\d{1,3}(?:\.\d+)?)\s*%|epoch\s+(\d+)\s*/\s*(\d+)",
-    re.IGNORECASE,
+# Progress markers only — do not treat arbitrary "N%" (thresholds, metrics) as job progress.
+_TRAINING_PCT_RE = re.compile(
+    r"(?i)\b(?:training|progress|completed?)\b[^%]{0,40}?(\d{1,3}(?:\.\d+)?)\s*%"
+)
+_TQDM_PCT_RE = re.compile(r"(\d{1,3}(?:\.\d+)?)\s*%\s*\|")
+_EPOCH_RE = re.compile(r"(?i)\bepoch\s+(\d+)\s*/\s*(\d+)\b")
+_PREDICT_FILE_RE = re.compile(
+    r"(?i)\[predict-file\]\s+(\d+)\s*/\s*(\d+)\b"
 )
 
 # orcAI ``hpsearch`` hardcodes "Sequential - running on 1 GPU" when parallel=False,
@@ -70,18 +75,29 @@ class JobMessenger(Messenger):
 
     @staticmethod
     def _parse_progress(text: str) -> float | None:
-        match = _PCT_RE.search(text)
-        if not match:
-            return None
-        if match.group(1) is not None:
+        predict = _PREDICT_FILE_RE.search(text)
+        if predict is not None:
+            current, total = int(predict.group(1)), int(predict.group(2))
+            if total <= 0:
+                return None
+            # Line is emitted when a file *starts* — count completed predecessors only.
+            return max(0.0, min(0.99, (current - 1) / total))
+
+        epoch = _EPOCH_RE.search(text)
+        if epoch is not None:
+            current, total = int(epoch.group(1)), int(epoch.group(2))
+            if total <= 0:
+                return None
+            return max(0.0, min(1.0, current / total))
+
+        for pattern in (_TRAINING_PCT_RE, _TQDM_PCT_RE):
+            match = pattern.search(text)
+            if match is None:
+                continue
             value = float(match.group(1)) / 100.0
             if 0.0 <= value <= 1.0:
                 return value
-            return None
-        current, total = int(match.group(2)), int(match.group(3))
-        if total <= 0:
-            return None
-        return max(0.0, min(1.0, current / total))
+        return None
 
     @staticmethod
     def _message_to_line(message: Any, prepend: str) -> str:

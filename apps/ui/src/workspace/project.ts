@@ -90,6 +90,7 @@ export async function persistActiveProjectPredictModel(
 }
 
 export function applyActiveProject(project: ProjectRecord): void {
+  const prev = loadWorkspace();
   saveWorkspace({
     activeProjectId: project.id,
     activeProjectKind: normalizeProjectKind(project.project_kind),
@@ -100,6 +101,12 @@ export function applyActiveProject(project: ProjectRecord): void {
     recordingTablePath: project.recording_table_path ?? null,
   });
   applyPredictModelFromProject(project, { resetIfMissing: true });
+  if (prev.activeProjectId !== project.id || prev.projectDir !== project.path) {
+    // Drop in-memory spectrogram tiles from the previous project.
+    void import("../lib/spectrogramTileCache").then((m) => {
+      m.invalidateSpectrogramTileCache();
+    });
+  }
 }
 
 /** Persist focus change for the active project (header model frame depends on it). */

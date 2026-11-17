@@ -14,6 +14,7 @@ export type CreateRecordingTableParams = {
   output_path?: string;
   default_channel?: number;
   remove_duplicate_filenames?: boolean;
+  exclude_patterns?: string;
   overwrite?: boolean;
 };
 

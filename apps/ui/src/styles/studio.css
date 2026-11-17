@@ -75,47 +75,67 @@
   }
 
   /*
-   * Page-header Help — outlined ghost (m01 screenshot):
-   * circle-? + label, soft gray rim, dark fill.
+   * Page-header Help — bare icon only:
+   * ~22px circle-?, no rim/fill/label; invisible 2.25rem hit-area.
    */
   .page-help-btn {
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    gap: var(--ctrl-gap, 0.5rem);
     box-sizing: border-box;
-    height: var(--ctrl-h, 2rem);
-    padding: 0 var(--ctrl-pad-x, 0.75rem);
-    border: 1px solid #6a6c70;
-    border-radius: var(--ctrl-radius, 8px);
-    background: #181a1b;
-    color: #c4c5c7;
-    font-size: 12px;
-    font-weight: 500;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: #c8c9cb;
     line-height: 1;
     text-decoration: none;
-    white-space: nowrap;
     cursor: pointer;
-    transition:
-      border-color 120ms ease,
-      color 120ms ease,
-      background-color 120ms ease;
+    transition: color 120ms ease;
   }
 
   .page-help-btn:hover {
-    border-color: #8a8c90;
-    color: #e2e2e4;
-    background: #1c1e20;
+    color: #f0f0f2;
+    background: transparent;
   }
 
   .page-help-btn:active {
-    border-color: #5a5c60;
-    background: #141516;
+    color: #d6d6d8;
+    background: transparent;
+  }
+
+  .page-help-btn:focus-visible {
+    outline: 1px solid #7dffa3;
+    outline-offset: 2px;
   }
 
   .page-help-btn-icon {
     display: block;
     flex-shrink: 0;
+  }
+
+  /* Pin Help to 10px from the panel's top-right. Titles stay put. */
+  .home-page-header > .page-help-btn,
+  .projects-page-header > .page-help-btn {
+    transform: translate(calc(1.25rem - 10px), calc(10px - 1.25rem));
+  }
+
+  .predict-page-header .page-help-btn {
+    transform: translate(calc(1.15rem - 10px), calc(10px - 1.15rem));
+  }
+
+  .results-page-header > .page-help-btn {
+    transform: translate(calc(12px - 10px), calc(10px - 0.75rem));
+  }
+
+  .models-page-header .page-help-btn {
+    transform: translate(calc(14px - 10px), calc(10px - 12px));
+  }
+
+  .tw-header .page-help-btn {
+    transform: translate(calc(12px - 10px), 0);
   }
 }

@@ -81,19 +81,22 @@ describe("static gate · Settings foundation", () => {
   });
 
   it("data-health banner defaults off on first launch and factory reset", () => {
-    const ctx = readFileSync(
-      join(uiSrc, "preferences/PreferencesContext.tsx"),
-      "utf8",
-    );
+    const ctx = [
+      readFileSync(join(uiSrc, "preferences/PreferencesContext.tsx"), "utf8"),
+      readFileSync(join(uiSrc, "preferences/usePreferencesControllers.ts"), "utf8"),
+      readFileSync(join(uiSrc, "preferences/preferencesHydration.ts"), "utf8"),
+      readFileSync(join(uiSrc, "preferences/storage.ts"), "utf8"),
+    ].join("\n");
+    expect(ctx).toContain("firstLaunchPatch");
     expect(ctx).toMatch(
-      /dataHealthBannerEnabled === undefined[\s\S]*?firstLaunchPatch\.dataHealthBannerEnabled = false/,
+      /dataHealthBannerEnabled === undefined[\s\S]*?patch\.dataHealthBannerEnabled = false/,
     );
     expect(ctx).toContain("setDataHealthBannerEnabledState(false)");
     expect(ctx).toMatch(
       /resetToFactoryDefaults[\s\S]*?dataHealthBannerEnabled:\s*false/,
     );
     expect(ctx).not.toMatch(
-      /firstLaunchPatch\.dataHealthBannerEnabled = true/,
+      /patch\.dataHealthBannerEnabled = true/,
     );
   });
 
@@ -115,7 +118,10 @@ describe("static gate · Settings foundation", () => {
   });
 
   it("PreferencesContext wires window chrome sync", () => {
-    const ctx = readFileSync(join(uiSrc, "preferences/PreferencesContext.tsx"), "utf8");
+    const ctx = [
+      readFileSync(join(uiSrc, "preferences/PreferencesContext.tsx"), "utf8"),
+      readFileSync(join(uiSrc, "preferences/usePreferencesControllers.ts"), "utf8"),
+    ].join("\n");
     expect(ctx).toContain("useWindowChromeSync");
     expect(ctx).toContain("setUiScale");
     expect(ctx).toContain("setDefaultDockMode");

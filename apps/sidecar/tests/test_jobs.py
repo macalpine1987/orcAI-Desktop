@@ -96,10 +96,14 @@ class JobStatusTests(unittest.TestCase):
     def test_list_all_jobs_merges_by_updated_at(self) -> None:
         from orcai_desktop_sidecar.store import connect, persist_job
 
+        project_root = self._home / "project"
+        project_root.mkdir()
+        other = self._home / "other"
+        other.mkdir()
         older = {
             "id": "job-merge",
             "command": "predict",
-            "params": {},
+            "params": {"project_dir": str(project_root)},
             "status": "running",
             "created_at": 1.0,
             "updated_at": 10.0,
@@ -108,17 +112,55 @@ class JobStatusTests(unittest.TestCase):
             "error": None,
         }
         newer = {**older, "status": "cancelled", "updated_at": 20.0, "error": "Cancelled"}
+        foreign = {
+            **older,
+            "id": "job-other",
+            "params": {"project_dir": str(other)},
+            "updated_at": 30.0,
+        }
+        unscoped = {**older, "id": "job-none", "params": {}, "updated_at": 40.0}
 
         from orcai_desktop_sidecar.store import project_db_path
 
         persist_job(connect(), older)
-        project_root = self._home / "project"
-        project_root.mkdir()
+        persist_job(connect(), foreign)
+        persist_job(connect(), unscoped)
         persist_job(connect(project_db_path(project_root)), newer)
 
         merged = list_all_jobs(project_dir=str(project_root))
-        row = next(j for j in merged if j["id"] == "job-merge")
-        self.assertEqual(row["status"], "cancelled")
+        self.assertEqual([row["id"] for row in merged], ["job-merge"])
+        self.assertEqual(merged[0]["status"], "cancelled")
+
+    def test_project_job_list_skips_other_projects_even_when_they_are_newer(self) -> None:
+        from orcai_desktop_sidecar.store import connect, persist_job
+
+        project = self._home / "project"
+        other = self._home / "other"
+        project.mkdir()
+        other.mkdir()
+
+        def row(job_id: str, folder: Path, updated: float) -> dict:
+            return {
+                "id": job_id,
+                "command": "predict",
+                "params": {"project_dir": str(folder)},
+                "status": "completed",
+                "created_at": 1.0,
+                "updated_at": updated,
+                "log": [],
+                "result": None,
+                "error": None,
+            }
+
+        persist_job(connect(), row("ours", project, 10.0))
+        persist_job(connect(), row("theirs", other, 99.0))
+        loose = row("loose", project, 50.0)
+        loose["params"] = {}
+        persist_job(connect(), loose)
+
+        scoped = list_all_jobs(project_dir=f"{project}/", limit=1)
+        self.assertEqual([item["id"] for item in scoped], ["ours"])
+        self.assertEqual([job.id for job in list_jobs(str(project))], ["ours"])
 
     def _seed_job(self, conn, **overrides: object) -> dict:
         from orcai_desktop_sidecar.store import persist_job
@@ -519,6 +561,36 @@ class JobStatusTests(unittest.TestCase):
         self.assertEqual(live.id, job.id)
         self.assertEqual(live.status, JobStatus.PENDING)
         self.assertFalse(Path("/p/.orcai-desktop").exists())
+
+    def test_persist_list_and_get_close_sqlite_connections(self) -> None:
+        """Hot-path helpers must exit every db_session (connection closed)."""
+        from contextlib import contextmanager
+
+        from orcai_desktop_sidecar import store
+
+        counts = {"enter": 0, "exit": 0}
+        real_session = store.db_session
+
+        @contextmanager
+        def tracking_session(*args, **kwargs):
+            counts["enter"] += 1
+            try:
+                with real_session(*args, **kwargs) as conn:
+                    yield conn
+            finally:
+                counts["exit"] += 1
+
+        with (
+            patch.object(store, "db_session", tracking_session),
+            patch.object(jobs, "db_session", tracking_session),
+        ):
+            job = create_job("predict", {"recording_path": "/tmp/a.wav"})
+            self.assertEqual(list_all_jobs()[0]["id"], job.id)
+            self.assertEqual(get_job(job.id).id, job.id)  # type: ignore[union-attr]
+            clear_jobs_history()
+
+        self.assertGreater(counts["enter"], 0)
+        self.assertEqual(counts["enter"], counts["exit"])
 
 
 if __name__ == "__main__":

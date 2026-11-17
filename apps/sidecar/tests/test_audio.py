@@ -47,7 +47,9 @@ class AudioCacheTests(unittest.TestCase):
         self.assertGreater(info.frames, 0)
 
     def test_full_cache_rejects_huge_file(self) -> None:
-        with patch.object(audio, "_MAX_FULL_CACHE_BYTES", 400):
+        # Production path reads MAX_FULL_AUDIO_CACHE_BYTES (alias _MAX_FULL_CACHE_BYTES
+        # is only for older callers — patching the alias alone does not clamp).
+        with patch.object(audio, "MAX_FULL_AUDIO_CACHE_BYTES", 400):
             wav = self._home / "big.wav"
             self._write_stereo_wav(wav, frames=120_000)
             with self.assertRaises(ValueError):

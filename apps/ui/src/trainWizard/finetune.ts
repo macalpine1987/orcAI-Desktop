@@ -226,7 +226,8 @@ export function formatFinetuneSpectroLine(
     locale === "ru" ? "ru-RU" : "en-US",
   );
   const hz = locale === "ru" ? "Гц" : "Hz";
-  return `${rate} ${hz} · nfft ${s.nfft} · overlap ${s.n_overlap} · ${s.freq_low}–${Number(s.freq_high).toLocaleString(locale === "ru" ? "ru-RU" : "en-US")} ${hz}`;
+  const hop = locale === "ru" ? "шаг" : "hop";
+  return `${rate} ${hz} · nfft ${s.nfft} · ${hop} ${s.n_overlap} · ${s.freq_low}–${Number(s.freq_high).toLocaleString(locale === "ru" ? "ru-RU" : "en-US")} ${hz}`;
 }
 
 /** Input shape line (snippet + quantiles). */

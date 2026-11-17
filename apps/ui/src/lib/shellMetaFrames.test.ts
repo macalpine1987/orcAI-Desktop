@@ -7,22 +7,14 @@ import {
 } from "./shellMetaFrames";
 
 describe("shellMetaFramesVisible", () => {
-  it("shows on all main routes including home", () => {
-    expect(shellMetaFramesVisible("/")).toBe(true);
-    expect(shellMetaFramesVisible("/projects")).toBe(true);
-    expect(shellMetaFramesVisible("/predict")).toBe(true);
-    expect(shellMetaFramesVisible("/pipeline")).toBe(true);
-    expect(shellMetaFramesVisible("/jobs")).toBe(true);
-    expect(shellMetaFramesVisible("/settings")).toBe(true);
-    expect(shellMetaFramesVisible("/models")).toBe(true);
+  it("shows on every main screen (FR-1.7)", () => {
+    expect(shellMetaFramesVisible()).toBe(true);
   });
 });
 
 describe("shellMetaEngineVisible", () => {
   it("shows engine frame on every screen", () => {
-    expect(shellMetaEngineVisible("/")).toBe(true);
-    expect(shellMetaEngineVisible("/jobs")).toBe(true);
-    expect(shellMetaEngineVisible("/predict")).toBe(true);
+    expect(shellMetaEngineVisible()).toBe(true);
   });
 });
 

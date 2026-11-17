@@ -1,5 +1,5 @@
-/** Shell banner when train snippets < n_batch × batch_size (orcAI fidelity warn).
- *  Same opt-in as ProjectDataHealthBanner: Settings → «Предупреждения о данных».
+/** Shell tip when train snippets < n_batch × batch_size (orcAI fidelity warn).
+ *  Same opt-in as ProjectDataHealthBanner: Settings → «Отображать советы».
  *  Snapshot comes from PipelinePage poll (no second fetch / no 15s lag).
  */
 
@@ -11,17 +11,24 @@ import {
   subscribeSnippetsReadiness,
   type SnippetsReadinessSnapshot,
 } from "../lib/pipelineSnippetsReadiness";
+import { useSaveNotice } from "../ui/saveNotice";
 
 export function PipelineSnippetsShortageBanner() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { dataHealthBannerEnabled } = usePreferences();
+  const { setHeaderTip } = useSaveNotice();
   const [shortage, setShortage] = useState<SnippetsReadinessSnapshot | null>(
     null,
   );
+  const [dismissed, setDismissed] = useState(false);
 
   const onPipeline =
     pathname === "/pipeline" || pathname.startsWith("/pipeline/");
+
+  useEffect(() => {
+    setDismissed(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!dataHealthBannerEnabled || !onPipeline) {
@@ -33,38 +40,31 @@ export function PipelineSnippetsShortageBanner() {
     });
   }, [dataHealthBannerEnabled, onPipeline]);
 
-  if (!dataHealthBannerEnabled || !onPipeline || !shortage) return null;
+  useEffect(() => {
+    if (!dataHealthBannerEnabled || !onPipeline || !shortage || dismissed) {
+      setHeaderTip("snippets", null);
+      return;
+    }
+    const split = shortage.split ?? "train";
+    setHeaderTip("snippets", {
+      message: t("pipeline.snippetsShortageHeaderTip", {
+        actual: shortage.actual ?? "—",
+        required: shortage.required,
+        split,
+      }),
+      onDismiss: () => setDismissed(true),
+    });
+    return () => {
+      setHeaderTip("snippets", null);
+    };
+  }, [
+    dataHealthBannerEnabled,
+    dismissed,
+    onPipeline,
+    setHeaderTip,
+    shortage,
+    t,
+  ]);
 
-  const split = shortage.split ?? "train";
-  const canClamp =
-    shortage.batch_size > 0 &&
-    (shortage.actual ?? 0) >= shortage.batch_size;
-
-  return (
-    <div
-      className="mb-4 shrink-0 rounded border border-amber-500/40 bg-subtle px-4 py-3 text-sm text-foreground-muted"
-      role="status"
-    >
-      <p className="font-medium text-foreground">
-        {t("pipeline.snippetsShortageTitle")}
-      </p>
-      <p className="mt-1.5 leading-snug">
-        {t("pipeline.snippetsShortageBody", {
-          actual: shortage.actual ?? "—",
-          required: shortage.required,
-          nBatch: shortage.n_batch,
-          batch: shortage.batch_size,
-          split,
-        })}
-      </p>
-      <p className="mt-1.5 leading-snug">
-        {t(
-          canClamp
-            ? "pipeline.snippetsShortageDesktopClamp"
-            : "pipeline.snippetsShortageDesktopNoClamp",
-          { split },
-        )}
-      </p>
-    </div>
-  );
+  return null;
 }

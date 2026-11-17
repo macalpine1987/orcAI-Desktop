@@ -15,6 +15,7 @@ describe("appAccess", () => {
     expect(isRuntimeFreePath("/")).toBe(true);
     expect(isRuntimeFreePath("/settings")).toBe(true);
     expect(isRuntimeFreePath("/help")).toBe(true);
+    expect(isRuntimeFreePath("/__preview/home-plan-rail")).toBe(true);
     expect(isRuntimeFreePath("/projects")).toBe(false);
     expect(isRuntimeFreePath("/predict")).toBe(false);
   });

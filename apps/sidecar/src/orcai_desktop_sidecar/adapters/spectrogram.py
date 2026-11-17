@@ -1,8 +1,11 @@
-"""Spectrogram metadata and viewport tiles for the in-app viewer."""
+"""Spectrogram viewport tiles for the in-app viewer.
+
+Public API is re-exported here. Metadata / histogram / waveform / tile helpers
+live in sibling modules.
+"""
 
 from __future__ import annotations
 
-import io
 import threading
 from pathlib import Path
 from typing import Any
@@ -16,12 +19,46 @@ from orcai_desktop_sidecar.adapters.spectrogram_cache import (
     load_full_spectrogram,
     save_full_spectrogram,
 )
+from orcai_desktop_sidecar.adapters.spectrogram_meta import (
+    _default_orcai_parameter,
+    _parameter_cache_key,
+    _read_orcai_parameter,
+    _resolve_parameter_path,
+    get_spectrogram_meta,
+    get_wav_meta,
+)
+from orcai_desktop_sidecar.adapters.spectrogram_render import (
+    normalize_display_kind,
+    read_stft_params,
+    stft_linear_slice,
+)
+from orcai_desktop_sidecar.adapters.spectrogram_tile import (
+    _to_uint8_gray,
+    render_spectrogram_tile_png,
+)
+from orcai_desktop_sidecar.adapters.spectrogram_waveform import render_waveform_png
 
 # Singleflight: one make_spectrogram per cache key (tile + labels TF concurrent).
 _build_locks_guard = threading.Lock()
 _build_locks: dict[str, threading.Lock] = {}
+_BUILD_LOCKS_MAX = 128
 # Heavy WAVs: only one full-file STFT at a time (avoid dual builds thrashing RAM).
 _full_build_gate = threading.Semaphore(1)
+
+
+def _prune_build_locks_unlocked() -> None:
+    """Drop idle locks when the dict grows past the soft cap."""
+    if len(_build_locks) <= _BUILD_LOCKS_MAX:
+        return
+    for key, lock in list(_build_locks.items()):
+        if len(_build_locks) <= _BUILD_LOCKS_MAX:
+            return
+        if not lock.acquire(blocking=False):
+            continue
+        try:
+            _build_locks.pop(key, None)
+        finally:
+            lock.release()
 
 
 def _build_lock_for(key: str) -> threading.Lock:
@@ -30,95 +67,8 @@ def _build_lock_for(key: str) -> threading.Lock:
         if lock is None:
             lock = threading.Lock()
             _build_locks[key] = lock
+            _prune_build_locks_unlocked()
         return lock
-
-from orcai_desktop_sidecar.adapters.spectrogram_render import (
-    apply_colormap,
-    frequency_energy_histogram,
-    normalize_display_kind,
-    normalize_spectrogram_to_uint8,
-    read_stft_params,
-    stft_linear_slice,
-)
-
-
-def _default_orcai_parameter() -> dict[str, Any]:
-    from importlib.resources import files
-
-    from orcai.io import read_json
-
-    return read_json(
-        files("orcai.defaults").joinpath("default_orcai_parameter.json")
-    )
-
-
-def _read_orcai_parameter(orcai_parameter_path: str | Path | None) -> dict[str, Any]:
-    """Load project/model parameter JSON, or fall back to orcAI defaults."""
-    if orcai_parameter_path:
-        from orcai.io import read_json
-
-        from orcai_desktop_sidecar.paths import resolve_user_json_path
-
-        try:
-            return read_json(resolve_user_json_path(str(orcai_parameter_path)))
-        except (FileNotFoundError, ValueError, PermissionError, OSError):
-            pass
-    return _default_orcai_parameter()
-
-
-def _resolve_parameter_path(orcai_parameter: str | Path | None) -> str | None:
-    if orcai_parameter is None:
-        return None
-    from orcai_desktop_sidecar.paths import resolve_user_json_path
-
-    try:
-        return str(resolve_user_json_path(str(orcai_parameter)))
-    except (FileNotFoundError, ValueError, PermissionError, OSError):
-        return None
-
-
-# Back-compat alias used by unit tests / older call sites.
-_parameter_cache_key = _resolve_parameter_path
-
-
-
-def get_wav_meta(wav_path: str | Path) -> dict[str, Any]:
-    from orcai_desktop_sidecar.wav_io import read_wav_meta
-
-    meta = read_wav_meta(wav_path)
-    return {
-        "path": meta["path"],
-        "duration_sec": meta["duration_sec"],
-        "sample_rate": meta["sample_rate_hz"],
-        "channels": meta["channels"],
-        "bit_depth": meta.get("bit_depth"),
-    }
-
-
-def get_spectrogram_meta(
-    wav_path: str | Path,
-    orcai_parameter: str | Path | None = None,
-) -> dict[str, Any]:
-    """WAV metadata plus orcAI-aligned axis max frequency."""
-    meta = get_wav_meta(wav_path)
-    param = _read_orcai_parameter(_resolve_parameter_path(orcai_parameter))
-    from orcai_desktop_sidecar.adapters.spectrogram_render import (
-        ORCAI_VIEW_FMAX_HZ,
-        spectrogram_parameter_section,
-        spectrogram_view_sample_rate,
-    )
-
-    sr = float(meta["sample_rate"])
-    meta["effective_sample_rate"] = spectrogram_view_sample_rate(param, sr)
-    spec = spectrogram_parameter_section(param)
-    freq_range = spec.get("freq_range")
-    if isinstance(freq_range, (list, tuple)) and len(freq_range) >= 2:
-        axis_max = float(freq_range[1])
-    else:
-        axis_max = ORCAI_VIEW_FMAX_HZ
-    # Cap at model band default unless project asks for a lower ceiling.
-    meta["axis_max_hz"] = min(max(1.0, axis_max), ORCAI_VIEW_FMAX_HZ)
-    return meta
 
 
 def _slice_time_range(
@@ -133,22 +83,6 @@ def _slice_time_range(
     if i1 <= i0:
         i1 = min(i0 + 1, len(times))
     return i0, i1
-
-
-def _resize_image(image: np.ndarray, width: int, height: int) -> np.ndarray:
-    from PIL import Image
-
-    img = Image.fromarray(image, mode="L")
-    img = img.resize((width, height), resample=Image.Resampling.BILINEAR)
-    return np.asarray(img, dtype=np.uint8)
-
-
-def _to_uint8_gray(chunk: np.ndarray) -> np.ndarray:
-    """Map orcAI preprocessed spectrogram (already 0–1) to uint8 without re-stretching."""
-    if chunk.size == 0:
-        return np.zeros((1, 1), dtype=np.uint8)
-    x = np.asarray(chunk, dtype=np.float64)
-    return (np.clip(x, 0.0, 1.0) * 255.0).astype(np.uint8)
 
 
 def _build_full_spectrogram_to_disk(
@@ -365,178 +299,33 @@ def _load_power_chunk(
     )
 
 
-def spectrogram_histogram(
-    wav_path: str,
-    *,
-    t0: float = 0.0,
-    t1: float | None = None,
-    channel: int = 1,
-    orcai_parameter: str | None = None,
-    display_kind: str = "orcai",
-    bins: int = 18,
-    windowed: bool = False,
-) -> dict[str, Any]:
-    meta = get_wav_meta(wav_path)
-    duration = meta["duration_sec"]
-    if t1 is None:
-        t1 = duration
-    t0 = max(0.0, t0)
-    t1 = min(duration, t1)
-    if t1 <= t0:
-        t1 = min(duration, t0 + 1.0)
-
-    param_path = _resolve_parameter_path(orcai_parameter)
-    kind = normalize_display_kind(display_kind)
-    chunk = _load_power_chunk(
-        wav_path,
-        t0=t0,
-        t1=t1,
-        channel=channel,
-        orcai_parameter_path=param_path,
-        display_kind=kind,
-        windowed=windowed,
-    )
-    values = frequency_energy_histogram(chunk, bins=bins)
-    return {
-        "bins": values,
-        "t0": t0,
-        "t1": t1,
-        "display_kind": kind,
-    }
-
-
-def render_spectrogram_tile_png(
-    wav_path: str,
-    *,
-    t0: float = 0.0,
-    t1: float | None = None,
-    width: int = 800,
-    height: int = 256,
-    channel: int = 1,
-    orcai_parameter: str | None = None,
-    display_kind: str = "orcai",
-    colormap: str = "inferno",
-    vmin: float = 0.0,
-    vmax: float = 1.0,
-    windowed: bool = False,
-) -> bytes:
-    meta = get_wav_meta(wav_path)
-    duration = meta["duration_sec"]
-    if t1 is None:
-        t1 = duration
-    t0 = max(0.0, t0)
-    t1 = min(duration, t1)
-    if t1 <= t0:
-        t1 = min(duration, t0 + 1.0)
-
-    width = max(64, min(width, 4096))
-    height = max(32, min(height, 2048))
-
-    param_path = _resolve_parameter_path(orcai_parameter)
-    param = _read_orcai_parameter(param_path)
-    kind = normalize_display_kind(display_kind)
-    if kind == "linear":
-        chunk = _load_power_chunk(
-            wav_path,
-            t0=t0,
-            t1=t1,
-            channel=channel,
-            orcai_parameter_path=param_path,
-            display_kind=kind,
-            windowed=windowed,
-        )
-        gray = normalize_spectrogram_to_uint8(
-            chunk,
-            param,
-            vmin_norm=vmin,
-            vmax_norm=vmax,
-            input_domain="linear",
-        )
-    else:
-        chunk = _load_orcai_spectrogram_chunk(
-            wav_path,
-            t0=t0,
-            t1=t1,
-            channel=channel,
-            orcai_parameter_path=param_path,
-            windowed=windowed,
-        )
-        gray = _to_uint8_gray(chunk)
-    gray = np.flipud(gray.T)
-    raster = _resize_image(gray, width, height)
-    cmap_name = (colormap or "inferno").lower().strip()
-    if cmap_name == "gray":
-        rgb = np.stack([raster, raster, raster], axis=-1)
-    else:
-        rgb = apply_colormap(raster, cmap_name)
-
-    from PIL import Image
-
-    buf = io.BytesIO()
-    Image.fromarray(rgb, mode="RGB").save(buf, format="PNG")
-    return buf.getvalue()
-
-
-def render_waveform_png(
-    wav_path: str,
-    *,
-    t0: float = 0.0,
-    t1: float | None = None,
-    width: int = 800,
-    height: int = 48,
-    channel: int = 1,
-) -> bytes:
-    import librosa
-    from PIL import Image, ImageDraw
-
-    path = Path(wav_path)
-    meta = get_wav_meta(path)
-    duration = meta["duration_sec"]
-    if t1 is None:
-        t1 = duration
-    t0 = max(0.0, t0)
-    t1 = min(duration, t1)
-
-    width = max(64, min(width, 4096))
-    height = max(16, min(height, 256))
-
-    y, _sr = librosa.load(
-        path,
-        sr=None,
-        mono=False,
-        offset=t0,
-        duration=max(t1 - t0, 0.01),
-    )
-    if y.ndim > 1:
-        idx = max(0, min(channel - 1, y.shape[0] - 1))
-        y = y[idx]
-    if y.size == 0:
-        y = np.zeros(2, dtype=np.float32)
-
-    step = max(1, len(y) // width)
-    env = np.array(
-        [np.max(np.abs(y[i : i + step])) for i in range(0, len(y), step)],
-        dtype=np.float32,
-    )
-    if env.size < width:
-        env = np.pad(env, (0, width - env.size))
-
-    img = Image.new("L", (width, height), 235)
-    draw = ImageDraw.Draw(img)
-    mid = height // 2
-    scale = (height / 2 - 2) / (float(env.max()) + 1e-8)
-    for x, amp in enumerate(env[:width]):
-        h = int(amp * scale)
-        draw.line([(x, mid - h), (x, mid + h)], fill=0)
-
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    return buf.getvalue()
-
-
 def clear_spectrogram_cache() -> None:
     from orcai_desktop_sidecar.adapters.spectrogram_cache import (
         clear_disk_and_ram_cache,
     )
 
     clear_disk_and_ram_cache()
+
+
+# Import after chunk loaders so histogram/tile lazy imports resolve.
+from orcai_desktop_sidecar.adapters.spectrogram_histogram import (  # noqa: E402
+    spectrogram_histogram,
+)
+
+__all__ = [
+    "_default_orcai_parameter",
+    "_load_orcai_spectrogram_chunk",
+    "_load_power_chunk",
+    "_parameter_cache_key",
+    "_read_orcai_parameter",
+    "_resolve_parameter_path",
+    "_to_uint8_gray",
+    "clear_spectrogram_cache",
+    "ensure_orcai_spectrogram_cached",
+    "get_spectrogram_meta",
+    "get_wav_meta",
+    "render_spectrogram_tile_png",
+    "render_waveform_png",
+    "spectrogram_histogram",
+    "use_windowed_orcai_stft",
+]

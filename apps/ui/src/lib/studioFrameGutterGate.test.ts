@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { readAnalysisLabCss } from "./readAnalysisLabCss";
 
 const styles = join(dirname(fileURLToPath(import.meta.url)), "..", "styles");
 
@@ -34,7 +35,7 @@ describe("results and models column scrollbar gutter", () => {
   });
 
   it("leaves the shared analysis column gutter unchanged", () => {
-    const shared = columnRule(read("analysis-lab.css"), ".mat-shell-main");
+    const shared = columnRule(readAnalysisLabCss(), ".mat-shell-main");
     expect(shared).toContain("scrollbar-gutter: stable");
     expect(shared).not.toContain("scrollbar-gutter: auto");
   });

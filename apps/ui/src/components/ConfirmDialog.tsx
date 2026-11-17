@@ -40,10 +40,10 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
-        className="w-full max-w-md rounded-[var(--radius)] border border-border bg-surface p-5 shadow-lg"
+        className="flex w-full max-w-md max-h-[min(32rem,calc(100vh-3rem))] flex-col overflow-hidden rounded-[var(--radius)] border border-border bg-surface p-5 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-dialog-head mb-3">
+        <div className="modal-dialog-head mb-3 flex-shrink-0">
           <h2
             id="confirm-dialog-title"
             className="text-base font-semibold text-foreground"
@@ -52,7 +52,7 @@ export function ConfirmDialog({
           </h2>
           <ModalCloseButton disabled={busy} onClick={onClose} />
         </div>
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

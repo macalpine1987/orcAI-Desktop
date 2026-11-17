@@ -49,8 +49,34 @@ class SpectrogramCacheTests(unittest.TestCase):
         np.testing.assert_allclose(got, spec, atol=0)
         np.testing.assert_allclose(got_t, times)
 
+    def test_ram_put_skips_entry_larger_than_budget(self) -> None:
+        from orcai_desktop_sidecar.adapters import spectrogram_cache as sc
+
+        small = np.zeros((8, 4), dtype=np.float32)
+        times_small = np.linspace(0, 1, 8, dtype=np.float64)
+        sc._ram_put("small", small, times_small)
+        self.assertIn("small", sc._ram_spec)
+
+        # Force a tiny budget so a modest matrix is treated as oversize.
+        prev = sc._RAM_MAX_BYTES
+        try:
+            sc._RAM_MAX_BYTES = 64
+            big = np.zeros((64, 64), dtype=np.float32)
+            times_big = np.linspace(0, 1, 64, dtype=np.float64)
+            self.assertGreater(sc._ram_entry_nbytes(big, times_big), sc._RAM_MAX_BYTES)
+            sc._ram_put("big", big, times_big)
+            self.assertNotIn("big", sc._ram_spec)
+            # Prior under-budget entry remains until normal prune.
+            self.assertIn("small", sc._ram_spec)
+        finally:
+            sc._RAM_MAX_BYTES = prev
+            sc.clear_ram_cache()
+
     def test_tile_matches_make_spectrogram_slice(self) -> None:
         """Cached tile chunk equals a direct make_spectrogram time slice."""
+        from _librosa_runtime import require_librosa
+
+        require_librosa(self)
         from orcai.auxiliary import Messenger
         from orcai.spectrogram import make_spectrogram
 
@@ -110,6 +136,9 @@ class SpectrogramCacheTests(unittest.TestCase):
     def test_windowed_flag_skips_full_file_npy(self) -> None:
         from unittest.mock import patch
 
+        from _librosa_runtime import require_librosa
+
+        require_librosa(self)
         from orcai_desktop_sidecar.adapters.spectrogram import (
             _load_orcai_spectrogram_chunk,
             clear_spectrogram_cache,

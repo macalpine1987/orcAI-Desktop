@@ -1,3 +1,19 @@
+import { readFileSync } from "node:fs";
+
+function readProjectsSource() {
+  const page = readFileSync(new URL("./ProjectsPage.tsx", import.meta.url), "utf8");
+  const model = readFileSync(new URL("../hooks/useProjectsPageModel.ts", import.meta.url), "utf8");
+  const lifecycle = readFileSync(
+    new URL("../hooks/useProjectStudioLifecycle.ts", import.meta.url),
+    "utf8",
+  );
+  const nav = readFileSync(new URL("../hooks/useProjectNavActions.ts", import.meta.url), "utf8");
+  const loaders = readFileSync(
+    new URL("../hooks/useProjectStudioLoaders.ts", import.meta.url),
+    "utf8",
+  );
+  return [page, model, lifecycle, nav, loaders].join("\n");
+}
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { act } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -14,6 +30,7 @@ import { SaveNoticeProvider } from "../ui/saveNotice";
 import { saveWorkspace } from "../workspace/storage";
 
 const navigateMock = vi.hoisted(() => vi.fn());
+const hydrateFromProjectMock = vi.hoisted(() => vi.fn());
 const summaryState = vi.hoisted(() => ({
   summary: null as ProjectSummary | null,
   loading: false,
@@ -47,6 +64,19 @@ vi.mock("../hooks/useSidecarStatus", () => ({
     capabilities: null,
   }),
 }));
+
+vi.mock("../predict/PredictSessionContext", async () => {
+  const actual = await vi.importActual<
+    typeof import("../predict/PredictSessionContext")
+  >("../predict/PredictSessionContext");
+  return {
+    ...actual,
+    usePredictSessionOptional: () =>
+      ({
+        hydrateFromProject: hydrateFromProjectMock,
+      }) as ReturnType<typeof actual.usePredictSession>,
+  };
+});
 
 vi.mock("../preferences/PreferencesContext", () => ({
   usePreferences: () => ({
@@ -233,26 +263,49 @@ async function renderStudio(opts?: {
   syncStatus?: ProjectSummary["recording_table"]["sync_status"];
   autoSync?: boolean;
   rows?: ProjectTableRow[];
+  focus?: ProjectSummary["focus"];
+  summaryOver?: Partial<ProjectSummary>;
 }) {
   const syncStatus = opts?.syncStatus ?? "current";
   const autoSync = opts?.autoSync ?? true;
   const rows = opts?.rows ?? [row()];
+  const focus = opts?.focus ?? "recognition";
+  const projectKind =
+    focus === "recognition" ? "recognition" : focus === "training" ? "training" : "full";
   const p = project({
     auto_sync_recording_table: autoSync,
     wav_count: rows.filter((r) => r.wav_exists).length,
+    focus,
+    project_kind: projectKind,
   });
   summaryState.summary = summary({
+    focus,
+    project_kind: projectKind,
     recording_table: {
       path: p.recording_table_path,
       sync_status: syncStatus,
     },
     auto_sync_recording_table: autoSync,
+    ...opts?.summaryOver,
   });
   api.fetchProjects.mockResolvedValue([p]);
   api.fetchProject.mockResolvedValue(p);
   api.fetchProjectRecordingTable.mockResolvedValue(table(rows));
   api.fetchProjectArtifacts.mockResolvedValue(artifacts());
   api.fetchProjectRecordings.mockResolvedValue(recordings());
+  api.fetchProjectAnnotations.mockResolvedValue({
+    project_id: "p1",
+    classes: [],
+    classes_source: "annotations",
+    has_mask_columns: false,
+    rows: [],
+    unlisted_labels: [],
+    annotated_count: 0,
+    total_count: rows.length,
+    unpaired: [],
+    unpaired_count: 0,
+    annotations_dir: "/tmp/demo/Fjord/annotations",
+  });
 
   const result = renderWithProviders(
     <SaveNoticeProvider>
@@ -332,6 +385,7 @@ describe("ProjectsPage · tab-strip predict CTA", () => {
   });
 
   it("navigates to /predict with run tab when CTA is clicked", async () => {
+    hydrateFromProjectMock.mockReset();
     const { container, unmount } = await renderStudio({ syncStatus: "current" });
     const btn = predictCta(container);
     expect(btn).toBeTruthy();
@@ -344,6 +398,14 @@ describe("ProjectsPage · tab-strip predict CTA", () => {
     });
 
     expect(api.fetchProjectRecordings).toHaveBeenCalledWith("p1");
+    expect(hydrateFromProjectMock).toHaveBeenCalled();
+    const hydrateArg = hydrateFromProjectMock.mock.calls[0]?.[0] as {
+      project: { id: string };
+      queue: { projectId: string; files: unknown[] };
+    };
+    expect(hydrateArg.project.id).toBe("p1");
+    expect(hydrateArg.queue.projectId).toBe("p1");
+    expect(hydrateArg.queue.files.length).toBeGreaterThan(0);
     expect(navigateMock).toHaveBeenCalledWith("/predict", {
       state: { tab: "run" },
     });
@@ -364,5 +426,111 @@ describe("ProjectsPage · tab-strip predict CTA", () => {
     expect(navigateMock).not.toHaveBeenCalled();
     expect(api.fetchProjectRecordings).not.toHaveBeenCalled();
     unmount();
+  });
+
+  it("keeps the 8s poll off the disk and refreshes fully when the window returns", () => {
+    const page = readProjectsSource();
+    expect(page).toContain("if (opts?.fresh === false) return;");
+    expect(page).toContain("refreshProjectData(selectedId, { fresh: false })");
+    expect(page).toContain("void refreshProjectData(selectedId);");
+    const early = page.slice(
+      page.indexOf("if (opts?.fresh === false) return;"),
+      page.indexOf("const silent = { silent: true }"),
+    );
+    expect(early).not.toContain("loadDetail");
+    expect(early).not.toContain("refreshSummary");
+    expect(early).not.toContain("refreshList");
+  });
+});
+
+describe("ProjectsPage · guided annotate tab", () => {
+  beforeEach(() => {
+    navigateMock.mockReset();
+    summaryState.summary = null;
+    summaryState.refresh.mockReset();
+    summaryState.refresh.mockResolvedValue(undefined);
+    for (const fn of Object.values(api)) fn.mockReset();
+    seedWorkspace();
+  });
+
+  it("does not auto-switch to Annotations when annotate is the next step", async () => {
+    const { container, unmount } = await renderStudio({
+      focus: "training",
+      summaryOver: {
+        readiness: {
+          recordings: "ready",
+          annotations: "needed",
+          datasets: "empty",
+          model: "empty",
+          predict: "empty",
+        },
+        readiness_lines: {
+          recordings: { state: "ready", wav_count: 1, table_rows: 1 },
+          annotations: { state: "needed", annotated: 0, total: 1, paired_files: 0 },
+          datasets: { state: "empty" },
+          model: { state: "empty" },
+          predict: { state: "empty", predicted: 0, total: 1 },
+        },
+      },
+    });
+
+    const recordingsTab = container.querySelector<HTMLButtonElement>(
+      '#projects-tab-recordings',
+    );
+    const annotationsTab = container.querySelector<HTMLButtonElement>(
+      '#projects-tab-annotations',
+    );
+    expect(recordingsTab?.getAttribute("aria-selected")).toBe("true");
+    expect(annotationsTab?.getAttribute("aria-selected")).toBe("false");
+    expect(annotationsTab?.classList.contains("is-guided")).toBe(true);
+    expect(container.querySelector(".ps-next-step.is-guided")).toBeTruthy();
+    unmount();
+  });
+
+  it("opens Annotations only when the guided next-step button is clicked", async () => {
+    const { container, unmount } = await renderStudio({
+      focus: "full",
+      summaryOver: {
+        readiness: {
+          recordings: "ready",
+          annotations: "needed",
+          datasets: "empty",
+          model: "empty",
+          predict: "empty",
+        },
+        readiness_lines: {
+          recordings: { state: "ready", wav_count: 1, table_rows: 1 },
+          annotations: { state: "needed", annotated: 0, total: 1, paired_files: 0 },
+          datasets: { state: "empty" },
+          model: { state: "empty" },
+          predict: { state: "empty", predicted: 0, total: 1 },
+        },
+      },
+    });
+
+    const guided = container.querySelector<HTMLButtonElement>(".ps-next-step.is-guided");
+    expect(guided).toBeTruthy();
+    expect(
+      container.querySelector('#projects-tab-recordings')?.getAttribute("aria-selected"),
+    ).toBe("true");
+
+    await act(async () => {
+      guided!.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await flushUi();
+
+    expect(
+      container.querySelector('#projects-tab-annotations')?.getAttribute("aria-selected"),
+    ).toBe("true");
+    unmount();
+  });
+
+  it("keeps guidedTab as highlight-only (no auto setTab)", () => {
+    const page = readProjectsSource();
+    expect(page).toContain("guidedTab={guidedTab}");
+    expect(page).not.toContain("setTab(guidedTab)");
+    expect(page).not.toContain("guidedTabAppliedKeyRef");
   });
 });

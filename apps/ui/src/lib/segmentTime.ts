@@ -34,9 +34,13 @@ export function segmentTimeSec(
         : 1;
 
   if (seg.start_sec != null && seg.stop_sec != null) {
-    const span = seg.stop_sec - seg.start_sec;
-    if (span > 0 && seg.stop_sec <= (durationSec ?? Infinity) * 1.05) {
-      return normalizeSegmentBounds(seg.start_sec, seg.stop_sec, dt);
+    const startSec = Number(seg.start_sec);
+    const stopSec = Number(seg.stop_sec);
+    if (Number.isFinite(startSec) && Number.isFinite(stopSec)) {
+      const span = stopSec - startSec;
+      if (span > 0 && stopSec <= (durationSec ?? Infinity) * 1.05) {
+        return normalizeSegmentBounds(startSec, stopSec, dt);
+      }
     }
   }
 
@@ -66,6 +70,10 @@ function normalizeSegmentBounds(
   t1: number,
   minSpan: number,
 ): { t0: number; t1: number } {
+  const span = Number.isFinite(minSpan) && minSpan > 0 ? minSpan : 0.05;
+  if (!Number.isFinite(t0) || !Number.isFinite(t1)) {
+    return { t0: 0, t1: span };
+  }
   let a = t0;
   let b = t1;
   if (b < a) {
@@ -74,7 +82,7 @@ function normalizeSegmentBounds(
     b = swap;
   }
   if (b <= a) {
-    b = a + minSpan;
+    b = a + span;
   }
   return { t0: a, t1: b };
 }

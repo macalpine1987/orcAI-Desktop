@@ -1,6 +1,6 @@
 [package]
 name = "orcai-desktop"
-version = "1.0.3"
+version = "1.0.4"
 description = "orcAI Desktop"
 authors = ["orcAI Desktop"]
 edition = "2021"
@@ -17,7 +17,7 @@ path = "src/main.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["image-png"] }
 tauri-plugin-os = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-single-instance = "2"

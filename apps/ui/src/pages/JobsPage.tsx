@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState, type MouseEvent } from "react";
+import { formatUserFacingErrorRequired } from "../lib/userFacingError";
+import {
+  useCallback,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
+import { useNowSec } from "../hooks/useNowSec";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import {
@@ -54,20 +61,25 @@ export function JobsPage() {
     refresh,
     failedJobs,
     jobs,
-  } = useJobsList({ projectDir: null });
+    projectDir,
+  } = useJobsList();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionBusyId, setActionBusyId] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const [clearBusy, setClearBusy] = useState(false);
   const hasLiveDuration = jobs.some(
     (job) => job.status === "running" || job.status === "pending",
   );
-  const [nowSec, setNowSec] = useState(() => Date.now() / 1000);
-
-  useEffect(() => {
-    if (!hasLiveDuration) return;
-    const id = window.setInterval(() => setNowSec(Date.now() / 1000), 1000);
-    return () => window.clearInterval(id);
-  }, [hasLiveDuration]);
+  const nowSec = useNowSec(hasLiveDuration);
+  /** After the first settled empty fetch, keep «нет задач» — do not flash «загрузка» on poll. */
+  const settledEmptyRef = useRef(false);
+  if (filtered.length > 0) {
+    settledEmptyRef.current = false;
+  } else if (!loading) {
+    settledEmptyRef.current = true;
+  }
+  const showEmptyLoading =
+    loading && filtered.length === 0 && !settledEmptyRef.current;
 
   const onSelectJob = (job: JobRecord) => {
     lab?.selectJob(job.id);
@@ -75,16 +87,21 @@ export function JobsPage() {
 
   const runAction = async (
     e: MouseEvent,
+    jobId: string,
     fn: () => Promise<void>,
   ) => {
     e.stopPropagation();
+    if (actionBusyId) return;
     setActionError(null);
+    setActionBusyId(jobId);
     try {
       await fn();
       await refresh();
       await lab?.refreshSelectedJob();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : String(err));
+      setActionError(formatUserFacingErrorRequired(err, t));
+    } finally {
+      setActionBusyId(null);
     }
   };
 
@@ -96,7 +113,7 @@ export function JobsPage() {
       const ok = await exportJobLogToFile(job);
       if (!ok) return;
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : String(err));
+      setActionError(formatUserFacingErrorRequired(err, t));
     }
   }, [lab?.selectedJob]);
 
@@ -109,17 +126,18 @@ export function JobsPage() {
     setClearBusy(true);
     setActionError(null);
     try {
-      await clearAllJobs();
+      if (!projectDir) return;
+      await clearAllJobs(projectDir);
       setFilter("all");
       lab?.selectJob(null);
       await refresh();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : String(err));
+      setActionError(formatUserFacingErrorRequired(err, t));
     } finally {
       setClearBusy(false);
       setConfirmClear(false);
     }
-  }, [lab, refresh, setFilter]);
+  }, [lab, projectDir, refresh, setFilter]);
 
   const tableColSpan = 7;
 
@@ -242,16 +260,10 @@ export function JobsPage() {
               </tr>
             </thead>
             <tbody>
-              {loading && filtered.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={tableColSpan} className="jobs-table-placeholder">
-                    {t("common.loading")}
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={tableColSpan} className="jobs-table-placeholder">
-                    {t("jobs.empty")}
+                    {showEmptyLoading ? t("common.loading") : t("jobs.empty")}
                   </td>
                 </tr>
               ) : (
@@ -296,8 +308,9 @@ export function JobsPage() {
                         {job.status === "running" && (
                           <button
                             type="button"
+                            disabled={actionBusyId != null}
                             onClick={(e) =>
-                              void runAction(e, async () => {
+                              void runAction(e, job.id, async () => {
                                 await cancelJob(job.id);
                               })
                             }
@@ -309,8 +322,9 @@ export function JobsPage() {
                         {job.status === "pending" && (
                           <button
                             type="button"
+                            disabled={actionBusyId != null}
                             onClick={(e) =>
-                              void runAction(e, async () => {
+                              void runAction(e, job.id, async () => {
                                 await cancelJob(job.id);
                               })
                             }
@@ -322,8 +336,9 @@ export function JobsPage() {
                         {job.status === "failed" && (
                           <button
                             type="button"
+                            disabled={actionBusyId != null}
                             onClick={(e) =>
-                              void runAction(e, async () => {
+                              void runAction(e, job.id, async () => {
                                 const retried = await retryJob(job.id);
                                 lab?.selectJob(retried.id);
                               })
@@ -336,8 +351,9 @@ export function JobsPage() {
                         {job.status === "completed" && (
                           <button
                             type="button"
+                            disabled={actionBusyId != null}
                             onClick={(e) =>
-                              void runAction(e, async () => {
+                              void runAction(e, job.id, async () => {
                                 const ok = await revealJobResult(job);
                                 if (!ok) {
                                   throw new Error(t("jobs.openNoResult"));

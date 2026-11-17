@@ -84,8 +84,8 @@ export async function buildJobParams(
         recording_data_dir: recordingData,
         output_dir: tvt,
       };
-    case "create-tvt-snippet-tables":
-      return {
+    case "create-tvt-snippet-tables": {
+      const tvtParams: Record<string, unknown> = {
         ...base,
         output_dir: tvt,
         // orcAI create_snippet_table always writes all_snippets.csv.gz (gzip).
@@ -94,6 +94,17 @@ export async function buildJobParams(
         create_unfiltered_test_snippets: Boolean(draft.testAfterTrain),
         overwrite,
       };
+      const nUts = draft.nUnfilteredTestSnippets;
+      if (
+        draft.testAfterTrain &&
+        typeof nUts === "number" &&
+        Number.isFinite(nUts) &&
+        nUts > 0
+      ) {
+        tvtParams.n_unfiltered_test_snippets = Math.floor(nUts);
+      }
+      return tvtParams;
+    }
     case "create-tvt-data":
       return { ...base, tvt_dir: tvt, compression_type: compression, overwrite };
     case "hpsearch":
@@ -103,6 +114,7 @@ export async function buildJobParams(
         output_dir: hpsearchDir,
         hps_parameter: hpsPath,
         compression_type: compression,
+        ...(draft.hpsearchParallel ? { parallel: true } : {}),
       };
     case "train":
       return {

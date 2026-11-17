@@ -25,7 +25,7 @@
   --m16-table-rim-outer: #2a2c2f;
   --m16-thead-text: #757578;
   --m16-panel-top-hi: #3d3e40;
-  --rs-lcd: #7dffa3;
+  --rs-lcd: var(--lcd-accent);
   --rs-panel: #191a1b;
   --rs-rim: #2a2c2f;
   --rs-pill: #49c578;
@@ -293,7 +293,9 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* Keep scroll on .results-table-body; visible here so filter focus rings are not clipped. */
+  overflow: visible;
+  min-width: 0;
 }
 
 .results-table-filters {
@@ -303,7 +305,9 @@
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
-  padding: 0.05rem 0 0.5rem;
+  /* Keep focus rings fully above the table well (search sits flush to the rim). */
+  padding: 0.4rem 0.25rem 0.7rem;
+  margin: 0;
 }
 
 .results-filter-label {
@@ -336,6 +340,8 @@
 }
 
 .results-table-filters input {
+  appearance: none;
+  -webkit-appearance: none;
   box-sizing: border-box;
   height: 2rem;
   padding: 0 0.7rem;
@@ -345,6 +351,17 @@
   color: #d4d5d8;
   font-size: 0.75rem;
   line-height: 1;
+}
+
+/* Inset focus so the blue ring stays inside the control (not clipped by ancestors). */
+.results-table-filters select:focus,
+.results-table-filters select:focus-visible,
+.results-table-filters input:focus,
+.results-table-filters input:focus-visible {
+  outline: 2px solid #6a8ec8;
+  outline-offset: -2px;
+  border-color: #6a8ec8;
+  box-shadow: none;
 }
 
 .results-filter-prob {
@@ -373,9 +390,25 @@
     inset 0 2px 6px rgb(0 0 0 / 0.45);
 }
 
+.results-filter-prob input:focus,
+.results-filter-prob input:focus-visible {
+  outline: 2px solid #6a8ec8;
+  outline-offset: -2px;
+  border-color: #6a8ec8;
+  box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.45);
+}
+
 .results-filter-search {
-  min-width: 8rem;
-  flex: 1 1 auto;
+  min-width: 0;
+  flex: 1 1 8rem;
+  width: auto;
+  max-width: 100%;
+}
+
+.results-filter-search:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: #8b8d91;
 }
 
 .results-table-count {

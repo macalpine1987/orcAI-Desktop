@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatUserFacingErrorRequired } from "../lib/userFacingError";
 import {
   fetchProjectParameters,
   saveProjectParameters,
@@ -47,7 +48,7 @@ export function PipelineParamsModal({ open, projectId, onClose, onSaved }: Props
         if (!cancelled) setData(doc);
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+        if (!cancelled) setError(formatUserFacingErrorRequired(err, t));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -85,7 +86,7 @@ export function PipelineParamsModal({ open, projectId, onClose, onSaved }: Props
       setData(saved);
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(formatUserFacingErrorRequired(err, t));
     } finally {
       setBusy(false);
     }
@@ -102,7 +103,7 @@ export function PipelineParamsModal({ open, projectId, onClose, onSaved }: Props
     try {
       await writeTextFileAbsolute(target, text.endsWith("\n") ? text : `${text}\n`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(formatUserFacingErrorRequired(err, t));
     }
   };
 

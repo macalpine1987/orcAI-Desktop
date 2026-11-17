@@ -12,7 +12,9 @@ import {
   pickSpectrogramNavTarget,
   predictResultsTabEnabled,
   resolveAnalysisLabelPath,
+  rememberedQueueForProject,
   resolveQueueUnavailable,
+  queueUnavailableMessageKey,
   shouldShowQueueLoading,
   spectrogramTabEnabled,
 } from "./predictQueueUi";
@@ -60,6 +62,17 @@ describe("resolveQueueUnavailable", () => {
     ).toBe("project_missing");
   });
 
+  it("keeps a known initialized project open after a soft refetch failure", () => {
+    expect(
+      resolveQueueUnavailable({
+        hasActiveProject: true,
+        queueLoading: false,
+        projectLoadFailed: true,
+        projectInitialized: true,
+      }),
+    ).toBeNull();
+  });
+
   it("blocks uninitialized project", () => {
     expect(
       resolveQueueUnavailable({
@@ -104,6 +117,20 @@ describe("resolveQueueUnavailable", () => {
   });
 });
 
+describe("queueUnavailableMessageKey", () => {
+  it("maps each gate reason to its own copy key", () => {
+    expect(queueUnavailableMessageKey("no_project")).toBe(
+      "predict.queueBlockedNoProject",
+    );
+    expect(queueUnavailableMessageKey("project_missing")).toBe(
+      "predict.queueBlockedProjectMissing",
+    );
+    expect(queueUnavailableMessageKey("not_initialized")).toBe(
+      "predict.queueBlockedNotInitialized",
+    );
+  });
+});
+
 describe("shouldShowQueueLoading", () => {
   it("shows loading only for active project without blockers", () => {
     expect(
@@ -127,6 +154,24 @@ describe("shouldShowQueueLoading", () => {
         queueUnavailable: "not_initialized",
       }),
     ).toBe(false);
+    expect(
+      shouldShowQueueLoading({
+        hasActiveProject: true,
+        queueLoading: true,
+        queueUnavailable: null,
+        hasQueue: true,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("rememberedQueueForProject", () => {
+  it("keeps a queue saved for this project and ignores another project", () => {
+    const stored = { projectId: "p1" };
+    expect(rememberedQueueForProject(stored, "p1")).toBe(stored);
+    expect(rememberedQueueForProject(stored, "p2")).toBeNull();
+    expect(rememberedQueueForProject(null, "p1")).toBeNull();
+    expect(rememberedQueueForProject(undefined, "p1")).toBeNull();
   });
 });
 
@@ -161,7 +206,7 @@ describe("predictResultsTabEnabled", () => {
     files: [wav("a.wav", "pending"), wav("b.wav", "done")],
   };
 
-  it("requires at least one recognized or running wav", () => {
+  it("requires at least one completed wav (not merely running)", () => {
     expect(predictResultsTabEnabled(queue, true)).toBe(true);
     expect(
       predictResultsTabEnabled(
@@ -174,7 +219,7 @@ describe("predictResultsTabEnabled", () => {
         { ...queue, files: [wav("a.wav", "running")] },
         true,
       ),
-    ).toBe(true);
+    ).toBe(false);
     expect(predictResultsTabEnabled(null, true)).toBe(false);
     expect(predictResultsTabEnabled(queue, false)).toBe(false);
   });
@@ -394,6 +439,16 @@ describe("resolveAnalysisLabelPath", () => {
     expect(resolveAnalysisLabelPath(file, "filtered", CH, MODEL)).toBe(
       "/p/a_c1_orcai-isl-v1_predicted_filtered.txt",
     );
+    expect(resolveAnalysisLabelPath(file, "original", CH, MODEL)).toBe(
+      "/p/a_c1_orcai-isl-v1_predicted.txt",
+    );
+  });
+
+  it("does not fall back to original when filtered kind has no filtered path", () => {
+    const file = wav("a.wav", "done", {
+      labelPath: "/p/a_c1_orcai-isl-v1_predicted.txt",
+    });
+    expect(resolveAnalysisLabelPath(file, "filtered", CH, MODEL)).toBeUndefined();
     expect(resolveAnalysisLabelPath(file, "original", CH, MODEL)).toBe(
       "/p/a_c1_orcai-isl-v1_predicted.txt",
     );

@@ -115,12 +115,15 @@ class ExplicitErrorTests(_JobsFixture):
 
     def test_persist_failure_is_logged_and_job_stays_in_memory(self) -> None:
         job = create_job("init", {"project_dir": str(self._home), "project_name": "p"})
+        # persist_job_everywhere lives in store/job_persist after the jobs façade split.
         with (
             patch(
-                "orcai_desktop_sidecar.jobs.persist_job_everywhere",
+                "orcai_desktop_sidecar.job_persist.persist_job_everywhere",
                 side_effect=OSError("disk full"),
             ),
-            self.assertLogs("orcai_desktop_sidecar.jobs", level="DEBUG") as captured,
+            self.assertLogs(
+                "orcai_desktop_sidecar.job_persist", level="WARNING"
+            ) as captured,
         ):
             set_status(job.id, JobStatus.RUNNING)
         refreshed = get_job(job.id)

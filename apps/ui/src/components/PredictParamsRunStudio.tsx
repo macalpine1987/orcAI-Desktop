@@ -1,10 +1,16 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import type { OrcaiModel } from "../api/models";
 import { pickJsonFile } from "../platform/dialog";
-import { predictFilesToRun, predictRecordingStem } from "../lib/predictBatch";
+import { predictFilesToRun } from "../lib/predictBatch";
 import { inferPredictedLabelPath } from "../lib/predictLabels";
 import { PREDICT_CLI_KEYS } from "../lib/predictCliLine";
+import { copyText } from "../lib/jobLogExport";
 import {
   channelMapFromRecordingTableRows,
   estimatePredictEtaSeconds,
@@ -15,106 +21,24 @@ import {
 } from "../lib/predictQueueStudio";
 import {
   batchSelectedNames,
-  isFileSelectedForPredict,
   predictQueueAudioFiles,
   type PredictQueue,
-  type PredictQueueFile,
-  type PredictQueueFileStatus,
 } from "../workspace/predictQueue";
 import type { PredictSettings } from "../workspace/predictSettings";
 import { projectCallDurationLimitsPath } from "../workspace/predictSettings";
 import { defaultRecordingsDir } from "../workspace/project";
-import type { PredictQueueUnavailableReason } from "../lib/predictQueueUi";
+import {
+  type PredictQueueUnavailableReason,
+} from "../lib/predictQueueUi";
+import { useSaveNotice } from "../ui/saveNotice";
 import { PredictAdvancedParamsDialog } from "./PredictAdvancedParamsDialog";
-
-function channelForQueueFile(
-  fileName: string,
-  channelMap: Record<string, number>,
-  fallback: number,
-): number {
-  return (
-    channelMap[fileName] ??
-    channelMap[predictRecordingStem(fileName)] ??
-    fallback
-  );
-}
-
-function StudioSwitch({
-  checked,
-  disabled,
-  label,
-  onChange,
-}: {
-  checked: boolean;
-  disabled?: boolean;
-  label: string;
-  onChange: (next: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      className="pp-switch"
-      aria-checked={checked}
-      aria-label={label}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-    >
-      <span className="pp-switch-knob" aria-hidden />
-    </button>
-  );
-}
-
-/** Known builtin class lists for m03 class strip (orcAI parameter.json). */
-const BUILTIN_MODEL_CLASSES: Record<string, string[]> = {
-  "orcai-isl-v1": [
-    "BR",
-    "BUZZ",
-    "HERDING",
-    "PHS",
-    "SS",
-    "TAILSLAP",
-    "WHISTLE",
-  ],
-  "orcai-nor-v1": [
-    "BR",
-    "BUZZ",
-    "HERDING",
-    "PHS",
-    "SS",
-    "TAILSLAP",
-    "WHISTLE",
-  ],
-};
-
-function statusTone(status: PredictQueueFileStatus): string {
-  switch (status) {
-    case "done":
-    case "filtered":
-      return "pp-status--done";
-    case "failed":
-      return "pp-status--failed";
-    case "running":
-      return "pp-status--running";
-    default:
-      return "pp-status--pending";
-  }
-}
-
-function statusKey(status: PredictQueueFileStatus): string {
-  switch (status) {
-    case "done":
-      return "predict.run.statusDone";
-    case "filtered":
-      return "predict.run.statusFiltered";
-    case "failed":
-      return "predict.run.statusFailed";
-    case "running":
-      return "predict.run.statusRunning";
-    default:
-      return "predict.run.statusPending";
-  }
-}
+import {
+  BUILTIN_MODEL_CLASSES,
+  channelForQueueFile,
+} from "./predictParams/predictParamsHelpers";
+import { PredictParamsQueuePanel } from "./predictParams/PredictParamsQueuePanel";
+import { PredictParamsLaunchPanel } from "./predictParams/PredictParamsLaunchPanel";
+import { COPY_FEEDBACK_MS } from "../lib/timeouts";
 
 type Props = {
   queue: PredictQueue | null;
@@ -175,7 +99,12 @@ export function PredictParamsRunStudio({
   onBatchCancel,
 }: Props) {
   const { t } = useTranslation();
+  const { notifyHeaderError } = useSaveNotice();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [batchCancelling, setBatchCancelling] = useState(false);
+  useEffect(() => {
+    if (!batchRunning) setBatchCancelling(false);
+  }, [batchRunning]);
   useEffect(() => {
     const el = scrollRef.current;
     const root = el?.closest(".predict-studio");
@@ -195,6 +124,12 @@ export function PredictParamsRunStudio({
   }, []);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [cliCopied, setCliCopied] = useState(false);
+  const cliCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (cliCopiedTimerRef.current) clearTimeout(cliCopiedTimerRef.current);
+    };
+  }, []);
   const fieldsDisabled = !orcaiReady || batchRunning;
 
   const patch = (p: Partial<PredictSettings>) => {
@@ -239,13 +174,14 @@ export function PredictParamsRunStudio({
 
   const onCopyCli = async () => {
     if (!commandLine.trim()) return;
-    try {
-      await navigator.clipboard.writeText(commandLine);
-      setCliCopied(true);
-      window.setTimeout(() => setCliCopied(false), 1600);
-    } catch {
-      /* ignore */
+    const ok = await copyText(commandLine);
+    if (!ok) {
+      notifyHeaderError(t("predict.run.cliCopyFailed"));
+      return;
     }
+    setCliCopied(true);
+    if (cliCopiedTimerRef.current) clearTimeout(cliCopiedTimerRef.current);
+    cliCopiedTimerRef.current = setTimeout(() => setCliCopied(false), COPY_FEEDBACK_MS);
   };
 
   useEffect(() => {
@@ -315,377 +251,44 @@ export function PredictParamsRunStudio({
 
       <div className="pp-params-scroll" ref={scrollRef}>
         <div className="pp-params-grid">
-        {/* —— Left: ПАРАМЕТРЫ ЗАПУСКА —— */}
-        <section className="pp-col pp-col--model" aria-labelledby="pp-model-input-label">
-          <h2 id="pp-model-input-label" className="pp-col-label">
-            {t("predict.run.modelInputTitle")}
-          </h2>
+          <PredictParamsLaunchPanel
+            models={models}
+            settings={settings}
+            fieldsDisabled={fieldsDisabled}
+            isBuiltin={isBuiltin}
+            modelCliKey={modelCliKey}
+            classes={classes}
+            selectedModel={selectedModel}
+            cdlOn={cdlOn}
+            projectDir={projectDir}
+            patch={patch}
+            setCdlEnabled={setCdlEnabled}
+            setAdvancedOpen={setAdvancedOpen}
+            notifyHeaderError={notifyHeaderError}
+          />
 
-          <div className="pp-field">
-            <span className="pp-label">
-              {t("predict.model")}{" "}
-              <span className="pp-cli-key" aria-hidden>
-                {modelCliKey}
-              </span>
-            </span>
-            <div className="pp-field-row">
-              <select
-                className="pp-select pp-select-model"
-                value={settings.model}
-                disabled={fieldsDisabled}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  const entry = models.find((m) => m.id === id);
-                  patch({
-                    model: id,
-                    modelDir: entry?.kind === "trained" ? entry.path : undefined,
-                  });
-                }}
-              >
-                {models.length === 0 ? (
-                  <option value="orcai-isl-v1">orcai-isl-v1</option>
-                ) : (
-                  models.map((m) => (
-                    <option key={m.path} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))
-                )}
-              </select>
-              {isBuiltin ? (
-                <span className="pp-builtin">{t("predict.run.builtinBadge")}</span>
-              ) : (
-                <span className="pp-builtin">{t("predict.trainedModel")}</span>
-              )}
-            </div>
-            {classes ? (
-              <p className="pp-classes">
-                {t("predict.run.classCount", { count: classes.length })}:{" "}
-                {classes.join(" · ")}
-              </p>
-            ) : selectedModel?.kind === "trained" ? (
-              <p className="pp-classes text-foreground-muted">
-                {t("predict.run.classesUnknown")}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="pp-field">
-            <span className="pp-label">
-              {t("predict.channel")}{" "}
-              <span className="pp-cli-key" aria-hidden>
-                {PREDICT_CLI_KEYS.channel}
-              </span>
-            </span>
-            <div className="pp-field-row pp-field-row--channel">
-              <input
-                type="number"
-                min={1}
-                className="pp-input pp-input-sm"
-                value={settings.channel}
-                disabled={fieldsDisabled}
-                onChange={(e) => {
-                  const n = Number(e.target.value);
-                  patch({
-                    channel: Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1,
-                  });
-                }}
-              />
-              <span className="pp-hint">{t("predict.run.channelHint")}</span>
-              <button
-                type="button"
-                className="ps-btn ps-btn-sm pp-channel-advanced"
-                disabled={fieldsDisabled}
-                title={
-                  settings.outputPath.trim() &&
-                  settings.outputPath.trim() !== "default"
-                    ? `${PREDICT_CLI_KEYS.outputPath} ${settings.outputPath}`
-                    : `${PREDICT_CLI_KEYS.outputPath} · ${PREDICT_CLI_KEYS.verbosity} ${settings.verbosity}`
-                }
-                onClick={() => setAdvancedOpen(true)}
-              >
-                {t("predict.advancedOpen")}
-              </button>
-            </div>
-          </div>
-
-          <div className="pp-field">
-            <span className="pp-label">{t("predict.run.thresholdTitle")}</span>
-            <div className="pp-threshold">
-              <div className="pp-threshold-lcd" aria-live="polite">
-                <span className="pp-threshold-lcd-cap">
-                  {t("predict.run.thresholdLcdCap")}
-                </span>
-                <span className="pp-threshold-lcd-val">
-                  {settings.threshold.toFixed(2)}
-                </span>
-              </div>
-              <div className="pp-threshold-slider-wrap">
-                <div className="pp-threshold-scale">
-                  <span>0.00</span>
-                  <span>1.00</span>
-                </div>
-                <input
-                  type="range"
-                  className="pp-threshold-slider"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={settings.threshold}
-                  disabled={fieldsDisabled}
-                  tabIndex={fieldsDisabled ? -1 : 0}
-                  aria-valuemin={0}
-                  aria-valuemax={1}
-                  aria-valuenow={settings.threshold}
-                  aria-valuetext={settings.threshold.toFixed(2)}
-                  style={
-                    {
-                      "--pp-th-pct": `${Math.round(settings.threshold * 100)}%`,
-                    } as CSSProperties
-                  }
-                  onChange={(e) =>
-                    patch({ threshold: Number(e.target.value) })
-                  }
-                  onInput={(e) =>
-                    patch({
-                      threshold: Number(
-                        (e.target as HTMLInputElement).value,
-                      ),
-                    })
-                  }
-                  aria-label={t("predict.run.thresholdTitle")}
-                />
-              </div>
-              <span className="pp-threshold-flag" aria-hidden>
-                {PREDICT_CLI_KEYS.threshold}
-              </span>
-            </div>
-          </div>
-
-          <div className="pp-field">
-            <span className="pp-label">
-              {t("predict.labelSuffix")}{" "}
-              <span className="pp-cli-key" aria-hidden>
-                {PREDICT_CLI_KEYS.labelSuffix}
-              </span>
-            </span>
-            <div className="pp-field-row">
-              <input
-                type="text"
-                className="pp-input pp-input-sm"
-                value={settings.labelSuffix}
-                disabled={fieldsDisabled}
-                onChange={(e) => patch({ labelSuffix: e.target.value })}
-              />
-              <span className="pp-hint">{t("predict.run.labelSuffixHint")}</span>
-            </div>
-          </div>
-
-          <div className="pp-toggles">
-            <div className="pp-toggle-row">
-              <StudioSwitch
-                checked={settings.saveProbabilities}
-                disabled={fieldsDisabled}
-                label={t("predict.run.toggleSpTitle")}
-                onChange={(v) => patch({ saveProbabilities: v })}
-              />
-              <div className="pp-toggle-copy">
-                <span className="pp-toggle-title">
-                  {t("predict.run.toggleSpTitle")}
-                </span>
-                <span className="pp-toggle-sub">
-                  {PREDICT_CLI_KEYS.saveProbabilities} ·{" "}
-                  {t("predict.run.toggleSpHint")}
-                </span>
-              </div>
-            </div>
-
-            <div className="pp-toggle-row">
-              <StudioSwitch
-                checked={settings.overwrite}
-                disabled={fieldsDisabled}
-                label={t("predict.run.toggleOwTitle")}
-                onChange={(v) => patch({ overwrite: v })}
-              />
-              <div className="pp-toggle-copy">
-                <span className="pp-toggle-title">
-                  {t("predict.run.toggleOwTitle")}
-                </span>
-                <span className="pp-toggle-sub">
-                  {PREDICT_CLI_KEYS.overwrite} · {t("predict.run.toggleOwHint")}
-                </span>
-              </div>
-            </div>
-
-            <div className="pp-toggle-row pp-toggle-row--cdl">
-              <StudioSwitch
-                checked={cdlOn}
-                disabled={fieldsDisabled}
-                label={t("predict.run.toggleCdlTitle")}
-                onChange={setCdlEnabled}
-              />
-              <div className="pp-toggle-copy">
-                <span className="pp-toggle-title">
-                  {t("predict.run.toggleCdlTitle")}
-                </span>
-                <span className="pp-toggle-sub">
-                  {PREDICT_CLI_KEYS.callDurationLimits} ·{" "}
-                  {cdlOn && settings.callDurationLimits.trim()
-                    ? settings.callDurationLimits.split(/[/\\]/).pop()
-                    : "call_duration_limits.json"}
-                </span>
-              </div>
-              <div className="pp-toggle-actions">
-                <button
-                  type="button"
-                  className="ps-btn ps-btn-sm"
-                  disabled={fieldsDisabled}
-                  onClick={() =>
-                    void pickJsonFile(
-                      t("predict.callDurationLimitsPickTitle"),
-                    ).then((p) => {
-                      if (p) {
-                        patch({
-                          callDurationFilter: true,
-                          callDurationLimits: p,
-                          callDurationLimitsProjectDir: projectDir ?? null,
-                        });
-                      }
-                    })
-                  }
-                >
-                  {t("predict.run.pickJson")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* —— Right: ОЧЕРЕДЬ ЗАПУСКА —— */}
-        <section className="pp-col pp-col--queue" aria-labelledby="pp-queue-label">
-          <div className="pp-col-head">
-            <h2 id="pp-queue-label" className="pp-col-label">
-              {t("predict.run.queueStudioTitle")}
-            </h2>
-            <span className="pp-col-meta">
-              {hoursLabel != null
-                ? t("predict.run.queueMeta", {
-                    count: allAudio.length,
-                    hours: hoursLabel,
-                  })
-                : t("predict.run.queueMetaCountOnly", {
-                    count: allAudio.length,
-                  })}
-            </span>
-          </div>
-          <p className="pp-queue-hint">{t("predict.run.queueStudioHint")}</p>
-
-          <div
-            className="pp-filter-seg"
-            role="group"
-            aria-label={t("predict.run.filterAria")}
-          >
-            {(
-              [
-                ["all", t("predict.run.filterAll")],
-                ["new", t("predict.run.filterNew")],
-                ["failed", t("predict.run.filterFailed")],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                aria-pressed={viewFilter === id}
-                disabled={!queue || batchRunning}
-                onClick={() => onFilterChange(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="pp-queue-run-meta">
-            <span>
-              {t("predict.run.selectedCount", {
-                selected: selectedCount,
-                visible: visible.length,
-              })}
-            </span>
-            <span title={t("predict.run.etaHint")}>
-              {t("predict.run.etaLabel", { eta: etaLabel })}
-            </span>
-          </div>
-
-          <div className="pp-queue-table-wrap">
-            {queueUnavailable ? (
-              <p className="pp-empty">{t("predict.queueBlockedNoProject")}</p>
-            ) : queueLoading ? (
-              <p className="pp-empty">{t("shellMeta.loading")}</p>
-            ) : !queue || allAudio.length === 0 ? (
-              <div className="pp-empty">
-                <p>{t("predict.queueEmpty")}</p>
-                {canManageFiles ? (
-                  <button
-                    type="button"
-                    className="ps-btn mt-2"
-                    disabled={busy || batchRunning}
-                    onClick={onAddWavs}
-                  >
-                    {t("predict.queueAddWavs")}
-                  </button>
-                ) : null}
-              </div>
-            ) : visible.length === 0 ? (
-              <p className="pp-empty">
-                {viewFilter === "failed"
-                  ? t("predict.run.queueFilterEmptyFailed")
-                  : viewFilter === "new"
-                    ? t("predict.run.queueFilterEmptyNew")
-                    : t("predict.queueEmpty")}
-              </p>
-            ) : (
-              <table className="pp-queue-table">
-                <thead>
-                  <tr>
-                    <th scope="col" className="pp-queue-th-check">
-                      <span className="sr-only">{t("predict.run.colSelect")}</span>
-                    </th>
-                    <th scope="col" className="pp-queue-th-file">
-                      {t("predict.run.colFile")}
-                    </th>
-                    <th scope="col" className="pp-queue-th-ch">
-                      {t("predict.run.colChannel")}
-                    </th>
-                    <th scope="col" className="pp-queue-th-status">
-                      {t("predict.run.colStatus")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visible.map((file) => (
-                    <QueueRow
-                      key={file.name}
-                      file={file}
-                      channel={channelForQueueFile(
-                        file.name,
-                        channelMap,
-                        settings.channel,
-                      )}
-                      selected={isFileSelectedForPredict(queue, file.name)}
-                      active={
-                        file.name === activeFileName ||
-                        file.name === runningFileName
-                      }
-                      disabled={batchRunning}
-                      onSelectActive={onSelectActive}
-                      onToggleBatchSelect={onToggleBatchSelect}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </section>
+          <PredictParamsQueuePanel
+            queue={queue}
+            queueUnavailable={queueUnavailable}
+            queueLoading={queueLoading}
+            batchRunning={batchRunning}
+            busy={busy}
+            canManageFiles={canManageFiles}
+            viewFilter={viewFilter}
+            onFilterChange={onFilterChange}
+            allAudio={allAudio}
+            visible={visible}
+            selectedCount={selectedCount}
+            hoursLabel={hoursLabel}
+            etaLabel={etaLabel}
+            channelMap={channelMap}
+            settingsChannel={settings.channel}
+            activeFileName={activeFileName}
+            runningFileName={runningFileName}
+            onSelectActive={onSelectActive}
+            onToggleBatchSelect={onToggleBatchSelect}
+            onAddWavs={onAddWavs}
+          />
         </div>
       </div>
 
@@ -709,7 +312,7 @@ export function PredictParamsRunStudio({
               <button
                 type="button"
                 className="pp-btn pp-btn-preset pp-cmd-copy"
-                disabled={!commandLine.trim()}
+                disabled={batchRunning || !commandLine.trim()}
                 onClick={() => void onCopyCli()}
               >
                 {cliCopied
@@ -727,7 +330,11 @@ export function PredictParamsRunStudio({
                 <button
                   type="button"
                   className="pp-btn pp-btn-preset"
-                  onClick={onBatchCancel}
+                  disabled={batchCancelling}
+                  onClick={() => {
+                    setBatchCancelling(true);
+                    onBatchCancel();
+                  }}
                 >
                   {t("predict.batchCancel")}
                 </button>
@@ -793,57 +400,3 @@ export function PredictParamsRunStudio({
   );
 }
 
-function QueueRow({
-  file,
-  channel,
-  selected,
-  active,
-  disabled,
-  onSelectActive,
-  onToggleBatchSelect,
-}: {
-  file: PredictQueueFile;
-  channel: number;
-  selected: boolean;
-  active: boolean;
-  disabled?: boolean;
-  onSelectActive: (name: string) => void;
-  onToggleBatchSelect: (name: string) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <tr
-      className={
-        active
-          ? "is-active"
-          : file.status === "running"
-            ? "is-running"
-            : undefined
-      }
-      onClick={() => onSelectActive(file.name)}
-    >
-      <td className="pp-queue-td-check" onClick={(e) => e.stopPropagation()}>
-        <label className="pp-queue-check">
-          <input
-            type="checkbox"
-            checked={selected}
-            disabled={disabled}
-            onChange={() => onToggleBatchSelect(file.name)}
-            aria-label={file.name}
-          />
-          <span className="pp-queue-check-box" aria-hidden />
-        </label>
-      </td>
-      <td className="pp-queue-td-file" title={file.path}>
-        <span className="pp-queue-file-name">{file.name}</span>
-      </td>
-      <td className="pp-queue-td-ch">{channel}</td>
-      <td className="pp-queue-td-status">
-        <span className={`pp-status ${statusTone(file.status)}`}>
-          <span className="pp-status-dot" aria-hidden />
-          {t(statusKey(file.status))}
-        </span>
-      </td>
-    </tr>
-  );
-}

@@ -8,10 +8,10 @@ import {
 import { type JobRecord } from "../api/jobs";
 import { basename } from "../platform/dialog";
 import { waitForJobTerminal } from "./waitForJob";
+import { DEFAULT_IMPORT_JOB_TIMEOUT_MS } from "./timeouts";
 
 export type { ImportFailedRow } from "../api/projects";
-
-const DEFAULT_IMPORT_JOB_TIMEOUT_MS = 30 * 60 * 1000;
+export { DEFAULT_IMPORT_JOB_TIMEOUT_MS };
 
 const IMPORT_PARTIAL_FAILED_EN =
   "Some files failed to import:";

@@ -60,11 +60,11 @@ export function subscribeShellMetaFramesBridge(fn: () => void): () => void {
 }
 
 /** Project · Model · Engine header frames on every main screen (FR-1.7). */
-export function shellMetaFramesVisible(_pathname: string): boolean {
+export function shellMetaFramesVisible(): boolean {
   return true;
 }
 
-export function shellMetaEngineVisible(_pathname: string): boolean {
+export function shellMetaEngineVisible(): boolean {
   return true;
 }
 

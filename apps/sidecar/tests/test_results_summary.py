@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from orcai_desktop_sidecar.adapters.results_summary import (
+    _RESULTS_SOFT_ROW_LIMIT,
     _thresholds_from_jobs,
     build_results_summary,
     is_annotation_label_name,
@@ -243,6 +244,30 @@ class TestBuildResultsSummary(unittest.TestCase):
             {"alpha.wav", "zeta.wav", "beta.wav"},
         )
 
+    def test_soft_row_cap_sets_truncated_keeps_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "clip_c1_orcai-isl-v1_predicted.txt").write_text("x\n", encoding="utf-8")
+            segments = [
+                {
+                    "label": "WHISTLE",
+                    "start_sec": float(i),
+                    "stop_sec": float(i) + 0.1,
+                    "mean_p": 0.9,
+                }
+                for i in range(_RESULTS_SOFT_ROW_LIMIT + 3)
+            ]
+            with patch(
+                "orcai_desktop_sidecar.adapters.results_summary._preview_label_file",
+                return_value=_preview(segments),
+            ):
+                out = build_results_summary(root, source="predicted")
+        self.assertTrue(out["truncated"])
+        self.assertEqual(len(out["rows"]), _RESULTS_SOFT_ROW_LIMIT)
+        self.assertEqual(
+            out["summary"]["detection_count"], _RESULTS_SOFT_ROW_LIMIT + 3
+        )
+
 
 class TestThresholdsFromJobs(unittest.TestCase):
     def test_thresholds_ignore_other_projects(self) -> None:
@@ -267,6 +292,58 @@ class TestThresholdsFromJobs(unittest.TestCase):
                 self.assertEqual(_thresholds_from_jobs(str(mine)), [0.5])
                 self.assertEqual(_thresholds_from_jobs(str(other)), [0.8])
                 self.assertEqual(_thresholds_from_jobs(str(fresh)), [])
+
+    def test_resolve_falls_back_to_default_when_predicted_hits_lack_jobs(self) -> None:
+        from orcai_desktop_sidecar.adapters.results_summary import (
+            resolve_results_thresholds,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with patch(
+                "orcai_desktop_sidecar.adapters.results_summary._thresholds_from_jobs",
+                return_value=[],
+            ):
+                self.assertEqual(
+                    resolve_results_thresholds(
+                        str(root), source="predicted", detection_count=12
+                    ),
+                    [0.5],
+                )
+                self.assertEqual(
+                    resolve_results_thresholds(
+                        str(root), source="predicted", detection_count=0
+                    ),
+                    [],
+                )
+                self.assertEqual(
+                    resolve_results_thresholds(
+                        str(root), source="filtered", detection_count=12
+                    ),
+                    [],
+                )
+                self.assertEqual(
+                    resolve_results_thresholds(
+                        str(root), source="annotations", detection_count=12
+                    ),
+                    [],
+                )
+
+    def test_resolve_prefers_job_thresholds_over_default(self) -> None:
+        from orcai_desktop_sidecar.adapters.results_summary import (
+            resolve_results_thresholds,
+        )
+
+        with patch(
+            "orcai_desktop_sidecar.adapters.results_summary._thresholds_from_jobs",
+            return_value=[0.8],
+        ):
+            self.assertEqual(
+                resolve_results_thresholds(
+                    "/proj", source="predicted", detection_count=99
+                ),
+                [0.8],
+            )
 
 
 class TestExportHelpers(unittest.TestCase):

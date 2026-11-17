@@ -76,7 +76,6 @@ export function ProjectHeaderCard({
             className="ps-focus-radios"
             role="radiogroup"
             aria-label={t("projects.studio.focus.change")}
-            title={t("projects.studio.focus.hint")}
           >
             {PROJECT_FOCUSES.map((f) => {
               const selected = focus === f;
@@ -92,7 +91,6 @@ export function ProjectHeaderCard({
                     if (!selected) onChangeFocus(f);
                   }}
                 >
-                  <span className="ps-radio" aria-hidden />
                   <span className="ps-focus-radio-label">{focusLabel(f, t)}</span>
                 </button>
               );

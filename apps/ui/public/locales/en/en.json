@@ -1,7 +1,9 @@
 {
   "audioImport": {
     "wavOnlyOne": "Only WAV audio files can be uploaded. The file \"{{name}}\" is not supported.",
-    "wavOnlyMany": "Only WAV audio files can be uploaded. Unsupported files: {{names}}."
+    "wavOnlyMany": "Only WAV audio files can be uploaded. Unsupported files: {{names}}.",
+    "txtOnlyOne": "Only .txt annotation files can be added. The file \"{{name}}\" is not supported.",
+    "txtOnlyMany": "Only .txt annotation files can be added. Unsupported files: {{names}}."
   },
   "app": {
     "name": "orcAI Desktop",
@@ -12,6 +14,10 @@
     "goToHomeRuntime": "Go to Home — start components",
     "navRequiresRuntime": "Start sidecar and engine from Home",
     "navRequiresTrainingFocus": "Training is available for the Model training and Full cycle focuses",
+    "navRequiresRecognitionFocus": "Predictions are available for the Predictions and Full cycle focuses",
+    "navRequiresProject": "Create a project or select an active one first.",
+    "projectBlockedBody": "Create a project or select an active one in Projects first. Until then, only Home, Projects, Settings, and Help are available.",
+    "goToProjects": "Open Projects",
     "goToTraining": "Go to Training",
     "sidebarNav": "App sections",
     "sidebarCollapse": "Collapse section panel",
@@ -28,11 +34,19 @@
     "noModels": "No models found",
     "active": "active"
   },
+  "headerNotice": {
+    "info": "INFO",
+    "tip": "Tip",
+    "error": "Error"
+  },
   "shellHealth": {
-    "tableStale": "The recordings table is stale or missing — refresh it in Projects, or orcAI may not find WAV files.",
-    "missingWav": "{{count}} table rows have no WAV on disk — fix paths or remove those rows.",
-    "unpairedAnn": "{{count}} annotation files have no matching WAV — training may skip those labels.",
-    "annGap": "{{count}} WAV recordings have no annotations — add .txt labels or exclude them for training.",
+    "tableStale": "The recordings table is stale or missing. Refresh it in Projects.",
+    "missingWav_one": "{{count}} table row has no WAV file. Fix the path or delete the row.",
+    "missingWav_other": "{{count}} table rows have no WAV file. Fix the paths or delete the rows.",
+    "unpairedAnn_one": "{{count}} annotation has no WAV. Training will not use that label.",
+    "unpairedAnn_other": "{{count}} annotations have no WAV. Training will not use those labels.",
+    "annGap_one": "{{count}} WAV recording has no annotations. Training needs a paired label file.",
+    "annGap_other": "{{count}} WAV recordings have no annotations. Training needs paired label files.",
     "goToProject": "Open project",
     "dismiss": "Dismiss"
   },
@@ -63,11 +77,6 @@
       "help": "?"
     }
   },
-  "header": {
-    "layout": "Layout",
-    "lab": "Lab",
-    "layoutLabHint": "Dense layout with job console and inspector"
-  },
   "home": {
     "title": "Home",
     "quickPredict": "Recognize recordings",
@@ -95,6 +104,8 @@
     "runtimeReady": "Ready · Sidecar and engine are running",
     "runtimeStopping": "Shutting down components…",
     "runtimeError": "Failed to start or run components",
+    "runtimeOperationTimedOut": "The operation timed out. Try again or restart the runtime.",
+    "runtimeStartSidecarFirst": "Start the Sidecar first.",
     "runtimeComponentReady": "ready",
     "runtimeComponentActive": "loading…",
     "runtimeComponentStopped": "stopped",
@@ -216,7 +227,7 @@
       "results": "results"
     },
     "quickActionsTitle": "Quick actions",
-    "quickActionsNeedProject": "Select an active project first.",
+    "quickActionsNeedProject": "Create a project or select an active one first.",
     "quickPredictCmd": "orcai predict",
     "quickFilter": "Filter predictions",
     "quickFilterDesc": "filter-predictions by duration",
@@ -232,7 +243,19 @@
     "recentJobsEmpty": "No jobs yet — they appear after you run orcAI commands.",
     "recentJobsOffline": "Start Sidecar to see the job queue.",
     "recentJobsLoading": "Loading jobs…",
-    "recentJobsColFinished": "Finished"
+    "recentJobsColFinished": "Finished",
+    "wizardPlanTitleRunning": "Wizard · running",
+    "wizardPlanTitleStopped": "Wizard · stopped",
+    "wizardPlanOpenPipeline": "Pipeline →",
+    "wizardPlanScrollLabel": "Wizard plan steps",
+    "wizardPlanStatusDone": "Done",
+    "wizardPlanStatusRunning": "Running",
+    "wizardPlanStatusQueued": "Queued",
+    "wizardPlanStatusError": "Failed",
+    "wizardPlanStatusCancelled": "Cancelled",
+    "wizardPlanFoot": "plan · {{done}}/{{total}} · no hpsearch",
+    "wizardPlanFootWithHpsearch": "plan · {{done}}/{{total}} · hpsearch",
+    "monitorOpenFailed": "Could not open the training monitor"
   },
   "commandPalette": {
     "title": "Command palette",
@@ -254,7 +277,7 @@
     "channel": "Channel",
     "threshold": "Threshold",
     "thresholdHintLabel": "Threshold help",
-    "thresholdHintBody": "Minimum model confidence (0.00–1.00): a segment is written to the label file only if probability is at or above the threshold. Lower—more labels (including weak and possible false ones); higher—only confident detections.",
+    "thresholdHintBody": "Confidence threshold from 0.00 to 1.00. Lower — more labels. Higher — only confident ones.",
     "thresholdTick0": "0",
     "thresholdTickLow": "0.25",
     "thresholdTickMid": "0.5",
@@ -264,16 +287,16 @@
     "thresholdZoneShortSensitive": "Sensitive",
     "thresholdZoneShortBalanced": "Balanced",
     "thresholdZoneShortStrict": "Strict",
-    "thresholdZoneSensitive": "Sensitive: more detections; check for false positives on the spectrogram.",
-    "thresholdZoneBalanced": "Balanced starting point (0.5): adjust if you miss calls or get too many labels.",
-    "thresholdZoneStrict": "Strict: fewer labels; may miss quiet or short calls.",
+    "thresholdZoneSensitive": "Sensitive: more labels, more false positives.",
+    "thresholdZoneBalanced": "Balanced (0.5): usual starting point.",
+    "thresholdZoneStrict": "Strict: fewer labels; quiet calls may be missed.",
     "sensitivity": "Sensitivity",
     "outputPath": "Output path",
     "outputPathHintLabel": "Output path help",
     "outputPathTooltipWhat": "Where orcAI writes the label file (.txt).",
     "outputPathTooltipEffect": "default creates one file per WAV next to the recording. A custom .txt path applies to every file in the batch queue.",
     "outputPathTooltipExample": "Example (default): recording_c1_orcai-isl-v1_predicted.txt",
-    "outputPathFieldHint": "default — one label file per WAV. A single shared .txt only if you intentionally merge the whole queue.",
+    "outputPathFieldHint": "default — one label file per WAV.",
     "outputPathPickTitle": "Label output file",
     "outputPathBrowse": "Choose file…",
     "outputPathUseDefault": "Use default",
@@ -304,6 +327,8 @@
       "cliEmpty": "Select files and set parameters to preview the command.",
       "cliCopy": "Copy",
       "cliCopied": "Copied",
+      "cliCopyFailed": "Could not copy to the clipboard",
+      "recordingTableLoadFailed": "Could not load the recordings table",
       "filterAria": "Queue filters",
       "filterAll": "All",
       "filterNew": "New only",
@@ -326,6 +351,7 @@
       "classCount": "Classes ({{count}})",
       "classesUnknown": "Model classes not found in orcai_parameter.json",
       "channelHint": "for single files; from recording table — per row",
+      "channelInvalid": "Channel must be an integer ≥ 1. Reset to 1.",
       "thresholdTitle": "Probability threshold",
       "thresholdLcd": "thresh {{value}}",
       "labelSuffixHint": "appended to the class name in the output file",
@@ -522,16 +548,17 @@
       "classSidebarAria": "Classes and display",
       "classesTitle": "Classes",
       "displayTitle": "Display",
-      "probFloorTitle": "Probabilities",
+      "probFloorTitle": "Probability",
       "probFloorAll": "all",
       "probFloorValue": "> {{n}}",
-      "probFloorAria": "Display by probability",
+      "probFloorAria": "Minimum probability for display",
       "probFloorHint": "Display only: the label file is not changed. Zero shows every detection. Otherwise only values strictly above this level stay on the spectrogram and in the table. The write threshold is Threshold on Parameters (`orcai predict -th`).",
-      "probFloorReset": "Reset probability display",
-      "probFloorResetHint": "Show all probabilities (level 0)",
+      "probFloorReset": "Reset probability filter",
+      "probFloorResetHint": "Show all detections (level 0)",
       "probFloorResetShort": "Reset",
       "probFloorPredictTick": "Write threshold from Parameters: {{n}}",
       "labelSourceAria": "Which label file is open",
+      "studioToolsAria": "Spectrogram palette and tools mode",
       "labelSourceOriginal": "Original",
       "labelSourceFiltered": "Filtered",
       "labelSourceOriginalHint": "Show the original *_predicted.txt",
@@ -550,9 +577,15 @@
       "filePickerColSize": "Size",
       "classesFilter": "Classes",
       "classesFilterTitle": "Classes",
-      "classesFilterHint": "Class filter and probability floor for the detections table",
+      "classesFilterHint": "Class filter and probability for the detections table",
       "classesFilterClose": "Close",
       "classesFilterCloseHint": "Close the class filter",
+      "classesToolsAria": "Class filter",
+      "classesToolsHint": "Open the class filter in place of the player bar",
+      "classesToolsReset": "Reset",
+      "classesToolsResetHint": "Reset class filter, probability, and display",
+      "playerTools": "Player",
+      "playerToolsHint": "Return to the playback bar",
       "fileNavAria": "Switch audio recordings",
       "filePrev": "Previous recording",
       "filePrevHint": "Show the previous audio recording",
@@ -581,13 +614,13 @@
       "lcdDs": "ds",
       "lcdViewLabel": "view",
       "modelSettings": {
-        "title": "AI model settings",
+        "title": "Model settings",
         "close": "Close",
         "subtitle": "Read-only · main and additional parameters · {{model}}",
         "main": "Main",
         "additional": "Additional",
         "model": "Model",
-        "type": "Model type",
+        "type": "Model kind",
         "typeBundled": "bundled",
         "typeTrained": "trained",
         "modelDir": "Model directory",
@@ -615,8 +648,9 @@
       "load": "Load",
       "save": "Save",
       "reset": "Reset",
-      "publication": "orcAI-v1 example",
-      "publicationHint": "Insert reference minima from the orcai-v1 publication. Upper bounds stay open.",
+      "publication": "Example",
+      "publicationHint": "Duration-limit example from the publication. Upper bounds stay open.",
+      "publicationNeedsBuiltin": "The example is for the built-in model's classes. Open predictions from orcai-isl-v1 or orcai-nor-v1 to view it.",
       "loadTitle": "Load call_duration_limits.json",
       "saveTitle": "Save call_duration_limits.json",
       "saved": "Duration limits saved",
@@ -631,6 +665,19 @@
       "histMin": "min {{n}}",
       "histMax": "max {{n}}",
       "histAxis": "Duration, s",
+      "histScale": "{{n}} s",
+      "histTail": "{{n}} s and longer",
+      "histTailRange": "{{from}}–{{to}} s",
+      "histCount": "Calls",
+      "histColumn": "Column {{n}} s",
+      "histLegendKeep": "Kept",
+      "histLegendDrop": "Dropped",
+      "histBin": "{{count}} · {{from}}–{{to}} s",
+      "histFateKeep": "Kept",
+      "histFateDrop": "Dropped",
+      "histFateMixed": "{{keep}} kept",
+      "histDefaultEmpty": "Every class has its own limit. Shown here: classes that use the default row.",
+      "histDefaultShared": "These classes have no limit of their own, so they share default. The chart does not mix them — click a class row in the table.",
       "histHint": "Drag a region on the histogram to set min and max. Double-click clears min and max.",
       "histBrush": "Duration limit brush on the histogram",
       "source": "Source",
@@ -644,7 +691,8 @@
       "remainOf": "{{keep}} of {{found}} detections will remain",
       "apply": "Apply filter",
       "defaultWarn": "The default limits set is active (every class is [0, null]). orcAI will not remove any detection until you set your own min/max.",
-      "empty": "No label files to filter. Run predictions on the Parameters tab first."
+      "empty": "No label files to filter. Run predictions on the Parameters tab first.",
+      "durationMinGtMax": "Minimum duration cannot be greater than maximum."
     },
     "profile": {
       "label": "Parameter profile",
@@ -685,6 +733,7 @@
       "resultsBadgeDetections": "Detections in file: {{count}}",
       "resultsBadgeFiles": "Files with results: {{count}}",
       "resultsDisabled": "Run predictions on the Settings tab first",
+      "resultsBusy": "Analysis opens after prediction finishes",
       "resultsNeedEngine": "Start the runtime (Sidecar + orcAI) on Home",
       "filterDisabled": "An active project with WAV files and the orcAI engine is required",
       "filterNeedsLabels": "Recognize at least one WAV first",
@@ -744,12 +793,12 @@
     "callDurationLimitsTooltipWhat": "JSON file with minimum and maximum segment duration (seconds) for each signal type (label class) the model can output.",
     "callDurationLimitsTooltipEffect": "The JSON sets min/max duration per signal type (label class). If a path is set, orcAI drops out-of-range segments during predict. If empty, predict keeps all segments; use the Filter predictions block below for a separate pass.",
     "callDurationLimitsTooltipExample": "Example (project): my_study_call_duration_limits.json next to project files.",
-    "callDurationLimitsHint": "Empty — all segments are kept during predict; filter by length in the block below. Project path is filled in automatically.",
+    "callDurationLimitsHint": "Empty — all segments are kept. Filter by length later on the Filter tab.",
     "callDurationLimitsEmpty": "empty — no in-predict filter",
     "callDurationLimitsClear": "Clear",
     "callDurationLimitsPickTitle": "Select duration limits JSON",
     "labelSuffix": "Label suffix",
-    "labelSuffixFieldHint": "Default is * — leave it unless you have a reason to change it. Must match the suffix used when filtering labels below on this page.",
+    "labelSuffixFieldHint": "Default is *. Must match the suffix on the Filter tab.",
     "baseDirRecording": "Recordings folder (CSV)",
     "baseDirRecordingHint": "Project root on disk: orcAI prepends this folder to relative paths from recording_table.csv to locate WAV files.",
     "baseDirRecordingPickTitle": "Select recordings folder",
@@ -777,70 +826,70 @@
         "what": "The neural network that detects sound events in a recording. Each model ships with orcai_parameter.json: class list (signal types), spectrogram settings, and network layout. Built-in orcai-isl-v1 suits typical field audio; trained checkpoints appear from the project folder.",
         "effect": "The model defines which classes can be detected and how output files are named—the model id is part of the filename. Different models on the same WAV produce different result files you can compare on the spectrogram.",
         "example": "Recording: night_01.wav\nModel: orcai-isl-v1\nOutput (with path default):\nnight_01_c1_orcai-isl-v1_predicted.txt",
-        "tip": "Run a small package first with orcai-isl-v1. For custom training, pick the checkpoint you trained. See class names in the model’s orcai_parameter.json or in the spectrogram legend after a run."
+        "tip": "For a quick check, run orcai-isl-v1 on a few files. Pick your own model from the project list."
       },
       "channel": {
         "title": "Channel",
         "what": "Which channel in a multichannel WAV orcAI analyzes. Numbering starts at 1 (first channel = 1, second = 2, …). For standard mono files, always use 1.",
         "effect": "The spectrogram and detector use only this channel. Label filenames include _c1_, _c2_, etc. The wrong channel can yield empty or noisy results even when the target signal is clear on another channel.",
         "example": "File stereo_trap.wav (2 channels):\nchannel 1 — trap mic with calls → use 1\nchannel 2 — background noise → not for target predictions",
-        "tip": "Match the channel used during model training. If unsure, listen in Audacity and pick the channel where the signal is clearest."
+        "tip": "Mono: channel 1. Stereo: the channel where you hear the signal."
       },
       "threshold": {
         "title": "Confidence threshold",
         "what": "Minimum model confidence from 0.00 to 1.00. A time region is written to the label file only if the model is confident enough that one of the classes from orcai_parameter.json is present.",
         "effect": "Low (0.30–0.45): more labels, including weak and possible false positives. Mid (0.50): balanced starting point. High (0.65–0.80): only strong hits; quiet calls may be missed.",
         "example": "Same recording fragment:\nthreshold 0.40 → 47 labels\nthreshold 0.55 → 31 labels\nthreshold 0.70 → 18 labels\nCompare on the spectrogram and pick a threshold for your package.",
-        "tip": "Start at 0.50. Too many labels—raise by 0.05–0.10. Missed weak calls—lower and verify visually. Save a good threshold in the profile before creating a package."
+        "tip": "Start at 0.50. Too many labels — raise it. Too few — lower it."
       },
       "outputPath": {
         "title": "Label output path",
         "what": "Where to save the label file in Audacity/orcAI text format. default means one file per WAV next to the recording, named by orcAI rules (model, channel, _predicted suffix).",
         "effect": "With default, each file has its own labels—best for packages, spectrograms, and per-file filtering. A single explicit .txt path merges all package WAVs into one file (uncommon; easy to overwrite by mistake).",
         "example": "WAV: /project/recordings/site_a/clip_003.wav\nOutput path: default\n→ /project/recordings/site_a/clip_003_c1_orcai-isl-v1_predicted.txt\n\nOutput path: /tmp/all_labels.txt\n→ all package files write into one file",
-        "tip": "Keep default for field projects. Use an explicit path only when you deliberately want one combined file."
+        "tip": "Leave default: one label file per WAV."
       },
       "overwrite": {
         "title": "Overwrite existing result",
         "what": "Allows orcAI to replace a label file that already exists at the output path. If unchecked, a matching path causes the job to fail and the old file remains.",
         "effect": "On: every predict run may replace an existing label file. Off: first run is protected; on the Analysis tab, re-analyzing files with existing results still overwrites after confirmation.",
         "example": "clip_003_c1_orcai-isl-v1_predicted.txt already exists:\noverwrite off → error, file unchanged\noverwrite on → new result replaces the old file",
-        "tip": "Before threshold experiments, back up the recordings folder or leave overwrite off so you do not lose a good run."
+        "tip": "Leave off if you want to keep an existing result."
       },
       "saveProbabilities": {
         "title": "Save probabilities",
         "what": "Besides intervals in the .txt file, orcAI saves detailed probabilities over time (extra data files). The text labels are built the same way; probabilities are for deeper analysis.",
         "effect": "Uses more disk space and may run slightly longer. Without this option you only get the .txt file—enough for spectrogram review and filtering.",
         "example": "clip_003.wav, threshold 0.50:\nwithout probabilities → one *_predicted.txt\nwith probabilities → *_predicted.txt + probability curve files (names depend on orcAI version)",
-        "tip": "Enable when tuning threshold from curves or exporting to R/Python. For the usual recognize → review → filter cycle, .txt alone is enough."
+        "tip": "Only needed for probability curves. Not required for spectrogram labels."
       },
       "callDurationLimits": {
         "title": "Duration limits (during predict)",
         "what": "Path to a JSON file: per signal class, minimum and maximum segment duration in seconds. orcAI can drop segments outside those bounds during predictions.",
         "effect": "Path set: only in-range segments appear in the .txt. Empty: all detections are kept; trim by length later on Filtering (handy to compare before/after).",
         "example": "Snippet of my_project_call_duration_limits.json:\n{\n  \"call_type_a\": { \"min\": 0.05, \"max\": 2.0 },\n  \"call_type_b\": { \"min\": 0.1, \"max\": 1.5 }\n}\nA 0.02 s segment for call_type_a is dropped when limits are active.",
-        "tip": "Leave empty when first exploring your data. The project JSON path is often filled automatically when the queue loads."
+        "tip": "You can leave this empty and filter by duration later."
       },
       "labelSuffix": {
         "title": "Label suffix",
         "what": "A short marker orcAI uses when writing class names in the label file. Default is asterisk (*). The same value is passed to the filtering step.",
         "effect": "Changing the suffix in the profile after predictions can make Filtering fail to parse existing files. Analysis packages freeze parameters—including suffix—at package creation.",
         "example": "In the .txt a class may look like: call_a*\nSuffix: *\n\nIf you set suffix to call, name format changes—older * annotations will not match.",
-        "tip": "Do not change * unless required. Change only when reference labels or the model explicitly use another format."
+        "tip": "Leave *."
       },
       "baseDirRecording": {
         "title": "Recordings folder (CSV)",
         "what": "Root folder on disk. orcAI prepends it to relative paths in recording_table.csv to locate WAV files for table-driven batch predictions.",
         "effect": "Used when the queue row is a CSV table entry, not a single project WAV from File selection. Ordinary WAV workflow does not need this field.",
         "example": "baseDirRecording: /Users/me/project/recordings\nIn CSV: site_a/clip_001.wav\norcAI opens: /Users/me/project/recordings/site_a/clip_001.wav",
-        "tip": "Set to the project recordings folder when the table lists relative paths. For typical WAV-only work, leave as is."
+        "tip": "Only needed when the CSV has paths without a full folder."
       },
       "verbosity": {
         "title": "Log verbosity",
         "what": "How much orcAI writes to the job log (Lab → Jobs), from 0 (errors only) to 3 (verbose debug). Does not change label quality.",
         "effect": "0–1: short logs on long packages. 2: normal daily use. 3: maximum detail when debugging failures.",
         "example": "0 → ERROR: WAV not found\n2 → INFO: processing clip_003.wav …\n3 → DEBUG: spectrogram params, tensor shapes …",
-        "tip": "Leave at 2. Use 3 when sending logs to support; for routine packages, 3 adds noise."
+        "tip": "Level 2 is usually enough."
       }
     }
   },
@@ -1035,7 +1084,7 @@
         "field": "Predictions without labeled recordings.",
         "lab": "Training from recordings and annotations.",
         "full": "Predictions and training in this project.",
-        "wizard": "Name, folder, and task for a new project."
+        "wizard": "Work goal, name, and folder for a new project."
       },
       "actions": {
         "create": "Create project",
@@ -1091,8 +1140,7 @@
         "full": "Full cycle",
         "unset": "not set",
         "change": "Change goal",
-        "hint": "The task changes hints, not commands.",
-        "saved": "Changes saved successfully"
+        "saved": "Project focus saved"
       },
       "classesFromParameters": "from parameters",
       "classesFromAnnotations": "annotated",
@@ -1126,11 +1174,26 @@
         "offline": "Start the Sidecar to see data readiness."
       },
       "nextStep": {
-        "predict": "Predict the remaining {{count}} recordings",
-        "train": "Train the model on {{count}} annotations",
-        "create_tvt": "Open training wizard · dataset from {{count}} annotations",
-        "annotate": "Add annotations for {{count}} recordings",
-        "filter": "Filter {{count}} results",
+        "predict_one": "Predict the remaining {{count}} recording",
+        "predict_few": "Predict the remaining {{count}} recordings",
+        "predict_many": "Predict the remaining {{count}} recordings",
+        "predict_other": "Predict the remaining {{count}} recordings",
+        "train_one": "Train the model on {{count}} annotation",
+        "train_few": "Train the model on {{count}} annotations",
+        "train_many": "Train the model on {{count}} annotations",
+        "train_other": "Train the model on {{count}} annotations",
+        "create_tvt_one": "Open training wizard · dataset from {{count}} annotation",
+        "create_tvt_few": "Open training wizard · dataset from {{count}} annotations",
+        "create_tvt_many": "Open training wizard · dataset from {{count}} annotations",
+        "create_tvt_other": "Open training wizard · dataset from {{count}} annotations",
+        "annotate_one": "Add annotations for {{count}} recording",
+        "annotate_few": "Add annotations for {{count}} recordings",
+        "annotate_many": "Add annotations for {{count}} recordings",
+        "annotate_other": "Add annotations for {{count}} recordings",
+        "filter_one": "Filter the remaining {{count}} result",
+        "filter_few": "Filter the remaining {{count}} results",
+        "filter_many": "Filter the remaining {{count}} results",
+        "filter_other": "Filter the remaining {{count}} results",
         "sync_table": "Refresh the table for {{count}} WAV"
       },
       "tabs": {
@@ -1243,16 +1306,21 @@
         "cancel": "Revert",
         "export": "Export",
         "missing": "Parameter file not created yet — run project init.",
-        "saved": "Changes saved successfully",
+        "saved": "Project parameters saved",
         "exportTitle": "Export orcAI parameters",
         "loading": "Reading parameters…",
         "aria": "orcAI parameter editor",
-        "exported": "Parameter file saved: {{path}}"
+        "exported": "Parameter file saved: {{path}}",
+        "excludedCallsHint": "Classes excluded from calls — click to view",
+        "excludedCallsTitle": "Excluded from calls",
+        "validateFailed": "Could not validate parameters"
+      },
+      "classColors": {
+        "saveFailed": "Could not save class colors"
       },
       "wizard": {
         "eyebrow": "Create project",
         "title": "Step 1 · Work goal",
-        "subtitle": "The task changes hints, not commands.",
         "recognitionTitle": "Predictions",
         "recognitionHint": "Predict recordings with built-in or trained models.",
         "trainingTitle": "Model training",
@@ -1278,7 +1346,12 @@
         "bodyCreate": "There is no recording_table.csv yet — it will be created from the WAV files in recordings/ (create-recording-table).",
         "action": "Refresh",
         "rebuild": "Rebuild from scratch",
-        "rebuildHint": "Delete the current CSV and rebuild it (manual channels are reset)."
+        "rebuildHint": "Delete the current CSV and rebuild it (manual channels are reset).",
+        "advancedTitle": "Advanced (CLI)",
+        "defaultChannel": "Default channel (-dc)",
+        "removeDuplicates": "Remove duplicate filenames (-rdf)",
+        "excludePatterns": "Exclude patterns (-ep)",
+        "excludePatternsPlaceholder": "path to JSON file or a JSON array of names"
       },
       "confirmDeleteFiles": {
         "title": "Delete recordings",
@@ -1431,6 +1504,7 @@
     "playbackUnavailable": "Playback requires the desktop app and a local WAV path.",
     "lanesHint": "Load annotation files below. Use the legend and overlay to review classes on the spectrogram.",
     "placeholderTitle": "Grayscale spectrogram (placeholder)",
+    "liveTitle": "Spectrogram",
     "segments": "{{count}} segments",
     "noSegments": "No segments in this time range.",
     "labelSourcesTitle": "Annotation sources",
@@ -1491,7 +1565,7 @@
       "colColor": "Class color",
       "colTime": "Time",
       "colDuration": "Duration",
-      "colType": "Signal type (AI)",
+      "colType": "Type",
       "colConfidence": "Conf.",
       "colTimeHeader": "Time",
       "colDurationHeader": "Duration",
@@ -1615,7 +1689,6 @@
     },
     "compatCheckNote": "Predictions can use any model from this list. Mismatches with the project parameters block Test only.",
     "trainedProjectDesc": "trained in this project ({{count}} classes).",
-    "export": "Export",
     "exportTitle": "Folder for model export",
     "exportNeedSelect": "Select a project-trained model in the table.",
     "exportBuiltinBlocked": "Built-in models cannot be exported — they already ship with the app.",
@@ -1649,6 +1722,15 @@
     "exportAudacity": "Export to Audacity",
     "exportCsvTitle": "Save CSV table",
     "exportAudacityTitle": "Folder for Audacity labels",
+    "exportCsvDone": "CSV table exported: {{name}}",
+    "exportAudacityDone": "Audacity labels exported: {{count}}",
+    "exportDialogTitle": "Export to Audacity",
+    "exportDialogBody": "Check the recordings in the current table. An unchecked recording is left out of the export.",
+    "exportDialogSelectAll": "Select all",
+    "exportDialogDeselectAll": "Deselect all",
+    "exportDialogConfirm": "Export ({{count}})",
+    "exportDialogSelectedCount": "Selected: {{selected}} of {{total}}",
+    "exportDialogEmpty": "The current table has no recordings to export",
     "kpiAria": "Project metrics",
     "kpiDetections": "Detections",
     "kpiFiles": "Files",
@@ -1666,9 +1748,10 @@
     "filterMinProb": "Probability ≥",
     "filterAllFiles": "All files",
     "filterAllClasses": "All classes",
-    "filterSearch": "Search by file…",
+    "filterSearch": "Search file, class, or type…",
+    "filterSearchDisabledHint": "Unavailable while a specific file is selected in the filter",
     "visibleCount": "showing {{visible}} of {{total}}",
-    "truncated": "Showing the first {{shown}} detections — the project has more.",
+    "truncated": "Showing the first {{shown}} of {{total}} detections — export covers visible rows only.",
     "filesFailed": "Skipped {{count}} unreadable label files."
   },
   "lab": {
@@ -1688,6 +1771,7 @@
     "dockConsole": "console",
     "dockPredictRunning": "Predictions in progress",
     "dockPredictFiles": "{{done}} / {{total}} files",
+    "dockFiles": "{{done}} / {{total}} files",
     "dockStatusOpen": "Log and inspector open",
     "dockStatusClosed": "Log and inspector hidden",
     "importAudioRunning": "Importing audio…",
@@ -1729,13 +1813,8 @@
     "localeEnShort": "EN",
     "localeRuShort": "RU",
     "appearance": "Appearance",
-    "theme": "Theme",
-    "layout": "Layout",
-    "layoutDefault": "Default",
-    "layoutHint": "Lab adds dense panels, a log console, and a job inspector.",
-    "themeHint": "The interface is always dark.",
-    "dataHealthBanner": "Data health warnings",
-    "dataHealthBannerHint": "Show header tips when WAV files, annotations, or the recordings table look incomplete, or when training parameters request more snippets than available (n_batch × batch_size). Does not block actions.",
+    "dataHealthBanner": "Show tips",
+    "dataHealthBannerHint": "Tips in the app header: missing WAV or annotations, a stale recordings table, or too few snippets for training (n_batch × batch_size). Does not block actions.",
     "dataHealthBannerOn": "On",
     "dataHealthBannerOff": "Off",
     "compute": "Neural network device",
@@ -1810,6 +1889,7 @@
     "pathClearCacheHint": "Spectrogram tiles in ~/.orcai-desktop/spec-cache. Recordings and projects are not touched.",
     "pathClearCacheAction": "Clear",
     "pathClearCacheDone": "Spectrogram cache cleared successfully",
+    "resetDone": "Settings restored to factory defaults",
     "pathFactoryReset": "Reset application",
     "pathFactoryResetHint": "Job database, project list, all caches, preferences.json, and sidecar.log. WAV folders on disk are kept.",
     "pathFactoryResetAction": "Reset",
@@ -1887,8 +1967,8 @@
     },
     "predict": {
       "title": "Predictions",
-      "description": "Recording queue, spectrogram with detections, and a duration filter.",
-      "analysisGuide": "Recording queue, spectrogram with detections, and a duration filter."
+      "description": "Recording queue, spectrogram with labels, and a duration filter.",
+      "analysisGuide": "Recording queue, spectrogram with labels, and a duration filter."
     },
     "spectrogram": {
       "title": "Spectrogram",
@@ -1896,7 +1976,7 @@
     },
     "pipeline": {
       "title": "Training",
-      "description": "orcAI pipeline: data prep, model training, and evaluation."
+      "description": "orcAI pipeline: data prep, model training, and testing."
     },
     "models": {
       "title": "Models",
@@ -1908,7 +1988,7 @@
     },
     "jobs": {
       "title": "Jobs",
-      "description": "Job queue and history."
+      "description": "Queue and history for the active project."
     },
     "help": {
       "title": "Help",
@@ -1919,13 +1999,16 @@
     }
   },
   "common": {
-    "mode": "Mode",
-    "layout": "Layout",
     "loading": "Loading…",
     "cancel": "Cancel",
     "close": "Close",
     "save": "Save",
-    "saveSuccess": "Changes saved successfully"
+    "saveSuccess": "Changes saved successfully",
+    "clipboardFailed": "Could not copy to the clipboard",
+    "jobPollFailed": "Could not refresh job status",
+    "networkError": "Cannot reach Sidecar. Start the runtime on Home and try again.",
+    "requestFailed": "Request failed",
+    "playbackFailed": "Could not play audio"
   },
   "pipeline": {
     "planned": "Planned",
@@ -1941,13 +2024,17 @@
     "refreshed": "Board updated",
     "wizard": "Training wizard",
     "monitor": "Monitor",
+    "monitorIdleHint": "Opens after the Training step starts, or when a previous run snapshot exists",
+    "monitorLiveHint": "Training is running",
+    "monitorLampOff": "Training is not running",
     "entryGroup": "Wizard and monitor",
-    "manualHint": "or run steps by hand — same order and artifacts",
+    "manualHint": "or run steps by hand — check orcai_parameter.json in Project parameters first",
     "planBusyTitle": "Running training wizard plan steps",
     "planBusyBody": "Steps run automatically ({{running}} running · {{queued}} queued). Do not start steps manually.",
     "planBusyHint": "Wizard plan is running — wait or cancel the plan",
     "planCancel": "Cancel plan",
     "snippetsShortageTitle": "Fewer snippets than orcAI requires",
+    "snippetsShortageHeaderTip": "{{split}} has {{actual}} snippets, needs {{required}}. Lower n_batch / batch_size or rebuild the table",
     "snippetsShortageBody": "The {{split}} table has {{actual}} snippets, but parameters request {{required}} (n_batch_{{split}} × batch_size = {{nBatch}} × {{batch}}). Plain orcAI would fail create-tvt-snippet-tables / train with «larger than available snippets».",
     "snippetsShortageDesktop": "orcAI Desktop clamps n_batch_* to inventory when at least one full batch remains; otherwise create-tvt / train match CLI and fail. To turn the lamp green, lower n_batch_{{split}} or batch_size.",
     "snippetsShortageDesktopClamp": "orcAI Desktop clamps n_batch_{{split}} to inventory (≥ 1 batch) before run, so create-tvt / training can still succeed. To turn the lamp green and match CLI parameters, lower n_batch_{{split}} or batch_size.",
@@ -1955,6 +2042,7 @@
     "planWaiting": "In plan…",
     "hpsearchOutsidePlan": "Not in plan",
     "hpsearchOutsidePlanHint": "This wizard plan did not include hyperparameter search. Cancel the plan to run this step manually.",
+    "hpsearchParallel": "Parallel on multiple GPUs (-pl)",
     "wizardSoon": "The training wizard will be available soon. Run steps on the pipeline board for now.",
     "monitorSoon": "The training monitor will be available soon. Live progress is in the console and Jobs.",
     "noProject": "Select a project to see the pipeline.",
@@ -1989,6 +2077,7 @@
       "missing_tvt_data": "TVT datasets required",
       "missing_checkpoint": "trained checkpoint required",
       "job_failed": "last run failed",
+      "upstream_failed": "fix the error on the previous step first",
       "params_changed": "project parameters changed",
       "params_changed_spectrogram": "spectrogram parameters changed",
       "params_changed_snippets": "snippet parameters changed",
@@ -1997,6 +2086,9 @@
     "ready": {
       "table": "Recording table",
       "tableSub": "{{count}} rows · current",
+      "tableStale": "{{count}} rows · stale",
+      "tableMissing": "no table",
+      "tableEmpty": "{{count}} rows",
       "annotations": "Annotations",
       "annotationsSub": "{{annotated}} of {{total}} recordings",
       "unlabeled": "Recordings without annotations",
@@ -2018,7 +2110,7 @@
       "architecture": "Architecture",
       "rate": "Sample rate",
       "hz": "Hz",
-      "nfft": "nfft / overlap",
+      "nfft": "nfft / hop",
       "freq": "Range",
       "snippet": "Snippet",
       "sec": "s",
@@ -2069,10 +2161,11 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "clearConfirmTitle": "Clear job history?",
-    "clearConfirmBody": "All records will be removed from the database. Running jobs will be cancelled. This cannot be undone.",
+    "clearConfirmBody": "Jobs of the active project will be removed. Running ones among them are cancelled. This cannot be undone.",
     "clearConfirmAction": "Clear",
     "clearConfirmCancel": "Cancel",
     "exportLog": "Export log",
+    "sidecarProcessExited": "Sidecar process exited",
     "meta": {
       "engine": "Engine",
       "engineRunning": "Running",
@@ -2163,7 +2256,7 @@
       "dataFinetune": "base and new annotations",
       "spectro": "and snippet slicing",
       "model": "architecture and training",
-      "preflight": "pre-flight check"
+      "preflight": "review before launch"
     },
     "scenarioSummary": "Scenario",
     "recSummary": "{{total}} recordings · {{annotated}} annotated",
@@ -2272,8 +2365,8 @@
     "samplingRateHint": "Hz · sampling_rate · recordings are resampled to this rate",
     "nfft": "nfft",
     "nfftHint": "FFT window size (samples)",
-    "overlap": "Window overlap",
-    "overlapHint": "n_overlap · usually half of nfft",
+    "overlap": "Window hop",
+    "overlapHint": "n_overlap · STFT hop in samples. Can be larger than nfft",
     "freqRange": "Frequency range",
     "freqRangeHint": "Hz · freq_range · lower and upper bound",
     "quantiles": "Brightness quantiles",
@@ -2377,8 +2470,13 @@
     "hour": "h",
     "testAfter": "Unfiltered test (-tu)",
     "testAfterHint": "the test step is always in the plan; on = also -uts when slicing and test -tu (no empty-snippet drop)",
+    "nUnfilteredTest": "Unfiltered set size (-n_uts)",
+    "nUnfilteredTestPlaceholder": "same as train",
+    "nUnfilteredTestHint": "empty — orcAI default: same count as the training snippet table",
     "includeHpsearch": "Tune hyperparameters",
     "includeHpsearchHint": "before train: hpsearch → train · longer than a normal train · re-run via the pipeline hpsearch step",
+    "hpsearchParallel": "Parallel search (-pl)",
+    "hpsearchParallelHint": "multiple GPUs; leave off on a single card",
     "hpsConfigure": "Configure…",
     "hpsModalTitle": "Hyperparameter search settings",
     "hpsModalHint": "KerasTuner search grid (orcAI default_hps_parameter.json). Written to the project when training starts.",

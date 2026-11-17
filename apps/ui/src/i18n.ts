@@ -11,8 +11,6 @@ import { loadStoredPreferences } from "./preferences/storage";
 
 export type { AppLocale } from "./i18n/locale";
 export {
-  detectSystemLocaleAsync,
-  detectSystemLocaleSync,
   localeFromLanguageTag,
   resolveInitialLocale,
 } from "./i18n/locale";
@@ -44,6 +42,13 @@ export async function setAppLocale(
   if (options?.manual) {
     persistLocalePreference(locale, true);
   }
+  // Detached train-monitor has its own i18n instance — sync from Lab.
+  const { broadcastLocaleToTrainMonitor } = await import(
+    "./platform/localeSync"
+  );
+  await broadcastLocaleToTrainMonitor(locale, {
+    localeManual: options?.manual === true,
+  });
 }
 
 export default i18n;

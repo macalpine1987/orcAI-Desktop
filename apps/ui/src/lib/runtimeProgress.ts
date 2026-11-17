@@ -1,4 +1,4 @@
-import type { ServicePhase } from "../sidecar/SidecarContext";
+import type { ServicePhase } from "../sidecar/sidecarTypes";
 import type { SidecarEngineStatus } from "../api/sidecar";
 
 export type SidecarBootStage = "spawning" | "waiting_port" | "ready";

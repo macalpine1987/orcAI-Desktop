@@ -5,6 +5,7 @@ import { useSectionsAccessible } from "../../hooks/useAppAccess";
 import { useWorkspace } from "../../hooks/useWorkspace";
 import {
   pipelineNavInactiveForWorkspace,
+  predictNavInactiveForWorkspace,
   type NavItemId,
 } from "../../layout/navigation";
 
@@ -100,11 +101,15 @@ export function HomeQuickActions({
           const blockedByFocus =
             action.id === "train" &&
             pipelineNavInactiveForWorkspace(workspace);
+          const blockedByRecognition =
+            (action.id === "predict" || action.id === "filter") &&
+            predictNavInactiveForWorkspace(workspace);
           const disabled =
             !hasProject ||
             Boolean(action.requiresRuntime && !sectionsAccessible) ||
             blockedByTable ||
-            blockedByFocus;
+            blockedByFocus ||
+            blockedByRecognition;
           return (
             <button
               key={action.id}
@@ -113,11 +118,13 @@ export function HomeQuickActions({
               title={
                 !hasProject
                   ? t("home.quickActionsNeedProject")
-                  : blockedByFocus
-                    ? t("app.navRequiresTrainingFocus")
-                    : blockedByTable
-                      ? t("projects.studio.table.predictBlockedStale")
-                      : undefined
+                  : blockedByRecognition
+                    ? t("app.navRequiresRecognitionFocus")
+                    : blockedByFocus
+                      ? t("app.navRequiresTrainingFocus")
+                      : blockedByTable
+                        ? t("projects.studio.table.predictBlockedStale")
+                        : undefined
               }
               className="mat-card home-quick-action p-3 text-left disabled:cursor-not-allowed disabled:opacity-45"
               onClick={() =>

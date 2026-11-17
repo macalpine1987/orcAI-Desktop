@@ -23,17 +23,26 @@ describe("T-6 results studio gate · / m06", () => {
     expect(adapter).toContain('source == "annotations"');
     expect(adapter).toContain("files_failed");
     expect(adapter).toContain("one bad label file must not fail the summary");
+    // Soft caps only (PERF); hard unbounded cutoffs must stay absent.
+    expect(adapter).toContain("_RESULTS_SOFT_FILE_LIMIT");
+    expect(adapter).toContain("_RESULTS_SOFT_ROW_LIMIT");
+    expect(adapter).toContain('"truncated": truncated');
     expect(adapter).not.toContain("_MAX_FILES");
     expect(adapter).not.toContain("_MAX_ROWS");
     expect(adapter).not.toContain("mean_p * 1.");
 
-    const main = read(sidecar("main.py"));
-    expect(main).toContain("/v1/results/summary");
-    expect(main).toContain("predicted, filtered, or annotations");
+    const mediaRoutes = read(sidecar("routes", "media.py"));
+    expect(mediaRoutes).toContain("/v1/results/summary");
+    expect(mediaRoutes).toContain("predicted, filtered, or annotations");
   });
 
   it("2. studio matches m06 chrome: pills, 5 KPIs, class chart, table bars", () => {
-    const studio = read(src("components", "ResultsStudio.tsx"));
+    const studio = [
+      read(src("components", "ResultsStudio.tsx")),
+      read(src("components", "results", "ResultsStudioKpi.tsx")),
+      read(src("components", "results", "ResultsStudioClassChart.tsx")),
+      read(src("components", "results", "ResultsStudioTable.tsx")),
+    ].join("\n");
     expect(studio).toContain('"predicted", "filtered", "annotations"');
     expect(studio).toContain("kpiDetections");
     expect(studio).toContain("kpiFiles");
@@ -59,15 +68,20 @@ describe("T-6 results studio gate · / m06", () => {
     expect(studio).toContain("predict-tabs-m03");
     expect(studio).toContain("predict-tab");
     expect(studio).toContain("summarizeResultsRows");
+    expect(studio).toContain("resultsFiltersAreBaseline");
     expect(studio).toContain("view.detection_count");
-    expect(studio).not.toContain("data.summary.detection_count");
+    expect(studio).toContain("data.summary.detection_count");
 
     const lib = read(src("lib", "resultsStudio.ts"));
     expect(lib).toContain('key: "recording", dir: "asc"');
     expect(lib).toContain("export function summarizeResultsRows");
     expect(lib).toContain("export function seedResultsMinProb");
+    expect(lib).toContain("export function resultsFilterResetKey");
+    expect(lib).toContain("export function resultsFiltersAreBaseline");
     expect(lib).toContain("export function classChartColumns");
     expect(lib).toContain('source !== "predicted"');
+    expect(studio).toContain("resultsFilterResetKey");
+    expect(studio).toContain("filterResetKey");
 
     const page = read(src("pages", "ResultsPage.tsx"));
     expect(page).toContain('tab: "results"');
@@ -85,7 +99,11 @@ describe("T-6 results studio gate · / m06", () => {
   });
 
   it("3. row click wires focusNav through Predict analysis", () => {
-    const predict = read(src("pages", "PredictPage.tsx"));
+    const predict = [
+      read(src("pages", "PredictPage.tsx")),
+      read(src("hooks", "usePredictPageState.ts")),
+      read(src("hooks", "usePredictLocationNav.ts")),
+    ].join("\n");
     expect(predict).toContain("focusStartSec");
     expect(predict).toContain("setAnalysisFocus");
     expect(predict).toContain("focusNav={");
@@ -95,7 +113,10 @@ describe("T-6 results studio gate · / m06", () => {
     const panel = read(src("components", "PredictSpectrogramPanel.tsx"));
     expect(panel).toContain("focusNav={focusNav}");
 
-    const viewer = read(src("components", "SpectrogramViewer.tsx"));
+    const viewer =
+      read(src("components", "SpectrogramViewer.tsx")) +
+      "\n" +
+      read(src("components", "spectrogram", "useSpectrogramFocusSelection.ts"));
     // Call via ref so segment-chevron / viewStart churn does not re-snap focusNav.
     expect(viewer).toContain("focusDetectionRef.current(focusNav.t0, focusNav.t1, focusNav.label)");
     expect(viewer).toContain("focusDetectionRef.current = focusDetection");
@@ -123,6 +144,8 @@ describe("T-6 results studio gate · / m06", () => {
     expect(ru.results.kpiFiles).toBe("Файлов");
     expect(ru.results.openRow).toBe("Открыть");
     expect(String(ru.results.truncated)).toContain("первые");
+    expect(String(ru.results.truncated)).toContain("{{total}}");
+    expect(String(ru.results.truncated)).toContain("экспорт");
     expect(String(ru.results.filesFailed)).toContain("Пропущены");
   });
 

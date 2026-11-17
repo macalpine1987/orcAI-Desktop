@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import type { RuntimeStep } from "../lib/runtimeProgress";
 
-export type RuntimeReadyLampState = "off" | "loading" | "on";
+export type RuntimeReadyLampState = "off" | "loading" | "on" | "running";
 
 type Props = {
   state: RuntimeReadyLampState;
@@ -10,7 +10,7 @@ type Props = {
   "aria-label"?: string;
 };
 
-/** Jewel-well pilot lamp for analysis environment readiness. */
+/** Jewel-well pilot lamp for analysis environment readiness (and train live). */
 export function RuntimeReadyLamp({
   state,
   className,
@@ -23,6 +23,7 @@ export function RuntimeReadyLamp({
         "runtime-ready-lamp",
         state === "on" && "is-on",
         state === "loading" && "is-loading",
+        state === "running" && "is-running",
         className,
       )}
       title={title}

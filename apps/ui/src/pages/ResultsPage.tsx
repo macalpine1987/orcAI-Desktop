@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { formatUserFacingErrorRequired } from "../lib/userFacingError";
 import {
   fetchResultsSummary,
   type ResultsSource,
@@ -25,15 +26,55 @@ import { pickCsvOutputFile, pickDirectory } from "../platform/dialog";
 import { isTauri } from "../platform/tauri";
 import { useSaveNotice } from "../ui/saveNotice";
 import { saveWorkspace } from "../workspace/storage";
+import { downloadTextFile } from "../lib/downloadBlob";
+import { useLabSectionActive } from "../layout/LabSectionActiveContext";
+import {
+  resultsSnapshotIsFresh,
+  type ResultsSnapshotEntry,
+} from "../lib/resultsSummaryCache";
 
-function downloadTextFile(content: string, fileName: string, mime: string) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  a.click();
-  URL.revokeObjectURL(url);
+const resultsSnapshots = new Map<string, ResultsSnapshotEntry>();
+const RESULTS_SNAPSHOT_CACHE_MAX = 16;
+/** Cap cached row arrays so LRU does not retain unbounded detection lists. */
+const RESULTS_SNAPSHOT_ROWS_MAX = 5_000;
+
+function resultsSnapshotKey(projectDir: string, source: ResultsSource): string {
+  return `${projectDir}\0${source}`;
+}
+
+/**
+ * Keep KPIs/meta from the full summary response; trim `rows` to a display/cache
+ * cap so React does not retain oversized detection lists. Sidecar already soft-
+ * caps rows near this size; KPIs come from aggregate fields on `res`.
+ */
+function slimResultsSnapshotForCache(
+  res: ResultsSummaryResponse,
+): ResultsSummaryResponse {
+  if (res.rows.length <= RESULTS_SNAPSHOT_ROWS_MAX) return res;
+  return {
+    ...res,
+    rows: res.rows.slice(0, RESULTS_SNAPSHOT_ROWS_MAX),
+    truncated: true,
+  };
+}
+
+function rememberResultsSnapshot(
+  key: string,
+  res: ResultsSummaryResponse,
+): void {
+  const cached = slimResultsSnapshotForCache(res);
+  if (resultsSnapshots.has(key)) resultsSnapshots.delete(key);
+  resultsSnapshots.set(key, { res: cached, fetchedAt: Date.now() });
+  while (resultsSnapshots.size > RESULTS_SNAPSHOT_CACHE_MAX) {
+    const oldest = resultsSnapshots.keys().next().value;
+    if (oldest == null || oldest === key) break;
+    resultsSnapshots.delete(oldest);
+  }
+}
+
+/** Vitest: drop module TTL cache between cases. */
+export function clearResultsSnapshotsForTests(): void {
+  resultsSnapshots.clear();
 }
 
 export function ResultsPage() {
@@ -43,6 +84,7 @@ export function ResultsPage() {
   const { notifySaved } = useSaveNotice();
   const { engineReady, online } = useSidecarStatus();
   const workspace = useWorkspace();
+  const sectionActive = useLabSectionActive();
 
   const [source, setSource] = useState<ResultsSource>("predicted");
   const [summary, setSummary] = useState<ResultsSummaryResponse | null>(null);
@@ -54,23 +96,44 @@ export function ResultsPage() {
   const projectDir = workspace.projectDir;
 
   useEffect(() => {
+    if (!sectionActive) return;
     if (!orcaiReady || !projectDir) {
       setSummary(null);
       setLoading(false);
       return;
     }
+    const key = resultsSnapshotKey(projectDir, source);
+    const entry = resultsSnapshots.get(key);
+    const cached = entry?.res ?? null;
     let cancelled = false;
-    setSummary(null);
-    setLoading(true);
-    setError(null);
+    if (cached) {
+      setSummary(cached);
+      setLoading(false);
+      setError(null);
+    } else {
+      setSummary(null);
+      setLoading(true);
+      setError(null);
+    }
+    // Fresh snapshot within TTL → skip network on revisit.
+    if (resultsSnapshotIsFresh(entry)) {
+      return () => {
+        cancelled = true;
+      };
+    }
     void fetchResultsSummary({ projectDir, source })
       .then((res) => {
-        if (!cancelled) setSummary(res);
+        const slim = slimResultsSnapshotForCache(res);
+        rememberResultsSnapshot(key, slim);
+        if (!cancelled) {
+          setSummary(slim);
+          setError(null);
+        }
       })
       .catch((err) => {
         if (!cancelled) {
-          setSummary(null);
-          setError(err instanceof Error ? err.message : String(err));
+          if (!cached) setSummary(null);
+          setError(formatUserFacingErrorRequired(err, t));
         }
       })
       .finally(() => {
@@ -79,7 +142,7 @@ export function ResultsPage() {
     return () => {
       cancelled = true;
     };
-  }, [orcaiReady, projectDir, source]);
+  }, [sectionActive, orcaiReady, projectDir, source, t]);
 
   const onOpenDetection = useCallback(
     (row: ResultsSummaryRow) => {
@@ -116,12 +179,14 @@ export function ResultsPage() {
           );
           if (!path) return;
           await writeTextFile(path, csv);
-          notifySaved();
+          const name = path.split(/[/\\]/).pop() || "detections.csv";
+          notifySaved(t("results.exportCsvDone", { name }));
           return;
         }
         downloadTextFile(csv, "detections.csv", "text/csv;charset=utf-8");
+        notifySaved(t("results.exportCsvDone", { name: "detections.csv" }));
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(formatUserFacingErrorRequired(err, t));
       } finally {
         setExportBusy(false);
       }
@@ -147,7 +212,9 @@ export function ResultsPage() {
             );
             await writeTextFile(out, text);
           }
-          notifySaved();
+          notifySaved(
+            t("results.exportAudacityDone", { count: grouped.size }),
+          );
           return;
         }
         for (const [, group] of grouped) {
@@ -158,8 +225,9 @@ export function ResultsPage() {
             "text/plain;charset=utf-8",
           );
         }
+        notifySaved(t("results.exportAudacityDone", { count: grouped.size }));
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(formatUserFacingErrorRequired(err, t));
       } finally {
         setExportBusy(false);
       }

@@ -9,6 +9,8 @@ import {
 import { PageHelpButton } from "../components/PageHelpButton";
 import { isRuntimeFreePath } from "../lib/appAccess";
 import { useSectionsAccessible } from "../hooks/useAppAccess";
+import { useBusyGuard } from "../hooks/useBusyGuard";
+import { useHomeWizardPlan } from "../hooks/useHomeWizardPlan";
 import { useProjectSummary } from "../hooks/useProjectSummary";
 import { useSidecarStatus } from "../hooks/useSidecarStatus";
 import { useWorkspace } from "../hooks/useWorkspace";
@@ -19,6 +21,7 @@ import {
 } from "../lib/sidecarCapabilities";
 import { usePreferences } from "../preferences/PreferencesContext";
 import { isRecordingTableBlockingPredict } from "../lib/recordingTableGate";
+import { silentCatch } from "../lib/silentCatch";
 import { HomeProjectCard, shortHomeModelLabel } from "./home/HomeProjectCard";
 import { HomeQuickActions } from "./home/HomeQuickActions";
 import { HomeRecentJobs } from "./home/HomeRecentJobs";
@@ -47,10 +50,27 @@ export function HomePage() {
     stopAll,
   } = useSidecarStatus();
   const sectionsAccessible = useSectionsAccessible();
-  const [busy, setBusy] = useState(false);
+  const { busy, runBusy } = useBusyGuard();
   const [panelModels, setPanelModels] = useState<RuntimePanelModel[]>([]);
   const { summary, loading: summaryLoading, error: summaryError } =
     useProjectSummary(workspace.activeProjectId);
+  const { plan: wizardPlan, error: wizardPlanError } = useHomeWizardPlan(
+    workspace.activeProjectId,
+  );
+  const wizardPlanFoot = useMemo(() => {
+    if (!wizardPlan) return null;
+    if (wizardPlan.includesHpsearch) {
+      return t("home.wizardPlanFootWithHpsearch", {
+        done: wizardPlan.done,
+        total: wizardPlan.total,
+        defaultValue: `plan · ${wizardPlan.done}/${wizardPlan.total}`,
+      });
+    }
+    return t("home.wizardPlanFoot", {
+      done: wizardPlan.done,
+      total: wizardPlan.total,
+    });
+  }, [wizardPlan, t]);
 
   const predictBlocked = isRecordingTableBlockingPredict({
     syncStatus: summary?.recording_table.sync_status,
@@ -85,7 +105,8 @@ export function HomePage() {
         }));
         setPanelModels(fallback);
       })
-      .catch(() => {
+      .catch((err) => {
+        silentCatch("homeFetchModels")(err);
         if (cancelled) return;
         setPanelModels(
           (capabilities?.builtin_models ?? []).map((m) => ({
@@ -125,14 +146,12 @@ export function HomePage() {
     summary?.primary_model_name,
   ]);
 
-  const wrap = useCallback(async (fn: () => Promise<void>) => {
-    setBusy(true);
-    try {
-      await fn();
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+  const wrap = useCallback(
+    async (fn: () => Promise<void>) => {
+      await runBusy(fn);
+    },
+    [runBusy],
+  );
 
   const restartAll = useCallback(async () => {
     await stopAll();
@@ -308,6 +327,7 @@ export function HomePage() {
             <HomeProjectCard
               projectName={workspace.projectName}
               projectPath={workspace.projectDir}
+              projectId={workspace.activeProjectId}
               recordings={summary?.metrics.recordings ?? null}
               annotations={summary?.metrics.annotations ?? null}
               predicted={summary?.metrics.predicted ?? null}
@@ -316,12 +336,19 @@ export function HomePage() {
               loading={summaryBusy}
               engineReady={engineReady}
               onChangeProject={() => navigate("/projects")}
+              wizardPlanSteps={wizardPlan?.steps ?? null}
+              wizardPlanFoot={wizardPlanFoot}
             />
           </div>
 
           {summaryError ? (
             <p className="mat-inset px-3 py-2 font-mono text-xs text-foreground">
               {summaryError}
+            </p>
+          ) : null}
+          {wizardPlanError ? (
+            <p className="mat-inset px-3 py-2 font-mono text-xs text-foreground">
+              {wizardPlanError}
             </p>
           ) : null}
 

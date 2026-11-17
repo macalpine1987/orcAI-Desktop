@@ -169,7 +169,7 @@ function unfilteredSummary(): ResultsSummaryResponse {
 }
 
 describe("Results studio · T-6 / regression", () => {
-  it("T-6.1 KPIs follow the visible table (five cells, no model KPI)", () => {
+  it("T-6.1 baseline KPIs use summary aggregates (five cells, no model KPI)", () => {
     const { container, unmount } = renderWithProviders(
       <ResultsStudio
         data={unfilteredSummary()}
@@ -181,10 +181,48 @@ describe("Results studio · T-6 / regression", () => {
       />,
     );
     expect(container.querySelectorAll(".results-kpi-cell")).toHaveLength(5);
-    expect(kpiValues(container)).toEqual(["2", "2", "00:02", "0.55", "—"]);
+    // Baseline filters → sidecar summary (not row recount).
+    expect(kpiValues(container)).toEqual(["2", "2", "18:24", "0.70", "—"]);
     expect(container.textContent).not.toMatch(/orcai-isl-v1/);
     expect(classCodes(container).sort()).toEqual(["BUZZ", "WHISTLE"]);
     expect(container.querySelectorAll(".predict-results-page-btn--filled")).toHaveLength(2);
+    unmount();
+  });
+
+  it("ERR-01 truncated baseline KPIs stay on summary totals", () => {
+    const { container, unmount } = renderWithProviders(
+      <ResultsStudio
+        data={summary({
+          truncated: true,
+          summary: {
+            detection_count: 9000,
+            recording_count: 40,
+            duration_sec: 120,
+            mean_p: 0.88,
+            models: ["orcai-isl-v1"],
+            thresholds: [],
+          },
+          classes: [{ label: "WHISTLE", count: 9000, duration_sec: 120 }],
+          recordings: ["a.wav"],
+          rows: [
+            row({
+              id: "slim-only",
+              label: "WHISTLE",
+              duration_sec: 1,
+              mean_p: 0.5,
+            }),
+          ],
+        })}
+        source="predicted"
+        onSourceChange={vi.fn()}
+        onExportCsv={vi.fn()}
+        onExportAudacity={vi.fn()}
+        onOpenDetection={vi.fn()}
+      />,
+    );
+    expect(kpiValues(container)).toEqual(["9000", "40", "02:00", "0.88", "—"]);
+    expect(container.textContent).toMatch(/9000/);
+    expect(container.textContent).toMatch(/экспорт|export/i);
     unmount();
   });
 
@@ -329,7 +367,7 @@ describe("Results studio · T-6 / regression", () => {
     unmount();
   });
 
-  it("T-6.3 Audacity export is grouped from the visible rows", async () => {
+  it("T-6.3 Audacity export opens a picker then exports selected recordings", async () => {
     const onExportAudacity = vi.fn();
     const { container, unmount } = renderWithProviders(
       <ResultsStudio
@@ -356,6 +394,15 @@ describe("Results studio · T-6 / regression", () => {
     );
     await act(async () => {
       btn!.click();
+    });
+    expect(onExportAudacity).not.toHaveBeenCalled();
+    const dialog = document.body.querySelector('[role="dialog"]');
+    expect(dialog).toBeTruthy();
+    const confirm = Array.from(
+      document.body.querySelectorAll('[role="dialog"] button'),
+    ).find((b) => /Export|Экспортировать/i.test(b.textContent ?? ""));
+    await act(async () => {
+      confirm!.click();
     });
     const exported = onExportAudacity.mock.calls[0]?.[0] as ResultsSummaryRow[];
     expect(exported.map((r) => r.recording).sort()).toEqual(["a.wav", "b.wav"]);
@@ -533,7 +580,18 @@ describe("Results studio · T-6 / regression", () => {
   it("BR-004/005 truncated and files_failed notices are visible", () => {
     const { container, unmount } = renderWithProviders(
       <ResultsStudio
-        data={summary({ truncated: true, files_failed: 2 })}
+        data={summary({
+          truncated: true,
+          files_failed: 2,
+          summary: {
+            detection_count: 12_000,
+            recording_count: 2,
+            duration_sec: 2,
+            mean_p: 0.7,
+            models: ["orcai-isl-v1"],
+            thresholds: [0.5],
+          },
+        })}
         source="predicted"
         onSourceChange={vi.fn()}
         onExportCsv={vi.fn()}
@@ -542,6 +600,8 @@ describe("Results studio · T-6 / regression", () => {
       />,
     );
     expect(container.textContent).toMatch(/первые|first/i);
+    expect(container.textContent).toMatch(/12000/);
+    expect(container.textContent).toMatch(/экспорт|export/i);
     expect(container.textContent).toMatch(/Пропущены 2|Skipped 2/);
     unmount();
   });
@@ -598,6 +658,37 @@ describe("Results studio · T-6 / regression", () => {
     const search = container.querySelector(".results-filter-search") as HTMLInputElement;
     await setInputValue(search, "b.wav");
     expect(tableFiles(container)).toEqual(["b.wav"]);
+    unmount();
+  });
+
+  it("disables file search while a specific recording filter is set", async () => {
+    const { container, unmount } = renderWithProviders(
+      <ResultsStudio
+        data={summary()}
+        source="predicted"
+        onSourceChange={vi.fn()}
+        onExportCsv={vi.fn()}
+        onExportAudacity={vi.fn()}
+        onOpenDetection={vi.fn()}
+      />,
+    );
+    const search = container.querySelector(
+      ".results-filter-search",
+    ) as HTMLInputElement;
+    const recording = container.querySelectorAll(
+      ".results-table-filters select",
+    )[0] as HTMLSelectElement;
+
+    expect(search.disabled).toBe(false);
+    await setInputValue(search, "b");
+    expect(search.value).toBe("b");
+
+    await setSelectValue(recording, "a.wav");
+    expect(search.disabled).toBe(true);
+    expect(search.value).toBe("");
+
+    await setSelectValue(recording, "");
+    expect(search.disabled).toBe(false);
     unmount();
   });
 });

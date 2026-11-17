@@ -13,6 +13,16 @@ from typing import Any, Literal
 
 ResultsSource = Literal["predicted", "filtered", "annotations"]
 
+# Soft payload caps for huge projects. KPIs / class aggregates scan every file
+# (up to the file soft-cap); ``rows`` in the response are truncated to this
+# limit with ``truncated=true`` so the UI banner and export stay honest.
+_RESULTS_SOFT_FILE_LIMIT = 2_000
+_RESULTS_SOFT_ROW_LIMIT = 5_000
+
+# Matches Desktop ``DEFAULT_PREDICT_SETTINGS.threshold`` / orcAI typical ``-th``.
+# Used only when predicted files exist but no predict job recorded a threshold.
+_DEFAULT_PREDICT_THRESHOLD = 0.5
+
 _SKIP_DIR_NAMES = {
     ".git",
     ".hg",
@@ -161,6 +171,24 @@ def _thresholds_from_jobs(project_dir: str) -> list[float]:
     return values
 
 
+def resolve_results_thresholds(
+    project_dir: str,
+    *,
+    source: ResultsSource,
+    detection_count: int,
+) -> list[float]:
+    """Job ``-th`` values, else Desktop/orcAI default when predicted hits exist.
+
+    Filtered / annotations stay empty (duration-only / no mean_p seed).
+    """
+    from_jobs = _thresholds_from_jobs(project_dir)
+    if from_jobs:
+        return from_jobs
+    if source == "predicted" and detection_count > 0:
+        return [_DEFAULT_PREDICT_THRESHOLD]
+    return []
+
+
 def _preview_label_file(
     path: Path,
     *,
@@ -197,8 +225,16 @@ def build_results_summary(
     recordings_with_hits: set[str] = set()
     files_ok = 0
     files_failed = 0
+    truncated = False
+    detection_count = 0
+    duration_sec = 0.0
+    mean_sum = 0.0
+    mean_n = 0
 
     for path in files:
+        if files_ok + files_failed >= _RESULTS_SOFT_FILE_LIMIT:
+            truncated = True
+            break
         meta = parse_label_filename(path.name)
         stem = str(meta["stem"])
         wav_path = infer_wav_path(path, stem, root)
@@ -229,10 +265,25 @@ def build_results_summary(
         for seg in preview["segments"]:
             start_sec = float(seg["start_sec"])
             stop_sec = float(seg["stop_sec"])
-            duration_sec = max(0.0, stop_sec - start_sec)
+            seg_duration = max(0.0, stop_sec - start_sec)
             label = str(seg["label"])
             mean_p = seg.get("mean_p")
             mean_p_f = float(mean_p) if isinstance(mean_p, (int, float)) else None
+            detection_count += 1
+            duration_sec += seg_duration
+            if mean_p_f is not None:
+                mean_sum += mean_p_f
+                mean_n += 1
+            bucket = class_counts.setdefault(
+                label,
+                {"label": label, "count": 0, "duration_sec": 0.0},
+            )
+            bucket["count"] += 1
+            bucket["duration_sec"] += seg_duration
+            recordings_with_hits.add(recording)
+            if len(rows) >= _RESULTS_SOFT_ROW_LIMIT:
+                truncated = True
+                continue
             rows.append(
                 {
                     "id": f"{resolved}:{start_sec:.6f}:{stop_sec:.6f}:{label}:{len(rows)}",
@@ -242,30 +293,25 @@ def build_results_summary(
                     "label": label,
                     "start_sec": start_sec,
                     "stop_sec": stop_sec,
-                    "duration_sec": duration_sec,
+                    "duration_sec": seg_duration,
                     "mean_p": mean_p_f,
                     "model": model,
                     "channel": int(channel),
                     "kind": kind,
                 }
             )
-            bucket = class_counts.setdefault(
-                label,
-                {"label": label, "count": 0, "duration_sec": 0.0},
-            )
-            bucket["count"] += 1
-            bucket["duration_sec"] += duration_sec
-            recordings_with_hits.add(recording)
 
-    mean_values = [row["mean_p"] for row in rows if row["mean_p"] is not None]
-    mean_p = (sum(mean_values) / len(mean_values)) if mean_values else None
-    duration_sec = sum(float(row["duration_sec"]) for row in rows)
+    mean_p = (mean_sum / mean_n) if mean_n else None
     classes = sorted(
         class_counts.values(),
         key=lambda item: (-int(item["count"]), str(item["label"])),
     )
-    recordings = sorted({row["recording"] for row in rows})
-    thresholds = _thresholds_from_jobs(str(root))
+    recordings = sorted(recordings_with_hits)
+    thresholds = resolve_results_thresholds(
+        str(root),
+        source=source,
+        detection_count=detection_count,
+    )
 
     return {
         "source": source,
@@ -273,9 +319,9 @@ def build_results_summary(
         "files_total": len(files),
         "files_ok": files_ok,
         "files_failed": files_failed,
-        "truncated": False,
+        "truncated": truncated,
         "summary": {
-            "detection_count": len(rows),
+            "detection_count": detection_count,
             "recording_count": len(recordings_with_hits),
             "duration_sec": duration_sec,
             "mean_p": mean_p,

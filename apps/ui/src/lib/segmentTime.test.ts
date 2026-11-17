@@ -29,6 +29,25 @@ describe("segmentTimeSec", () => {
       segmentTimeSec({ start: 2.56, stop: 3.6693 }, null, 120),
     ).toEqual({ t0: 2.56, t1: 3.6693 });
   });
+
+  it("returns a finite fallback for non-finite start/stop", () => {
+    expect(
+      segmentTimeSec(
+        { start: Number.NaN, stop: 1.5, time_unit: "seconds" },
+        0.05,
+        10,
+        "seconds",
+      ),
+    ).toEqual({ t0: 0, t1: 0.05 });
+    expect(
+      segmentTimeSec(
+        { start: 0, stop: Number.POSITIVE_INFINITY, time_unit: "seconds" },
+        0.05,
+        10,
+        "seconds",
+      ),
+    ).toEqual({ t0: 0, t1: 0.05 });
+  });
 });
 
 describe("effectiveLabelDeltaT", () => {

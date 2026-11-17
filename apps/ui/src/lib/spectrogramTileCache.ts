@@ -1,10 +1,18 @@
 /** Client LRU for spectrogram tile PNG/JPEG blobs (smooth zoom/pan revisit). */
 
-const MAX_ENTRIES = 64;
-/** First full-file make_spectrogram can be slow on long WAV; keep a hard ceiling. */
-const TILE_FETCH_TIMEOUT_MS = 300_000;
+import { TILE_FETCH_TIMEOUT_MS } from "./timeouts";
+
+export { TILE_FETCH_TIMEOUT_MS };
+
+/** Soft ceiling so resize width buckets cannot grow the LRU without bound. */
+export const SPECTROGRAM_TILE_CACHE_MAX_ENTRIES = 64;
+const MAX_ENTRIES = SPECTROGRAM_TILE_CACHE_MAX_ENTRIES;
+/** Soft byte budget (~48 MiB) so large PNG tiles cannot pin unbounded RAM. */
+export const SPECTROGRAM_TILE_CACHE_MAX_BYTES = 48 * 1024 * 1024;
+const MAX_BYTES = SPECTROGRAM_TILE_CACHE_MAX_BYTES;
 
 const cache = new Map<string, Blob>();
+let cacheBytes = 0;
 /** In-flight fetches so pan prefetch and UI load share one network request. */
 const inflight = new Map<
   string,
@@ -33,24 +41,52 @@ export function spectrogramTileCacheKey(url: string): string {
 export function invalidateSpectrogramTileCache(): void {
   cacheGeneration += 1;
   cache.clear();
+  cacheBytes = 0;
   for (const entry of inflight.values()) {
     entry.controller.abort();
   }
   inflight.clear();
 }
 
+/**
+ * Sidecar port change must drop tiles (URLs bind the live port). Remounting
+ * Analysis with the same port must keep the LRU — otherwise every nav away/back
+ * forces a cold STFT reload.
+ */
+export function sidecarPortRequiresTileInvalidate(
+  previous: number | null | undefined,
+  next: number | null,
+): boolean {
+  if (previous === undefined) return false;
+  return previous !== next;
+}
+
 export function spectrogramTileCacheSize(): number {
   return cache.size;
 }
 
+function dropOldestUnlocked(): void {
+  const oldest = cache.keys().next().value;
+  if (oldest == null) return;
+  const prev = cache.get(oldest);
+  cache.delete(oldest);
+  if (prev) cacheBytes = Math.max(0, cacheBytes - prev.size);
+}
+
 function rememberBlob(key: string, blob: Blob, generation: number): void {
   if (generation !== cacheGeneration) return;
-  cache.delete(key);
+  const existing = cache.get(key);
+  if (existing) {
+    cacheBytes = Math.max(0, cacheBytes - existing.size);
+    cache.delete(key);
+  }
   cache.set(key, blob);
-  while (cache.size > MAX_ENTRIES) {
-    const oldest = cache.keys().next().value;
-    if (oldest == null) break;
-    cache.delete(oldest);
+  cacheBytes += blob.size;
+  while (
+    cache.size > MAX_ENTRIES ||
+    (cacheBytes > MAX_BYTES && cache.size > 1)
+  ) {
+    dropOldestUnlocked();
   }
 }
 

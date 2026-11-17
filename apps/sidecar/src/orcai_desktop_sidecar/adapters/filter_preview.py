@@ -35,9 +35,13 @@ def preview_filter_predictions(
     *,
     label_suffix: str = "*",
 ) -> dict[str, Any]:
-    """Apply orcAI ``_check_duration`` in memory; original files are not touched."""
+    """Run orcAI ``filter_predictions`` in memory; original files are not touched.
+
+    Same core as the ``filter-predictions`` job (``delta_t=1``), so keep/drop stays
+    aligned when orcAI adds filter rules beyond duration.
+    """
     import pandas as pd
-    from orcai.predict import _check_duration
+    from orcai.predict import filter_predictions
 
     missing: list[str] = []
     frames: list[pd.DataFrame] = []
@@ -77,22 +81,33 @@ def preview_filter_predictions(
     predicted["class_key"] = predicted["label"].map(
         lambda label: strip_label_suffix(str(label), label_suffix)
     )
-    predicted["duration_ok"] = predicted.apply(
-        lambda row: _check_duration(row, call_duration_limits, 1, label_suffix),
-        axis=1,
+    predicted["_preview_id"] = range(len(predicted))
+
+    # Engine mutates a working frame; keep our bookkeeping columns on ``predicted``.
+    work = predicted[[*_COLUMNS, "_preview_id"]].copy()
+    kept = filter_predictions(
+        predicted_labels=work,
+        delta_t=1,
+        call_duration_limits=call_duration_limits,
+        label_suffix=label_suffix,
+        verbosity=0,
     )
+    keep_ids = (
+        set(kept["_preview_id"].tolist()) if "_preview_id" in kept.columns else set()
+    )
+    predicted["kept"] = predicted["_preview_id"].isin(keep_ids)
 
     by_class: dict[str, dict[str, Any]] = {}
     for key, group in predicted.groupby("class_key", sort=False):
         found = len(group)
-        keep = int((group["duration_ok"] == "keep").sum())
+        keep = int(group["kept"].sum())
         durations = [float(x) for x in group["duration"].tolist()]
         by_class[str(key)] = {
             "label": str(key),
             "found": found,
             "keep": keep,
             "drop": found - keep,
-            "durations": durations[:4000],
+            "durations": durations,
         }
 
     ordered: list[dict[str, Any]] = []
@@ -117,7 +132,7 @@ def preview_filter_predictions(
             ordered.append(row)
 
     found = len(predicted)
-    keep = int((predicted["duration_ok"] == "keep").sum())
+    keep = int(predicted["kept"].sum())
     return {
         "total": {"found": found, "keep": keep, "drop": found - keep},
         "classes": ordered,

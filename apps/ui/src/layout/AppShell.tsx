@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -17,6 +18,7 @@ import { ShellMetaFrames } from "../components/ShellMetaFrames";
 import { RuntimeRestartBanner } from "../components/RuntimeRestartBanner";
 import { RuntimeRouteGuard } from "../components/RuntimeRouteGuard";
 import { useSectionsAccessible } from "../hooks/useAppAccess";
+import { useShellNavigateListener } from "../hooks/useShellNavigateListener";
 import { useShellMetaFramesBridge } from "../hooks/useShellMetaFramesBridge";
 import { isRuntimeFreeNavId } from "../lib/appAccess";
 import {
@@ -34,16 +36,26 @@ import { usePreferences } from "../preferences/PreferencesContext";
 import { NavIcon } from "../components/NavIcon";
 import {
   pipelineNavInactiveForWorkspace,
+  predictNavInactiveForWorkspace,
+  projectRequiredNavInactive,
   visibleNav,
   type NavItem,
 } from "./navigation";
 import { loadPredictSettings } from "../workspace/predictSettings";
+import { HeaderNoticeSlot, useHeaderError } from "../ui/saveNotice";
 
 function Header() {
   const location = useLocation();
+  const { dismissHeaderError } = useHeaderError();
+  const pathRef = useRef(location.pathname);
+  useEffect(() => {
+    if (pathRef.current === location.pathname) return;
+    pathRef.current = location.pathname;
+    dismissHeaderError();
+  }, [dismissHeaderError, location.pathname]);
   const workspace = useWorkspace();
   const bridge = useShellMetaFramesBridge();
-  const showMeta = shellMetaFramesVisible(location.pathname);
+  const showMeta = shellMetaFramesVisible();
   const jobsStudio = location.pathname === "/jobs";
   const alignMetaToStudio =
     showMeta && (location.pathname.startsWith("/predict") || jobsStudio);
@@ -78,25 +90,27 @@ function Header() {
   return (
     <header
       className={clsx(
-        "mat-shell-header flex shrink-0 items-center justify-between gap-4 px-4 py-2",
-        "min-h-14",
+        "mat-shell-header flex shrink-0 flex-col px-4",
         alignMetaToStudio && "mat-shell-header--meta-studio",
       )}
     >
-      <AppBrand studio={false} />
-      {showMeta ? (
-        <ShellMetaFrames
-          projectName={projectName}
-          modelId={modelId}
-          hasActiveProject={hasActiveProject}
-          activeProjectId={workspace.activeProjectId}
-          projectDir={workspace.projectDir}
-          showEngine={shellMetaEngineVisible(location.pathname)}
-          showModel={showModel}
-          modelSettingsOpen={bridge.modelSettingsOpen ?? false}
-          onToggleModelSettings={bridge.onToggleModelSettings ?? undefined}
-        />
-      ) : null}
+      <HeaderNoticeSlot />
+      <div className="flex min-h-14 items-center justify-between gap-4 py-2">
+        <AppBrand studio={false} />
+        {showMeta ? (
+          <ShellMetaFrames
+            projectName={projectName}
+            modelId={modelId}
+            hasActiveProject={hasActiveProject}
+            activeProjectId={workspace.activeProjectId}
+            projectDir={workspace.projectDir}
+            showEngine={shellMetaEngineVisible()}
+            showModel={showModel}
+            modelSettingsOpen={bridge.modelSettingsOpen ?? false}
+            onToggleModelSettings={bridge.onToggleModelSettings ?? undefined}
+          />
+        ) : null}
+      </div>
     </header>
   );
 }
@@ -256,9 +270,13 @@ function Sidebar() {
         )}
       >
         {items.map((item) => {
-          const focusBlocked =
+          const trainingBlocked =
             item.id === "pipeline" &&
             pipelineNavInactiveForWorkspace(workspace);
+          const recognitionBlocked =
+            item.id === "predict" &&
+            predictNavInactiveForWorkspace(workspace);
+          const projectBlocked = projectRequiredNavInactive(item.id, workspace);
           const runtimeBlocked =
             !sectionsAccessible && !isRuntimeFreeNavId(item.id);
           return (
@@ -266,9 +284,22 @@ function Sidebar() {
               key={item.id}
               item={item}
               collapsed={collapsed}
-              restricted={runtimeBlocked || focusBlocked}
+              restricted={
+                runtimeBlocked ||
+                projectBlocked ||
+                trainingBlocked ||
+                recognitionBlocked
+              }
               restrictedTitle={
-                focusBlocked ? t("app.navRequiresTrainingFocus") : undefined
+                runtimeBlocked
+                  ? undefined
+                  : projectBlocked
+                    ? t("app.navRequiresProject")
+                    : trainingBlocked
+                      ? t("app.navRequiresTrainingFocus")
+                      : recognitionBlocked
+                        ? t("app.navRequiresRecognitionFocus")
+                        : undefined
               }
             />
           );
@@ -283,9 +314,12 @@ function Sidebar() {
 }
 
 export function AppShell() {
+  useShellNavigateListener();
   const location = useLocation();
   const { defaultDockCollapsed } = usePreferences();
-  const homeStudio = location.pathname === "/";
+  const homeStudio =
+    location.pathname === "/" ||
+    location.pathname === "/__preview/home-plan-rail";
   const jobsStudio = location.pathname === "/jobs";
   const settingsStudio = location.pathname === "/settings";
   const helpStudio = location.pathname === "/help";

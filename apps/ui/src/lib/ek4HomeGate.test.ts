@@ -79,7 +79,10 @@ describe("T-1 home gate · A runtime (m01)", () => {
   });
 
   it("A-04 runtimeAutostart defaults off in preferences", () => {
-    const prefs = read(src("preferences/PreferencesContext.tsx"));
+    const prefs = [
+      read(src("preferences/PreferencesContext.tsx")),
+      read(src("preferences/preferencesHydration.ts")),
+    ].join("\n");
     const storage = read(src("preferences/storage.ts"));
     expect(storage).toContain("runtimeAutostart");
     expect(prefs).toContain("runtimeAutostart: stored.runtimeAutostart ?? false");
@@ -130,10 +133,26 @@ describe("T-1 home gate · B project + summary", () => {
     expect(card).toContain("home.projectMetricAnnotations");
     expect(card).toContain("home.projectMetricPredicted");
     expect(card).toContain("home.projectMetricModel");
-    expect(card).not.toContain("= 12");
+    /* No hardcoded LCD sample values (allow unrelated constants like pulse ms). */
+    expect(card).not.toMatch(/recordings=\{\s*12\s*\}/);
+    expect(card).not.toMatch(/value=\{\s*12\s*\}/);
     expect(card).toContain("home-card-eyebrow");
     expect(card).toContain("home-project-name");
     expect(card).toContain("shortHomeModelLabel");
+    expect(card).toContain("HomeWizardPlanRail");
+    const planRail = read(src("pages/home/HomeWizardPlanRail.tsx"));
+    expect(planRail).toContain("homeWizardPlanFocusStepId");
+    expect(planRail).toContain("scrollElementIntoScroller");
+    expect(planRail).toContain("data-plan-focus");
+    expect(card).toContain("home-project-monitor-btn");
+    const homeCss = read(src("styles/home.css"));
+    expect(homeCss).toMatch(
+      /\.home-project-monitor-wrap\.predict-tabs-m03\s*\{[^}]*right:\s*1rem/s,
+    );
+    /* Live Home wires wizard active_plan via pipeline poll. */
+    expect(page).toContain("useHomeWizardPlan");
+    expect(page).toContain("wizardPlanSteps");
+    expect(page).toContain("wizardPlanFoot");
   });
 
   it("B-02 table sync status keys for current/stale/missing", () => {
@@ -157,6 +176,8 @@ describe("T-1 home gate · B project + summary", () => {
     const hook = read(src("hooks/useProjectSummary.ts"));
     expect(hook).toContain("online");
     expect(hook).not.toContain("engineReady");
+    expect(hook).toContain("refresh({ silent: true })");
+    expect(hook).toContain("fresh: true");
   });
 
   it("B · Open folder button includes folder icon", () => {
@@ -179,7 +200,11 @@ describe("T-1 home gate · C quick actions", () => {
   });
 
   it("C · Predict page consumes location.state.tab for run/filter", () => {
-    const page = read(src("pages/PredictPage.tsx"));
+    const page = [
+      read(src("pages/PredictPage.tsx")),
+      read(src("hooks/usePredictPageState.ts")),
+      read(src("hooks/usePredictLocationNav.ts")),
+    ].join("\n");
     expect(page).toContain("normalizePredictNavTab");
     expect(page).toContain("location.state");
     expect(page).toContain("setActiveTabState(tab)");
@@ -225,11 +250,13 @@ describe("T-1 home gate · D jobs + shell meta", () => {
     const shell = read(src("layout/AppShell.tsx"));
     expect(shell).toContain("ProjectDataHealthBanner");
     expect(shell).toContain("PipelineSnippetsShortageBanner");
+    expect(shell).toContain("HeaderNoticeSlot");
     const picker = read(src("lib/projectDataHealth.ts"));
     expect(picker).toContain("pickDataHealthMessage");
     expect(picker).toContain("table_stale");
     const health = read(src("components/ProjectDataHealthBanner.tsx"));
-    expect(health).toContain("shrink-0");
+    expect(health).toContain("setHeaderTip");
+    expect(health).toContain('"data-health"');
   });
 });
 

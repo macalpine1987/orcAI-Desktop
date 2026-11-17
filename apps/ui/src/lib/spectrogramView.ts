@@ -163,8 +163,9 @@ export function quantizeSpectrogramTileWindow(
 /**
  * Extra time on each side of the live view when requesting a tile.
  * Lets horizontal pan use CSS translate before a new STFT is needed.
+ * 1.25 ≈ one extra viewport each side — Hand drag stays smooth longer.
  */
-export const SPECTROGRAM_TILE_OVERSCAN_RATIO = 0.75;
+export const SPECTROGRAM_TILE_OVERSCAN_RATIO = 1.25;
 
 /** Fraction of the live span used as a soft edge (prefetch only — no display swap). */
 export const SPECTROGRAM_TILE_EDGE_MARGIN_RATIO = 0.2;
@@ -232,18 +233,89 @@ export function spectrogramViewNeedsTileRefresh(
   return spectrogramViewOutsideTile(viewStart, viewEnd, tile);
 }
 
+/**
+ * Hard cap for STFT PNG width. Wider Retina/overscan requests used to hit
+ * 3–4k and dominate resize / first-paint time; CSS scales the bitmap.
+ */
+export const SPECTROGRAM_TILE_MAX_WIDTH_PX = 2048;
+
+/**
+ * Hard cap for STFT PNG height. Fullscreen grows the plot well past this;
+ * CSS scales the bitmap so maximize does not wait on a taller re-encode.
+ */
+export const SPECTROGRAM_TILE_MAX_HEIGHT_PX = 320;
+
+/** ResizeObserver → tile width buckets (fewer abort/refetch storms). */
+export const SPECTROGRAM_PLOT_WIDTH_STEP_PX = 64;
+/** Layout height buckets for the plot box (overlays / CSS). */
+export const SPECTROGRAM_PLOT_HEIGHT_STEP_PX = 32;
+/** Coarser buckets for the STFT height query (fewer maximize refetches). */
+export const SPECTROGRAM_TILE_HEIGHT_STEP_PX = 64;
+
 /** Raster width so overscanned tiles keep ~1:1 px density with the live view. */
 export function spectrogramTilePixelWidth(
   plotWidthPx: number,
   tileT0: number,
   tileT1: number,
   visibleSpan: number,
-  maxWidth = 4096,
+  maxWidth = SPECTROGRAM_TILE_MAX_WIDTH_PX,
 ): number {
   const tileSpan = Math.max(1e-6, tileT1 - tileT0);
   const vis = Math.max(1e-6, visibleSpan);
   const scaled = Math.round(Math.max(1, plotWidthPx) * (tileSpan / vis));
-  return Math.max(64, Math.min(maxWidth, scaled));
+  const capped = Math.max(64, Math.min(maxWidth, scaled));
+  return quantizeSpectrogramPlotPx(capped, SPECTROGRAM_PLOT_WIDTH_STEP_PX);
+}
+
+/** Raster height for the tile request — capped; plot CSS height may be taller. */
+export function spectrogramTilePixelHeight(
+  plotHeightPx: number,
+  maxHeight = SPECTROGRAM_TILE_MAX_HEIGHT_PX,
+  step = SPECTROGRAM_TILE_HEIGHT_STEP_PX,
+): number {
+  const capped = Math.max(160, Math.min(maxHeight, Math.max(1, plotHeightPx)));
+  return quantizeSpectrogramPlotPx(capped, step);
+}
+
+/**
+ * Convert a measured plot box to CSS px for tile requests.
+ * ``getBoundingClientRect`` follows CSS ``zoom``; STFT width must stay at
+ * layout px or 125% UI scale requests ~1.25× larger (slower) tiles.
+ */
+export function spectrogramPlotLayoutSize(
+  rect: { width: number; height: number },
+  uiZoom = 1,
+  minHeight = 160,
+): { width: number; height: number } {
+  const zoom = Number.isFinite(uiZoom) && uiZoom > 0 ? uiZoom : 1;
+  return {
+    width: Math.max(1, Math.round(rect.width / zoom)),
+    height: Math.max(minHeight, Math.round(rect.height / zoom)),
+  };
+}
+
+/** Quantize layout px so ResizeObserver jitter does not abort STFT mid-flight. */
+export function quantizeSpectrogramPlotPx(px: number, step = 32): number {
+  const s = Math.max(1, Math.round(step));
+  return Math.max(s, Math.round(px / s) * s);
+}
+
+/**
+ * Overlay class-lanes must track the live CSS plot box (fillContainer stretch),
+ * not the debounced/quantized STFT request size — otherwise bands thicken when
+ * the canvas stretches taller than ``layoutHint``.
+ */
+export function spectrogramOverlayBoxSize(
+  measured: { width: number; height: number },
+  layoutHint?: { w: number; h: number } | null,
+): { w: number; h: number } {
+  if (measured.width > 0 && measured.height > 0) {
+    return { w: measured.width, h: measured.height };
+  }
+  if (layoutHint != null && layoutHint.w > 0 && layoutHint.h > 0) {
+    return { w: layoutHint.w, h: layoutHint.h };
+  }
+  return { w: 0, h: 0 };
 }
 
 /** Adjacent windows for background prefetch (same span as the loaded tile). */

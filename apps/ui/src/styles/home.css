@@ -273,6 +273,11 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: stretch;
   }
+
+  /* Plan rail must not stretch «Среда» — steps scroll inside the rail. */
+  .home-grid-top:has(.home-project-card.has-wizard-plan) {
+    align-items: start;
+  }
 }
 
 /*
@@ -367,7 +372,7 @@
   color: #d64545;
 }
 
-/* Same rounded frame as the training-monitor KPI tiles (.tm-kpi). */
+/* Soft LCD tiles for Записи / Аннотации / Распознано / Модель. */
 .home-project-metric {
   display: flex;
   min-width: 0;
@@ -379,14 +384,9 @@
   text-align: center;
   background: #161718;
   border: 1px solid #2a2c2f;
-  border-radius: 8px;
+  border-radius: 0.75rem;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
   color: #9ce3ba;
-}
-
-[data-theme="light"] .home-project-metric {
-  background: var(--mat-raised);
-  border-color: var(--border-strong);
 }
 
 .home-project-metric-label {
@@ -460,11 +460,321 @@
   border-color: color-mix(in srgb, var(--border) 60%, var(--accent));
 }
 
-/* Stretch paired top cards to equal height (ek4-v8). */
+/* Stretch paired top cards to equal height (ek4-v8) — content height, not a fixed rem. */
 .home-grid-top > .home-runtime-panel,
 .home-grid-top > .home-project-card {
   height: 100%;
   min-height: 0;
+}
+
+.home-project-card {
+  position: relative;
+}
+
+.home-project-card-head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.home-project-card.has-wizard-plan .home-project-card-head {
+  /* Keep eyebrow clear of the absolute Monitor control. */
+  padding-right: 6.75rem;
+}
+
+.home-project-card-head .home-card-eyebrow {
+  margin: 0;
+  min-width: 0;
+}
+
+/*
+ * Pin to the card’s top-right, aligned with the wizard-plan rail
+ * (same inset as .home-project-card p-4 — not flush to the bezel).
+ */
+.home-project-monitor-wrap.predict-tabs-m03 {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  min-width: 0;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  pointer-events: auto;
+}
+
+/* Same chrome as Pipeline toolbar «Монитор» (predict-tab + jewel lamp). */
+.home-project-monitor-btn.predict-tab {
+  flex: 0 0 auto;
+  min-width: 0;
+  height: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0 0.6rem;
+  font-size: 0.6875rem;
+  gap: 0.35rem;
+}
+
+.home-project-monitor-btn .pp-monitor-lamp {
+  margin-right: 0.15rem;
+}
+
+.home-project-monitor-btn .pp-monitor-lamp .runtime-ready-lamp-well {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.home-project-monitor-btn .pp-monitor-lamp .runtime-ready-lamp-jewel {
+  width: 0.45rem;
+  height: 0.45rem;
+}
+
+/*
+ * Wizard plan rail (Home · Current Project): show ~3 step rows; the rest scrolls.
+ * Card stays content-sized; «Среда» is not stretched (:has → align-items: start).
+ * Shown only for active_plan (not manual steps).
+ */
+.home-project-card.has-wizard-plan {
+  overflow: hidden;
+}
+
+.home-wizard-plan-rail {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0.4rem 0.55rem 0.35rem;
+  background: #121314;
+  border: 1px solid #2a2c2f;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
+}
+
+.home-wizard-plan-head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  padding: 0 0.1rem;
+}
+
+.home-wizard-plan-title {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.home-wizard-plan-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--lcd-accent);
+  text-decoration: none;
+}
+
+.home-wizard-plan-link:hover {
+  text-decoration: underline;
+}
+
+.home-wizard-plan-scroll {
+  position: relative; /* offsetParent for plan rows (scroll-into-view) */
+  flex: 0 1 auto;
+  /* Three rows (1.4rem) + gaps + slack for one running progress bar. */
+  max-height: calc(3 * 1.4rem + 2 * 0.22rem + 0.35rem);
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Scrollbar chrome: .lab-scroll-narrow (D) in scrollbars.css */
+}
+
+.home-wizard-plan-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.home-wizard-plan-row {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.4rem;
+  padding: 0.12rem 0.15rem;
+  border-radius: 4px;
+}
+
+.home-wizard-plan-row.is-running {
+  background: rgb(125 255 163 / 0.06);
+}
+
+.home-wizard-plan-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #3a3c3f;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.6);
+}
+
+.home-wizard-plan-led.is-done {
+  background: #49c578;
+  box-shadow: 0 0 6px rgb(73 197 120 / 0.65);
+}
+
+.home-wizard-plan-led.is-running {
+  background: var(--lcd-accent);
+  box-shadow: 0 0 8px var(--lcd-accent);
+  /* Same timeline as Monitor jewel (.is-monitor-live). */
+  animation: home-wizard-sync-pulse 1.2s ease-in-out infinite;
+  animation-delay: var(--home-wizard-pulse-delay, 0ms);
+}
+
+.home-wizard-plan-led.is-queued {
+  background: #6a6c70;
+}
+
+.home-wizard-plan-led.is-error {
+  background: #d64545;
+  box-shadow: 0 0 6px rgb(214 69 69 / 0.7);
+}
+
+.home-wizard-plan-id {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #c8c9cb;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-wizard-plan-row.is-running .home-wizard-plan-id {
+  color: var(--lcd-accent);
+}
+
+.home-wizard-plan-row.is-queued .home-wizard-plan-id {
+  color: var(--text-muted);
+}
+
+.home-wizard-plan-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.home-wizard-plan-row.is-done .home-wizard-plan-status {
+  color: #5f9a72;
+}
+
+.home-wizard-plan-row.is-running .home-wizard-plan-status {
+  color: var(--lcd-accent);
+}
+
+.home-wizard-plan-row.is-error .home-wizard-plan-status {
+  color: #d64545;
+}
+
+.home-wizard-plan-foot {
+  flex: 0 0 auto;
+  margin: 0.35rem 0 0;
+  padding: 0 0.1rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Shared by running step LED + Monitor jewel (phase via --home-wizard-pulse-delay). */
+@keyframes home-wizard-sync-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    filter: brightness(0.85);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+}
+
+.home-project-card.is-monitor-live
+  .home-project-monitor-btn
+  .runtime-ready-lamp.is-running
+  .runtime-ready-lamp-jewel {
+  animation-name: home-wizard-sync-pulse;
+  animation-duration: 1.2s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: var(--home-wizard-pulse-delay, 0ms);
+}
+
+/* Dev-only preview chrome for /__preview/home-plan-rail */
+.home-plan-rail-preview-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  flex: 0 0 auto;
+  margin: 0 0 0.55rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: #141516;
+  border: 1px solid #2a2c2f;
+  border-radius: 6px;
+}
+
+.home-plan-rail-preview-banner code {
+  font-family: var(--font-mono);
+  color: var(--lcd-accent);
+}
+
+.home-plan-rail-preview-modes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.home-plan-rail-preview-modes button {
+  appearance: none;
+  height: 1.6rem;
+  padding: 0 0.55rem;
+  font: inherit;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: #181a1b;
+  border: 1px solid #4f4f51;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.home-plan-rail-preview-modes button.is-on {
+  color: var(--lcd-accent);
+  border-color: #3d6a4e;
+}
+
+.home-plan-rail-preview .home-work-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-wizard-plan-led.is-running,
+  .home-project-card.is-monitor-live
+    .home-project-monitor-btn
+    .runtime-ready-lamp.is-running
+    .runtime-ready-lamp-jewel {
+    animation: none;
+  }
 }
 
 /*

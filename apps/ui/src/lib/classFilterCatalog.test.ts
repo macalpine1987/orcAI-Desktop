@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { OrcaiModel } from "../api/models";
-import { callsForSelectedModel, classFilterRows } from "./classFilterCatalog";
+import {
+  callsForSelectedModel,
+  classFilterRows,
+  classSharePercent,
+} from "./classFilterCatalog";
 
 const TRAINED: OrcaiModel = {
   id: "new4",
@@ -61,5 +65,19 @@ describe("classFilterRows", () => {
   it("without a catalog shows only classes present in the file", () => {
     const rows = classFilterRows(null, [{ label: "WHISTLE", count: 2 }]);
     expect(rows).toEqual([{ label: "WHISTLE", count: 2 }]);
+  });
+});
+
+describe("classSharePercent", () => {
+  it("scales to the largest class as 100%", () => {
+    expect(classSharePercent(54, 54)).toBe(100);
+    expect(classSharePercent(27, 54)).toBe(50);
+    expect(classSharePercent(14, 54)).toBe(26);
+  });
+
+  it("returns 0 for empty or invalid counts", () => {
+    expect(classSharePercent(0, 54)).toBe(0);
+    expect(classSharePercent(10, 0)).toBe(0);
+    expect(classSharePercent(-1, 10)).toBe(0);
   });
 });

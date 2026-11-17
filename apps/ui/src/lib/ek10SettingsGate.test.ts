@@ -80,7 +80,10 @@ describe("T-13 settings integration gate · / m17 / m31", () => {
     expect(fsPaths).toContain("shell_ensure_dir");
     expect(fsPaths).toContain("shell_ensure_file");
 
-    const rs = readFileSync(join(repo, "src-tauri/src/lib.rs"), "utf8");
+    const rs = [
+      readFileSync(join(repo, "src-tauri/src/lib.rs"), "utf8"),
+      readFileSync(join(repo, "src-tauri/src/commands/shell_cmds.rs"), "utf8"),
+    ].join("\n");
     expect(rs).toContain("shell_clear_orcai_spec_cache");
     expect(rs).toContain("shell_reset_orcai_desktop_db");
     expect(rs).toContain("shell_wipe_orcai_desktop_dir");
@@ -101,7 +104,10 @@ describe("T-13 settings integration gate · / m17 / m31", () => {
     expect(storage).toContain('DEFAULT_THEME: Theme = "dark"');
     expect(storage).toContain("resolveTheme");
 
-    const ctx = read("preferences/PreferencesContext.tsx");
+    const ctx = [
+      read("preferences/PreferencesContext.tsx"),
+      read("preferences/usePreferencesControllers.ts"),
+    ].join("\n");
     expect(ctx).toContain("DEFAULT_THEME");
     expect(ctx).toContain("windowSetFullscreen(false)");
     expect(ctx).toContain("dataset.theme = theme");
@@ -141,7 +147,12 @@ describe("T-13 settings integration gate · / m17 / m31", () => {
     expect(jobs).toContain("withJobVerbosity");
     expect(jobs).not.toContain("patchJobsQueue");
 
-    const ctx = read("preferences/PreferencesContext.tsx");
+    const ctx = [
+      read("preferences/PreferencesContext.tsx"),
+      read("preferences/usePreferencesControllers.ts"),
+      read("preferences/preferencesHydration.ts"),
+      read("preferences/storage.ts"),
+    ].join("\n");
     expect(ctx).toContain("setLiveLogVerbosity");
     expect(ctx).toContain("setLiveLargeWavOptimize");
     expect(ctx).toContain("savePredictSettings");
@@ -156,15 +167,18 @@ describe("T-13 settings integration gate · / m17 / m31", () => {
     expect(ctx).not.toContain("jobExportEncoding");
 
     const sidecar = read("sidecar/SidecarContext.tsx");
-    expect(sidecar).toContain("port: null");
-    expect(sidecar).not.toContain("sidecarPortForStart");
+    const processCtrl = read("sidecar/useSidecarProcessControl.ts");
+    const life = read("sidecar/useRuntimeLifecycle.ts");
+    expect(processCtrl).toContain("port: null");
+    expect(processCtrl).not.toContain("sidecarPortForStart");
     expect(sidecar).not.toContain("sidecarPortPref");
     expect(sidecar).not.toContain("patchJobsQueue");
     expect(sidecar).toContain("persistJobLogs");
     // CPU/GPU restart must use host HTTP like startAll (v0.1.22 cold-start fix).
-    expect(sidecar).toContain("invokeSidecarEngineStart");
     expect(sidecar).toContain("restartRuntimeForComputeDevice");
-    expect(sidecar).toMatch(
+    expect(life).toContain("invokeSidecarEngineStart");
+    expect(life).toContain("restartRuntimeForComputeDevice");
+    expect(life).toMatch(
       /restartRuntimeForComputeDevice[\s\S]*invokeSidecarEngineStart/,
     );
 
@@ -178,28 +192,44 @@ describe("T-13 settings integration gate · / m17 / m31", () => {
   });
 
   it("4. Rust sidecar_start accepts optional port + cache/log dirs", () => {
-    const lib = readFileSync(join(repo, "src-tauri/src/lib.rs"), "utf8");
+    const lib = [
+      readFileSync(join(repo, "src-tauri/src/lib.rs"), "utf8"),
+      readFileSync(join(repo, "src-tauri/src/commands/sidecar_cmds.rs"), "utf8"),
+      readFileSync(join(repo, "src-tauri/src/commands/shell_cmds.rs"), "utf8"),
+    ].join("\n");
     expect(lib).toContain("spec_cache_dir");
     expect(lib).toContain("job_logs_dir");
     expect(lib).toContain("shell_ensure_dir");
     expect(lib).toContain("begin_sidecar_start(state.inner(), port)");
     expect(lib).not.toContain("window_set_hide_on_close");
 
-    const rs = readFileSync(join(repo, "src-tauri/src/sidecar.rs"), "utf8");
+    const rs = [
+      readFileSync(join(repo, "src-tauri/src/sidecar/mod.rs"), "utf8"),
+      readFileSync(join(repo, "src-tauri/src/sidecar/launch.rs"), "utf8"),
+    ].join("\n");
     expect(rs).toContain("pinned_port");
     expect(rs).toContain("ORCAI_SPEC_CACHE_ROOT");
     expect(rs).toContain("SIDECAR_DEFAULT_PORT");
   });
 
   it("5. Sidecar queue PATCH updates max_concurrent", () => {
+    const jobsRoutes = readFileSync(
+      join(repo, "apps/sidecar/src/orcai_desktop_sidecar/routes/jobs.py"),
+      "utf8",
+    );
+    const mediaRoutes = readFileSync(
+      join(repo, "apps/sidecar/src/orcai_desktop_sidecar/routes/media.py"),
+      "utf8",
+    );
     const main = readFileSync(
       join(repo, "apps/sidecar/src/orcai_desktop_sidecar/main.py"),
       "utf8",
     );
-    expect(main).toContain('@app.patch("/v1/jobs/queue")');
-    expect(main).toContain("set_max_concurrent");
-    expect(main).toContain('/v1/spectrograms/cache/clear');
-    expect(main).toContain("/v1/maintenance/factory-reset");
+    expect(jobsRoutes).toContain('/v1/jobs/queue');
+    expect(jobsRoutes).toContain("set_max_concurrent");
+    expect(mediaRoutes).toContain('/v1/spectrograms/cache/clear');
+    expect(mediaRoutes).toContain("/v1/maintenance/factory-reset");
+    expect(main).toContain("include_router(jobs.router)");
     const queue = readFileSync(
       join(repo, "apps/sidecar/src/orcai_desktop_sidecar/job_queue.py"),
       "utf8",

@@ -5,6 +5,7 @@ import {
   isTerminalJobStatus,
   patchJobFromStream,
 } from "../lib/jobEventStream";
+import { jobLogNextSince, trimJobLogLines } from "../lib/jobLogTail";
 
 const TERMINAL = new Set(["completed", "failed", "cancelled"]);
 
@@ -14,10 +15,13 @@ export function useJobLogTail(job: JobRecord | null, online: boolean) {
   const sinceRef = useRef(0);
   const jobIdRef = useRef<string | null>(null);
 
-  const reset = useCallback((initial: string[]) => {
-    sinceRef.current = initial.length;
-    setLines(initial);
-  }, []);
+  const reset = useCallback(
+    (initial: string[], nextSince: number) => {
+      sinceRef.current = nextSince;
+      setLines(trimJobLogLines(initial));
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!job) {
@@ -28,13 +32,14 @@ export function useJobLogTail(job: JobRecord | null, online: boolean) {
     }
     if (jobIdRef.current !== job.id) {
       jobIdRef.current = job.id;
-      reset(job.log);
+      reset(job.log, jobLogNextSince(job));
       return;
     }
     // Catch up when Lab merges a fuller snapshot (import-audio race).
-    if (job.log.length > sinceRef.current) {
-      setLines(job.log);
-      sinceRef.current = job.log.length;
+    const absLen = jobLogNextSince(job);
+    if (absLen > sinceRef.current) {
+      setLines(trimJobLogLines(job.log));
+      sinceRef.current = absLen;
     }
   }, [job, reset]);
 
@@ -52,13 +57,15 @@ export function useJobLogTail(job: JobRecord | null, online: boolean) {
       try {
         const slice = await fetchJobLogSince(jobId, from);
         if (closed) return;
+        // Snapshot before advancing: setLines may run after next_since is applied.
+        const caughtUpTo = sinceRef.current;
         if (slice.lines.length > 0) {
           setLines((prev) => {
-            // SSE may already have appended these lines while this request was in flight.
-            const overlap = Math.max(0, prev.length - from);
-            const fresh = slice.lines.slice(overlap);
+            // SSE may already have appended some of these while the request was in flight.
+            const already = Math.max(0, caughtUpTo - from);
+            const fresh = slice.lines.slice(already);
             if (fresh.length === 0) return prev;
-            return [...prev, ...fresh];
+            return trimJobLogLines([...prev, ...fresh]);
           });
         }
         sinceRef.current = Math.max(sinceRef.current, slice.next_since);
@@ -87,17 +94,26 @@ export function useJobLogTail(job: JobRecord | null, online: boolean) {
       unsubscribe?.();
       unsubscribe = connectJobEventStream(jobId, sinceRef.current, {
         onLog: (payload) => {
-          // Advance before React applies setLines. Completion polls in the same
-          // turn and would otherwise re-fetch the line just shown.
+          // Advance the absolute cursor before setLines so a same-turn
+          // completion poll does not re-fetch this line. Window base must use
+          // the pre-advance cursor, or patchJobFromStream treats the event as
+          // an in-window replace and drops the seed line.
+          const prevSince = sinceRef.current;
           if (typeof payload.index === "number") {
             sinceRef.current = Math.max(sinceRef.current, payload.index + 1);
           }
-          setLines((prev) =>
-            patchJobFromStream(
-              { id: jobId, status: "running", log: prev } as JobRecord,
+          setLines((prev) => {
+            const base = Math.max(0, prevSince - prev.length);
+            return patchJobFromStream(
+              {
+                id: jobId,
+                status: "running",
+                log: prev,
+                log_base: base,
+              } as JobRecord,
               payload,
-            ).log,
-          );
+            ).log;
+          });
         },
         onSnapshot: (payload) => {
           if (typeof payload.next_since === "number") {

@@ -28,6 +28,7 @@ const LabJobContext = createContext<LabJobContextValue | null>(null);
 export function LabJobProvider({ children }: { children: ReactNode }) {
   const { online } = useSidecarStatus();
   const jobsList = useJobsListOptional();
+  const projectDir = jobsList?.projectDir ?? null;
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<JobRecord | null>(null);
   const [dockTab, setDockTab] = useState<LabDockTab>("log");
@@ -39,6 +40,12 @@ export function LabJobProvider({ children }: { children: ReactNode }) {
     setSelectionPinned(Boolean(id));
     if (id) setDockTab("log");
   }, []);
+
+  useEffect(() => {
+    setSelectedJobId(null);
+    setSelectedJob(null);
+    setSelectionPinned(false);
+  }, [projectDir]);
 
   const refreshSelectedJob = useCallback(async () => {
     if (!selectedJobId) {

@@ -1,7 +1,7 @@
 {
   "name": "orcai-desktop-ui",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "pretest": "bash ../../scripts/ensure-ui-deps.sh",
     "test": "vitest run --configLoader native --config vitest.config.mjs",
-    "test:watch": "vitest"
+    "test:watch": "vitest --configLoader native --config vitest.config.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.2.0",

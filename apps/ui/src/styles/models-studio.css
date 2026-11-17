@@ -24,7 +24,7 @@
   --m16-table-rim: #1c1e20;
   --m16-table-rim-outer: #2a2c2f;
   --m16-thead-text: #757578;
-  --ms-lcd: #7dffa3;
+  --ms-lcd: var(--lcd-accent);
   --ms-rim: #2a2c2f;
   --ms-ok: #49c578;
   --ms-mid: #c9a227;

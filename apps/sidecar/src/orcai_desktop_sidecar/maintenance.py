@@ -56,9 +56,9 @@ def clear_spectrogram_tile_cache(*, recreate: bool = True) -> dict[str, Any]:
 
 def wipe_desktop_data_dir() -> dict[str, Any]:
     """Remove ``~/.orcai-desktop`` (SQLite, spectrogram cache, audio cache)."""
-    from orcai_desktop_sidecar.store import _APP_DIR
+    from orcai_desktop_sidecar.store import APP_DIR
 
-    root = _APP_DIR
+    root = APP_DIR
     existed = root.exists()
     if existed:
         shutil.rmtree(root, ignore_errors=True)

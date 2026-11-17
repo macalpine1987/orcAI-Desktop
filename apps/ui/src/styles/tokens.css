@@ -1,15 +1,4 @@
 :root {
-  --bg: #ffffff;
-  --bg-subtle: #f5f5f5;
-  --bg-muted: #ebebeb;
-  --border: #d4d4d4;
-  --border-strong: #a3a3a3;
-  --text: #0a0a0a;
-  --text-muted: #525252;
-  --text-faint: #737373;
-  --accent: #000000;
-  --accent-fg: #ffffff;
-  --destructive: #171717;
   --sidebar-width: 240px;
   --sidebar-collapsed-width: 3rem;
   --radius: 8px;
@@ -22,51 +11,6 @@
   --ctrl-gap: 0.5rem;
   --ctrl-pad-x: 0.75rem;
 
-  /* Instrument / DAW materials (monochrome) */
-  --mat-face: #f0f0f0;
-  --mat-recess: #e4e4e4;
-  --mat-raised: #f7f7f7;
-  --edge-hi: rgb(255 255 255 / 0.85);
-  --edge-lo: rgb(0 0 0 / 0.14);
-  --shadow-out: 0 1px 0 var(--edge-hi) inset, 0 -1px 0 var(--edge-lo) inset,
-    0 1px 2px rgb(0 0 0 / 0.08);
-  --shadow-in: inset 0 1px 2px rgb(0 0 0 / 0.14),
-    inset 0 -1px 0 rgb(255 255 255 / 0.45);
-  --bezel: #3a3a3a;
-  --lcd-bg: #d8d8d8;
-  --lcd-fg: #1a1a1a;
-  --scrim: rgb(0 0 0 / 0.35);
-  --status-ready: #1f9a4a;
-  --status-ready-core: #6aef9a;
-  --status-ready-ring: #147038;
-  --status-busy: #d4a017;
-  --status-busy-core: #ffe08a;
-  --status-busy-ring: #a67c00;
-  --status-idle: #9a9a9a;
-  --status-idle-ring: #6e6e6e;
-  --mat-face-gradient: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--mat-face) 92%, #fff) 0%,
-    var(--mat-face) 45%,
-    color-mix(in srgb, var(--mat-face) 88%, #000) 100%
-  );
-  --mat-raised-gradient: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--mat-raised) 96%, #fff) 0%,
-    var(--mat-raised) 55%,
-    color-mix(in srgb, var(--mat-raised) 90%, #000) 100%
-  );
-
-  /* Lab sidebar active chip (light theme — inverted Jobs m16 chip) */
-  --m16-radius-chip: 4px;
-  --m16-nav-active: #141414;
-  --m16-nav-active-fg: #f4f4f4;
-  --shadow-nav-active:
-    inset 0 1px 0 rgb(255 255 255 / 0.12),
-    inset 0 -1px 0 rgb(0 0 0 / 0.35);
-}
-
-[data-theme="dark"] {
   --bg: #131415;
   --bg-subtle: #111213;
   --bg-muted: #141516;
@@ -106,7 +50,6 @@
   --m16-btn-primary: #293035;
   --m16-filter-active: #33404c;
   --m16-panel-top-hi: #3d3e40;
-  --m16-thead-text: #bcbcbd;
   --m16-radius-chip: 4px;
   --m16-radius-pill: 9999px;
   --m16-nav-active: #f4f4f4;
@@ -143,6 +86,14 @@
   --bezel: #1a1b1c;
   --lcd-bg: #0a0b0c;
   --lcd-fg: #d4d4d4;
+  --lcd-accent: #7dffa3;
+  --m16-table-well: #131415;
+  --m16-table-head: #212224;
+  --m16-table-head-top: #232426;
+  --m16-table-head-bot: #1e1f21;
+  --m16-table-rim: #1c1e20;
+  --m16-table-rim-outer: #2a2c2f;
+  --m16-thead-text: #757578;
   --scrim: rgb(0 0 0 / 0.55);
   --status-ready: #2db86a;
   --status-ready-core: #7dffb0;

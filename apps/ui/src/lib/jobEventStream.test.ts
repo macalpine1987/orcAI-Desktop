@@ -49,13 +49,27 @@ describe("jobEventStream", () => {
     expect(next.started_at).toBe(1700);
   });
 
-  it("patchJobFromStream appends log by index", () => {
-    const next = patchJobFromStream(job({ log: ["a"] }), {
+  it("patchJobFromStream appends log by absolute index", () => {
+    const next = patchJobFromStream(job({ log: ["a"], log_base: 0 }), {
       type: "log",
       line: "b",
       index: 1,
     });
     expect(next.log).toEqual(["a", "b"]);
+    expect(next.log_base).toBe(0);
+  });
+
+  it("patchJobFromStream appends across a trimmed window", () => {
+    const next = patchJobFromStream(
+      job({ log: ["x", "y"], log_base: 100 }),
+      {
+        type: "log",
+        line: "z",
+        index: 102,
+      },
+    );
+    expect(next.log).toEqual(["x", "y", "z"]);
+    expect(next.log_base).toBe(100);
   });
 
   it("isTerminalJobStatus detects completed", () => {

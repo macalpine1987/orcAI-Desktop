@@ -103,6 +103,32 @@ describe("predictSettings · CSV base_dir_recording", () => {
     expect(next.callDurationLimits).toBe("");
   });
 
+  it("clears overwrite when switching to another project", () => {
+    const next = applyProjectCallDurationLimits(
+      {
+        ...DEFAULT_PREDICT_SETTINGS,
+        overwrite: true,
+        callDurationLimitsProjectDir: "/old",
+      },
+      "/new",
+      "new",
+    );
+    expect(next.overwrite).toBe(false);
+  });
+
+  it("keeps overwrite when the project dir is unchanged", () => {
+    const next = applyProjectCallDurationLimits(
+      {
+        ...DEFAULT_PREDICT_SETTINGS,
+        overwrite: true,
+        callDurationLimitsProjectDir: "/same",
+      },
+      "/same",
+      "same",
+    );
+    expect(next.overwrite).toBe(true);
+  });
+
   it("does not enable on-the-fly duration filter when a project is selected", () => {
     const next = applyProjectCallDurationLimits(
       { ...DEFAULT_PREDICT_SETTINGS },

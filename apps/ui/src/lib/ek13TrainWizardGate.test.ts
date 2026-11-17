@@ -137,14 +137,24 @@ describe("training wizard gate", () => {
   });
 
   it("3. PipelinePage mounts TrainWizard on view=wizard", () => {
-    const page = read("pages/PipelinePage.tsx");
+    const page = [read("pages/PipelinePage.tsx"), read("hooks/usePipelineBoard.ts")].join("\n");
     expect(page).toContain('view === "wizard"');
     expect(page).toContain("TrainWizard");
     expect(page).toContain("active_plan");
     expect(page).toContain("planBusyTitle");
     expect(page).toContain("wizardPlanActive");
     expect(page).not.toContain("pipeline.wizardSoon");
-    const wizard = read("trainWizard/TrainWizard.tsx");
+    const wizard = [
+      read("trainWizard/TrainWizard.tsx"),
+      read("trainWizard/useTrainWizardDraft.ts"),
+      read("trainWizard/useTrainWizardLaunch.ts"),
+      read("trainWizard/useTrainWizardFinetuneCatalog.ts"),
+      read("trainWizard/useTrainWizardProjectLoad.ts"),
+      read("trainWizard/useTrainWizardEquivalences.ts"),
+      read("trainWizard/useTrainWizardSnippetEstimate.ts"),
+      read("trainWizard/trainWizardNavigation.ts"),
+      read("trainWizard/useTrainWizardBrowsePath.ts"),
+    ].join("\n");
     expect(wizard).toContain("saveProjectParameters");
     expect(wizard).toContain("createJob");
     expect(wizard).toContain("plan_id");
@@ -156,16 +166,28 @@ describe("training wizard gate", () => {
     // Load must not clobber synonym edits (generation + pickEquivalencesAfterLoad).
     expect(wizard).toContain("pickEquivalencesAfterLoad");
     expect(wizard).toContain("equivalencesGenRef");
-    expect(wizard).toContain("wizard.prepOnly");
-    expect(wizard).toContain("wizard.startTrain");
+    expect(wizard).toContain("TrainWizardFooter");
+    const footer = read("trainWizard/TrainWizardFooter.tsx");
+    expect(footer).toContain("wizard.prepOnly");
+    expect(footer).toContain("wizard.startTrain");
     expect(wizard).not.toContain("PUBLICATION_PRESET");
     expect(wizard).not.toContain("wizard.publicationPreset");
-    expect(wizard).toContain("FACTORY_MODEL");
-    expect(wizard).toContain("wizard.resetDefaults");
-    expect(wizard).toContain("tw-form-head-actions");
+    const modelStep = read("trainWizard/TrainWizardModelStep.tsx");
+    expect(modelStep).toContain("FACTORY_MODEL");
+    expect(modelStep).toContain("wizard.resetDefaults");
+    expect(modelStep).toContain("tw-form-head-actions");
+    // hpsearch opt-in lives only on step 5 (launch plan), not on model params.
+    expect(modelStep).not.toContain("TrainWizardHpsearchBlock");
+    expect(modelStep).not.toContain("includeHpsearch");
+    const launchPlan = read("trainWizard/TrainWizardLaunchPlan.tsx");
+    expect(launchPlan).toContain("TrainWizardHpsearchBlock");
+    expect(launchPlan).toContain("includeHpsearch");
+    const hpsBlock = read("trainWizard/TrainWizardHpsearchBlock.tsx");
+    expect(hpsBlock).toContain("tw-preflight-opt");
+    expect(hpsBlock).not.toContain('variant: "model"');
     // Step 4 snippet calculator next to «batches per epoch».
     expect(wizard).toContain("TrainWizardSnippetCalcModal");
-    expect(wizard).toContain("wizard.calcOpen");
+    expect(modelStep).toContain("wizard.calcOpen");
     const calc = read("trainWizard/TrainWizardSnippetCalcModal.tsx");
     expect(calc).toContain("calculateProjectSnippets");
     expect(calc).toContain("snippetCalcCanApply");
@@ -178,23 +200,26 @@ describe("training wizard gate", () => {
         expect(loc.wizard[key], `${lang}.${key}`).toBeTruthy();
       }
     }
-    expect(wizard).toContain("wizard.openJson");
+    expect(footer).toContain("wizard.openJson");
     expect(wizard).toContain("TrainWizardParamsJsonModal");
     expect(wizard).toContain("paramsJsonOpen");
-    expect(wizard).toContain("wizard.willRunDetail");
+    expect(footer).toContain("wizard.willRunDetail");
     expect(wizard).toContain("canLaunch");
-    expect(wizard).toContain("checkModelNameDetailTaken");
+    const preflight = read("trainWizard/TrainWizardPreflightChecks.tsx");
+    expect(preflight).toContain("checkModelNameDetailTaken");
     expect(wizard).toContain("classColorsEditable");
-    expect(wizard).toContain("CLASS_COLOR_PRESETS");
+    const dataStep = read("trainWizard/TrainWizardDataStep.tsx");
+    expect(dataStep).toContain("CLASS_COLOR_PRESETS");
     expect(wizard).toContain("useProjectClassColors");
     expect(wizard).toContain("TrainWizardHpsModal");
     expect(wizard).toContain("includeHpsearch");
     expect(wizard).toContain("draftToHpsParameterJson");
     expect(wizard).not.toContain("refreshWizard");
     // Step 2 footer: create-label-arrays CLI (not calls = […] literal).
-    expect(wizard).toContain("orcai create-label-arrays");
-    expect(wizard).toContain("-bda");
-    expect(wizard).toContain("-ce");
+    const cli = read("trainWizard/useWizardCliPreview.ts");
+    expect(cli).toContain("orcai create-label-arrays");
+    expect(cli).toContain("-bda");
+    expect(cli).toContain("-ce");
     expect(wizard).not.toContain("formatCallsLiteral");
     const plan = read("trainWizard/plan.ts");
     expect(plan).toContain("hps_parameter");
@@ -237,7 +262,17 @@ describe("training wizard gate", () => {
   });
 
   it("5. parameter, synonym, and launch writes announce in the header", () => {
-    const wizard = read("trainWizard/TrainWizard.tsx");
+    const wizard = [
+      read("trainWizard/TrainWizard.tsx"),
+      read("trainWizard/useTrainWizardDraft.ts"),
+      read("trainWizard/useTrainWizardLaunch.ts"),
+      read("trainWizard/useTrainWizardFinetuneCatalog.ts"),
+      read("trainWizard/useTrainWizardProjectLoad.ts"),
+      read("trainWizard/useTrainWizardEquivalences.ts"),
+      read("trainWizard/useTrainWizardSnippetEstimate.ts"),
+      read("trainWizard/trainWizardNavigation.ts"),
+      read("trainWizard/useTrainWizardBrowsePath.ts"),
+    ].join("\n");
     const saved = wizard.match(/notifySaved\(t\("wizard\.draftSaved"\)\)/g);
     // Draft button, JSON save, and JSON reveal write the same parameter file.
     expect(saved).toHaveLength(3);

@@ -1,4 +1,5 @@
 import type { JobRecord } from "../api/jobs";
+import { trimJobLogLines } from "./jobLogTail";
 
 export type JobFilter = "all" | "active" | "errors" | "history";
 
@@ -155,7 +156,13 @@ export function mergeJobRecords(prev: JobRecord, incoming: JobRecord): JobRecord
 
   const prevLog = prev.log ?? [];
   const incLog = incoming.log ?? [];
-  const log = incLog.length >= prevLog.length ? incLog : prevLog;
+  const prevAbs = (prev.log_base ?? 0) + prevLog.length;
+  const incAbs = (incoming.log_base ?? 0) + incLog.length;
+  const pickLog = incAbs >= prevAbs ? incLog : prevLog;
+  const pickBase =
+    incAbs >= prevAbs ? (incoming.log_base ?? 0) : (prev.log_base ?? 0);
+  const log = trimJobLogLines(pickLog);
+  const log_base = pickBase + Math.max(0, pickLog.length - log.length);
 
   let progress = incoming.progress;
   if (typeof prev.progress === "number") {
@@ -171,6 +178,7 @@ export function mergeJobRecords(prev: JobRecord, incoming: JobRecord): JobRecord
     ...incoming,
     status,
     log,
+    log_base,
     progress: progress ?? prev.progress ?? null,
     error: incoming.error ?? prev.error,
     result: incoming.result ?? prev.result,

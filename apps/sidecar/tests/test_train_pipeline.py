@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import tempfile
 import time
 import unittest
@@ -15,6 +16,8 @@ from orcai_desktop_sidecar.train_pipeline import (
     disk_readiness_state,
     estimate_pipeline_disk_needed,
     inspect_pipeline,
+    recordings_table_lamp,
+    unlabeled_recordings_lamp,
 )
 
 
@@ -88,6 +91,55 @@ class TrainPipelineInspectTests(unittest.TestCase):
 
     def _step(self, payload: dict, step_id: str) -> dict:
         return next(s for s in payload["steps"] if s["id"] == step_id)
+
+    def test_unlabeled_lamp_is_not_a_warning_without_wav_files(self) -> None:
+        self.assertEqual(unlabeled_recordings_lamp(0, 0), "off")
+        self.assertEqual(unlabeled_recordings_lamp(0, 3), "off")
+        empty = self._inspect()["readiness"]["unlabeled"]
+        self.assertEqual(empty["state"], "off")
+        self.assertEqual(empty["count"], 0)
+
+    def test_unlabeled_lamp_stays_green_when_nothing_is_skipped(self) -> None:
+        self.assertEqual(unlabeled_recordings_lamp(2, 2), "ok")
+        self.assertEqual(unlabeled_recordings_lamp(2, 1), "warn")
+        self.assertEqual(unlabeled_recordings_lamp(2, 0), "warn")
+        _write(self.root / "recordings" / "rec1.wav", "")
+        _write(self.root / "annotations" / "rec1.txt", "0.0\t1.0\tBR\n")
+        ready = self._inspect()["readiness"]["unlabeled"]
+        self.assertEqual(ready["state"], "ok")
+        self.assertEqual(ready["count"], 0)
+
+    def test_recording_table_lamp_is_green_only_when_current(self) -> None:
+        self.assertEqual(recordings_table_lamp("current", table_rows=12, wav_count=12), "ok")
+        self.assertEqual(recordings_table_lamp("stale", table_rows=12, wav_count=12), "warn")
+        self.assertEqual(recordings_table_lamp("missing", table_rows=0, wav_count=4), "warn")
+        self.assertEqual(recordings_table_lamp("missing", table_rows=0, wav_count=0), "off")
+        self.assertEqual(recordings_table_lamp("current", table_rows=0, wav_count=0), "off")
+
+    def test_stale_or_missing_table_is_not_reported_as_current(self) -> None:
+        _write(self.root / "recordings" / "a.wav", "")
+        _write(self.root / "recordings" / "b.wav", "")
+        table = self.root / "recording_table.csv"
+        _write(table, "recording\na.wav\n")
+        stale = self._inspect()["readiness"]["recordings"]
+        self.assertEqual(stale["sync"], "stale")
+        self.assertEqual(stale["state"], "warn")
+        self.assertEqual(stale["rows"], 1)
+
+        table.unlink()
+        missing = self._inspect()["readiness"]["recordings"]
+        self.assertEqual(missing["sync"], "missing")
+        self.assertEqual(missing["state"], "warn")
+
+        now = time.time()
+        _write(table, "recording\na.wav\nb.wav\n")
+        for path in (self.root / "recordings" / "a.wav", self.root / "recordings" / "b.wav"):
+            os.utime(path, (now - 30, now - 30))
+        os.utime(table, (now, now))
+        current = self._inspect()["readiness"]["recordings"]
+        self.assertEqual(current["sync"], "current")
+        self.assertEqual(current["state"], "ok")
+        self.assertEqual(current["rows"], 2)
 
     def test_eight_steps_in_orcai_order(self) -> None:
         payload = self._inspect()
@@ -487,6 +539,60 @@ class TrainPipelineInspectTests(unittest.TestCase):
         self.assertIn("create-spectrograms", plan.get("commands") or [])
         self.assertNotIn("hpsearch", plan.get("commands") or [])
 
+    def test_active_plan_commands_follow_pipeline_order_not_job_recency(self) -> None:
+        """Home plan rail must not follow updated_at DESC job listing order."""
+        table = self.root / "recording_table.csv"
+        table.write_text("recording,channel\nrec1,0\n", encoding="utf-8")
+        now = time.time()
+        # Newest-first (as list_jobs_db returns) — reverse of board order.
+        jobs = [
+            {
+                "id": "j-test",
+                "command": "test",
+                "status": "pending",
+                "updated_at": now,
+                "progress": 0.0,
+                "params": {"project_dir": str(self.root), "plan_id": "plan-order"},
+            },
+            {
+                "id": "j-train",
+                "command": "train",
+                "status": "running",
+                "updated_at": now - 1,
+                "progress": 0.2,
+                "params": {"project_dir": str(self.root), "plan_id": "plan-order"},
+            },
+            {
+                "id": "j-tvt",
+                "command": "create-tvt-data",
+                "status": "succeeded",
+                "updated_at": now - 2,
+                "progress": 1.0,
+                "params": {"project_dir": str(self.root), "plan_id": "plan-order"},
+            },
+            {
+                "id": "j-spec",
+                "command": "create-spectrograms",
+                "status": "succeeded",
+                "updated_at": now - 9,
+                "progress": 1.0,
+                "params": {"project_dir": str(self.root), "plan_id": "plan-order"},
+            },
+        ]
+        payload = self._inspect(jobs)
+        plan = payload.get("active_plan")
+        self.assertIsNotNone(plan)
+        assert plan is not None
+        self.assertEqual(
+            plan.get("commands"),
+            [
+                "create-spectrograms",
+                "create-tvt-data",
+                "train",
+                "test",
+            ],
+        )
+
     def test_board_train_does_not_sticky_apply_best_hyperparameters(self) -> None:
         """QA-15: leftover best_hyperparameters.json must not retune every board Train."""
         best = self.root / "hpsearch" / "run1" / "best_hyperparameters.json"
@@ -580,7 +686,7 @@ class TrainPipelineInspectTests(unittest.TestCase):
         wav.parent.mkdir(parents=True, exist_ok=True)
         wav.write_bytes(b"0" * 10_000)
         with patch(
-            "orcai_desktop_sidecar.train_pipeline.shutil.disk_usage",
+            "orcai_desktop_sidecar.pipeline_inspect_inventory.shutil.disk_usage",
             return_value=type("DU", (), {"free": 1_000, "total": 10_000, "used": 9_000})(),
         ):
             payload = self._inspect()
@@ -595,7 +701,7 @@ class TrainPipelineInspectTests(unittest.TestCase):
         wav.write_bytes(b"0" * 10_000)
         # needed ~ wav + snippets; pick free between needed and 1.4x needed.
         with patch(
-            "orcai_desktop_sidecar.train_pipeline.shutil.disk_usage",
+            "orcai_desktop_sidecar.pipeline_inspect_inventory.shutil.disk_usage",
         ) as du:
             # First call inside inspect to compute needed, then we re-check via helper.
             du.return_value = type("DU", (), {"free": 10**12, "total": 10**12, "used": 0})()
@@ -706,6 +812,64 @@ class TrainPipelineInspectTests(unittest.TestCase):
             base.resolve(),
         )
 
+    def _job(self, command: str, status: str, updated_at: float | None = None) -> dict:
+        return {
+            "id": command,
+            "command": command,
+            "status": status,
+            "updated_at": time.time() if updated_at is None else updated_at,
+            "error": "boom" if status == "failed" else None,
+            "params": {"project_dir": str(self.root)},
+        }
+
+    def test_failed_label_arrays_hold_later_steps_not_spectrograms(self) -> None:
+        table = self.root / "recording_table.csv"
+        table.write_text("recording,channel\nrec1,0\n", encoding="utf-8")
+        _write(self.root / "recordings" / "rec1.wav", "")
+        _write(self.root / "annotations" / "rec1.txt", "0.0\t1.0\tBR\n")
+        _write(self.root / "spectrograms" / "rec1" / "spectrogram" / "times.json", "{}")
+        labels = self.root / "label_arrays" / "rec1" / "labels" / "mask.npy"
+        _write(labels, "x")
+        for name in ("train", "val", "test"):
+            (self.root / "tvt_data" / f"{name}_dataset").mkdir(parents=True)
+        # Within 0.5 s of the files the old check still said the step was done.
+        payload = self._inspect(
+            jobs=[self._job("create-label-arrays", "failed", labels.stat().st_mtime + 0.2)]
+        )
+        specs = self._step(payload, "create-spectrograms")
+        self.assertEqual(specs["status"], "done")
+        self.assertTrue(specs["can_run"])
+        self.assertIsNone(specs["run_block"])
+        failed = self._step(payload, "create-label-arrays")
+        self.assertEqual(failed["status"], "error")
+        self.assertEqual(failed["reason"], "job_failed")
+        self.assertTrue(failed["can_run"])
+        train = self._step(payload, "train")
+        self.assertEqual(train["status"], "idle")
+        self.assertFalse(train["can_run"])
+        self.assertEqual(train["run_block"], "upstream_failed")
+
+    def test_failed_hpsearch_does_not_hold_train(self) -> None:
+        for name in ("train", "val", "test"):
+            (self.root / "tvt_data" / f"{name}_dataset").mkdir(parents=True)
+        payload = self._inspect(jobs=[self._job("hpsearch", "failed")])
+        train = self._step(payload, "train")
+        test = self._step(payload, "test")
+        self.assertTrue(train["can_run"])
+        self.assertIsNone(train["run_block"])
+        self.assertIsNone(test["run_block"])
+        self.assertTrue(self._step(payload, "hpsearch")["can_run"])
+
+    def test_cancelled_rerun_with_files_stays_done(self) -> None:
+        table = self.root / "recording_table.csv"
+        table.write_text("recording,channel\nrec1,0\n", encoding="utf-8")
+        _write(self.root / "spectrograms" / "rec1" / "spectrogram" / "times.json", "{}")
+        payload = self._inspect(jobs=[self._job("create-spectrograms", "cancelled")])
+        step = self._step(payload, "create-spectrograms")
+        self.assertEqual(step["status"], "done")
+        self.assertNotEqual(step["status"], "error")
+        self.assertTrue(step["can_run"])
+
 
 class DiskReadinessHelperTests(unittest.TestCase):
     def test_thresholds(self) -> None:
@@ -800,6 +964,136 @@ class TrainPipelineApiTests(unittest.TestCase):
 
         with self.assertRaises(FileNotFoundError):
             get_project_pipeline("missing")
+
+    def test_get_project_pipeline_reuses_snapshot_until_fresh(self) -> None:
+        from orcai_desktop_sidecar import train_pipeline as tp
+
+        tp._pipeline_cache.clear()
+        project = {"path": str(self._home), "orcai_name": "orcai-v1"}
+        with (
+            patch.object(tp, "get_project", return_value=project),
+            patch.object(tp, "list_all_jobs", return_value=[]),
+            patch.object(
+                tp,
+                "inspect_pipeline",
+                side_effect=lambda *args, **kwargs: {"steps": []},
+            ) as inspect,
+            patch(
+                "orcai_desktop_sidecar.engine.get_cached_accelerator_summary",
+                return_value={},
+            ),
+        ):
+            first = tp.get_project_pipeline("p-cache")
+            second = tp.get_project_pipeline("p-cache")
+            self.assertEqual(inspect.call_count, 1)
+            self.assertEqual(second["project_id"], first["project_id"])
+            fresh = tp.get_project_pipeline("p-cache", fresh=True)
+            self.assertEqual(inspect.call_count, 2)
+            self.assertEqual(fresh["project_id"], "p-cache")
+        tp._pipeline_cache.clear()
+
+    def test_get_project_pipeline_refreshes_when_the_snapshot_is_four_seconds_old(self) -> None:
+        from orcai_desktop_sidecar import train_pipeline as tp
+
+        tp._pipeline_cache.clear()
+        clock = {"t": 1_000.0}
+        project = {"path": str(self._home), "orcai_name": "orcai-v1"}
+        with (
+            patch.object(tp.time, "monotonic", lambda: clock["t"]),
+            patch.object(tp, "get_project", return_value=project),
+            patch.object(tp, "list_all_jobs", return_value=[]),
+            patch.object(
+                tp,
+                "inspect_pipeline",
+                side_effect=lambda *args, **kwargs: {"steps": []},
+            ) as inspect,
+            patch(
+                "orcai_desktop_sidecar.engine.get_cached_accelerator_summary",
+                return_value={},
+            ),
+        ):
+            tp.get_project_pipeline("p-ttl")
+            clock["t"] = 1_003.9
+            tp.get_project_pipeline("p-ttl")
+            self.assertEqual(inspect.call_count, 1)
+            clock["t"] = 1_004.0
+            again = tp.get_project_pipeline("p-ttl")
+            self.assertEqual(inspect.call_count, 2)
+            self.assertEqual(again["project_id"], "p-ttl")
+        tp._pipeline_cache.clear()
+
+    def test_missing_project_is_not_cached(self) -> None:
+        from orcai_desktop_sidecar import train_pipeline as tp
+
+        tp._pipeline_cache.clear()
+        with patch.object(tp, "get_project", return_value=None):
+            with self.assertRaises(FileNotFoundError):
+                tp.get_project_pipeline("gone")
+            with self.assertRaises(FileNotFoundError):
+                tp.get_project_pipeline("gone")
+        self.assertNotIn("gone", tp._pipeline_cache)
+
+    def test_failed_walk_is_not_cached_and_keeps_the_previous_snapshot(self) -> None:
+        from orcai_desktop_sidecar import train_pipeline as tp
+
+        tp._pipeline_cache.clear()
+        project = {"path": str(self._home), "orcai_name": "kept"}
+        calls = {"n": 0}
+
+        def walk(*_args: object, **_kwargs: object) -> dict[str, list[object]]:
+            calls["n"] += 1
+            if calls["n"] == 2:
+                raise OSError("disk")
+            return {"steps": [calls["n"]]}
+
+        with (
+            patch.object(tp, "get_project", return_value=project),
+            patch.object(tp, "list_all_jobs", return_value=[]),
+            patch.object(tp, "inspect_pipeline", side_effect=walk),
+            patch(
+                "orcai_desktop_sidecar.engine.get_cached_accelerator_summary",
+                return_value={},
+            ),
+        ):
+            first = tp.get_project_pipeline("p-err")
+            with self.assertRaises(OSError):
+                tp.get_project_pipeline("p-err", fresh=True)
+            kept = tp.get_project_pipeline("p-err")
+        self.assertEqual(first["steps"], [1])
+        self.assertEqual(kept["steps"], [1])
+        self.assertEqual(kept["orcai_name"], "kept")
+        self.assertEqual(calls["n"], 2)
+        tp._pipeline_cache.clear()
+
+    def test_pipeline_snapshots_stay_per_project(self) -> None:
+        from orcai_desktop_sidecar import train_pipeline as tp
+
+        tp._pipeline_cache.clear()
+
+        def project_for(project_id: str) -> dict[str, str]:
+            return {"path": str(self._home / project_id), "orcai_name": project_id}
+
+        with (
+            patch.object(tp, "get_project", side_effect=project_for),
+            patch.object(tp, "list_all_jobs", return_value=[]),
+            patch.object(
+                tp,
+                "inspect_pipeline",
+                side_effect=lambda project_dir, **kwargs: {"dir": str(project_dir)},
+            ),
+            patch(
+                "orcai_desktop_sidecar.engine.get_cached_accelerator_summary",
+                return_value={},
+            ),
+        ):
+            one = tp.get_project_pipeline("one")
+            two = tp.get_project_pipeline("two")
+            one_again = tp.get_project_pipeline("one")
+        self.assertEqual(one["orcai_name"], "one")
+        self.assertEqual(two["orcai_name"], "two")
+        self.assertEqual(one_again["dir"], one["dir"])
+        self.assertNotEqual(one["dir"], two["dir"])
+        tp._pipeline_cache.clear()
 
 
 if __name__ == "__main__":

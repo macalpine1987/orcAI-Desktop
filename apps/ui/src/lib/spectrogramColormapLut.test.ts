@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { grayToRgbaPixels, spectrogramColormapLut } from "./spectrogramColormapLut";
+import {
+  grayToRgbaPixels,
+  grayToRgbaPixelsAsync,
+  spectrogramColormapLut,
+} from "./spectrogramColormapLut";
 import { spectrogramColormapFromProject } from "./spectrogramView";
 
 describe("spectrogramColormapLut", () => {
@@ -69,5 +73,18 @@ describe("spectrogramColormapLut", () => {
     expect(classic[12]).toBe(0);
     expect(classic[13]).toBe(0);
     expect(classic[14]).toBe(0);
+  });
+
+  it("grayToRgbaPixelsAsync matches sync and aborts cleanly", async () => {
+    const gray = new Uint8ClampedArray([0, 64, 128, 255]);
+    const sync = grayToRgbaPixels(gray, 4, 1, "inferno");
+    const asyncPx = await grayToRgbaPixelsAsync(gray, 4, 1, "inferno", false, undefined, 2);
+    expect(Array.from(asyncPx)).toEqual(Array.from(sync));
+
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      grayToRgbaPixelsAsync(gray, 4, 1, "inferno", false, controller.signal, 1),
+    ).rejects.toMatchObject({ name: "AbortError" });
   });
 });

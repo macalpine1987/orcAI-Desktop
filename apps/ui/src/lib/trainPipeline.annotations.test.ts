@@ -17,10 +17,10 @@ function board(wavCount: number, paired: number): ProjectPipeline {
 }
 
 describe("pipelineBlockedWithoutAnnotations", () => {
-  it("blocks the label chain only when loaded WAVs have no paired txt", () => {
+  it("matches Projects: block until at least one paired .txt (incl. empty project)", () => {
     expect(pipelineBlockedWithoutAnnotations(board(4, 0))).toBe(true);
     expect(pipelineBlockedWithoutAnnotations(board(4, 1))).toBe(false);
-    expect(pipelineBlockedWithoutAnnotations(board(0, 0))).toBe(false);
-    expect(pipelineBlockedWithoutAnnotations(null)).toBe(false);
+    expect(pipelineBlockedWithoutAnnotations(board(0, 0))).toBe(true);
+    expect(pipelineBlockedWithoutAnnotations(null)).toBe(true);
   });
 });

@@ -50,6 +50,40 @@ export function seedResultsMinProb(
   return first == null ? null : first;
 }
 
+/**
+ * Stable key for resetting Results table filters. Same source/dir/threshold
+ * values must not remount filters when the parent replaces the summary object
+ * (cache → refetch) with a new `thresholds` array identity.
+ */
+export function resultsFilterResetKey(
+  source: ResultsSource,
+  scanDir: string,
+  thresholds: number[],
+): string {
+  return `${source}\0${scanDir}\0${thresholds.map((value) => String(value)).join(",")}`;
+}
+
+/**
+ * True when table filters match the studio baseline for this source (including
+ * the seeded predict threshold). KPI strip then uses sidecar `summary` /
+ * `classes` aggregates so a truncated `rows` payload does not undercount.
+ */
+export function resultsFiltersAreBaseline(
+  filters: ResultsTableFilters,
+  source: ResultsSource,
+  thresholds: number[],
+): boolean {
+  const seeded = seedResultsMinProb(source, thresholds);
+  return (
+    !filters.recording &&
+    !filters.classLabel &&
+    !filters.fileQuery.trim() &&
+    filters.minDuration == null &&
+    filters.maxDuration == null &&
+    filters.minProb === seeded
+  );
+}
+
 /** Class chart keeps every file-filtered class; a selected class stays visible at count 0. */
 export function classChartColumns(
   classes: ResultsClassBucket[],
@@ -68,16 +102,24 @@ export function classChartColumns(
     .filter((item): item is ResultsClassBucket => Boolean(item));
 }
 
+export type FilterResultsRowsOptions = {
+  /** Synonym / publication type label for a class code (e.g. SS → pulsed calls). */
+  typeLabelFor?: (label: string) => string;
+};
+
 export function filterResultsRows(
   rows: ResultsSummaryRow[],
   filters: ResultsTableFilters,
+  options?: FilterResultsRowsOptions,
 ): ResultsSummaryRow[] {
   return rows.filter((row) => {
     if (filters.recording && row.recording !== filters.recording) return false;
     if (filters.classLabel && row.label !== filters.classLabel) return false;
     if (filters.fileQuery.trim()) {
       const q = filters.fileQuery.trim().toLowerCase();
-      if (!row.recording.toLowerCase().includes(q)) return false;
+      const typeLabel = options?.typeLabelFor?.(row.label) ?? "";
+      const haystack = `${row.recording}\0${row.label}\0${typeLabel}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
     }
     if (filters.minProb != null) {
       if (row.mean_p == null) {
@@ -254,6 +296,19 @@ export function groupRowsByRecording(
     else map.set(key, [row]);
   }
   return map;
+}
+
+/** Unique `row.recording` values in first-seen order (Results Audacity picker). */
+export function recordingsInRowOrder(rows: ResultsSummaryRow[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const name = row.recording;
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    out.push(name);
+  }
+  return out;
 }
 
 export function audacityGroupKey(row: {

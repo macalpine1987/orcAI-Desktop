@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatUserFacingErrorRequired } from "../lib/userFacingError";
 import {
   calculateProjectSnippets,
   type SnippetCalculatorResult,
@@ -11,10 +12,9 @@ import {
   PredictAppModalPortal,
 } from "../lib/predictAppModal";
 import { ModalCloseButton } from "../components/ModalCloseButton";
-import { draftToParameterJson } from "./defaults";
-import { ensureIdentity } from "./equivalences";
 import {
   snippetCalcCanApply,
+  snippetCalculatorBody,
   snippetDemandExceedsInventory,
   snippetSplitsWithoutBatch,
 } from "./snippetCalc";
@@ -60,20 +60,9 @@ export function TrainWizardSnippetCalcModal({
       setLoading(true);
       setError(null);
       try {
-        const param = draftToParameterJson(draft) as {
-          calls: string[];
-          snippets: Record<string, number>;
-          seed: number;
-        };
         const next = await calculateProjectSnippets(
           projectId,
-          {
-            calls: param.calls,
-            equivalences: ensureIdentity(draft.equivalencesMap, param.calls),
-            snippets: param.snippets,
-            batch_size: draft.model.batch_size,
-            seed: param.seed,
-          },
+          snippetCalculatorBody(draft),
           signal,
         );
         if (requestSeq.current !== seq) return;
@@ -81,7 +70,7 @@ export function TrainWizardSnippetCalcModal({
       } catch (err) {
         if (requestSeq.current !== seq || isAbortError(err)) return;
         setResult(null);
-        setError(err instanceof Error ? err.message : String(err));
+        setError(formatUserFacingErrorRequired(err, t));
       } finally {
         if (requestSeq.current === seq) setLoading(false);
       }

@@ -5,14 +5,15 @@ import { useReconcileWorkspaceOnRuntime } from "./hooks/useReconcileWorkspaceOnR
 import { AppShell } from "./layout/AppShell";
 import { HelpPage } from "./pages/HelpPage";
 import { HomePage } from "./pages/HomePage";
+import { HomePlanRailPreviewPage } from "./pages/home/HomePlanRailPreviewPage";
 import { JobsPage } from "./pages/JobsPage";
 import { ModelsPage } from "./pages/ModelsPage";
 import { PipelinePage } from "./pages/PipelinePage";
-import { ResultsPage } from "./pages/ResultsPage";
-import { PredictPage } from "./pages/PredictPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SpectrogramPage } from "./pages/SpectrogramPage";
+import { TrainMonitor } from "./trainMonitor/TrainMonitor";
+import { PredictSessionProvider } from "./predict/PredictSessionContext";
 import { resolveUiScaleFactor } from "./lib/interfaceSettings";
 import { applyUiScale } from "./lib/uiScale";
 import { usePreferences } from "./preferences/PreferencesContext";
@@ -22,15 +23,21 @@ function AppRoutes() {
   useReconcileWorkspaceOnRuntime();
   return (
     <Routes>
+      <Route path="train-monitor" element={<TrainMonitor />} />
       <Route element={<AppShell />}>
           <Route index element={<HomePage />} />
+          <Route
+            path="__preview/home-plan-rail"
+            element={<HomePlanRailPreviewPage />}
+          />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="recordings" element={<Navigate to="/projects" replace />} />
-          <Route path="predict" element={<PredictPage />} />
+          {/* Predict/Results stay mounted in LabKeepAliveHost (Outlet placeholder). */}
+          <Route path="predict" element={null} />
           <Route path="pipeline" element={<PipelinePage />} />
           <Route path="models" element={<ModelsPage />} />
           <Route path="spectrogram" element={<SpectrogramPage />} />
-          <Route path="results" element={<ResultsPage />} />
+          <Route path="results" element={null} />
           <Route path="jobs" element={<JobsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="help" element={<HelpPage />} />
@@ -51,7 +58,9 @@ export default function App() {
   return (
     <div className="app-shell-root">
       <BrowserRouter>
-        <AppRoutes />
+        <PredictSessionProvider>
+          <AppRoutes />
+        </PredictSessionProvider>
       </BrowserRouter>
     </div>
   );

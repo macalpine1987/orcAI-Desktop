@@ -1,6 +1,7 @@
 @import "./styles/tokens.css";
 @import "./styles/studio.css";
 @import "./styles/instrument.css";
+@import "./styles/header-notice.css";
 @import "./styles/analysis-lab.css";
 @import "./styles/jobs-console.css";
 @import "./styles/settings-interface.css";
@@ -14,6 +15,8 @@
 @import "./styles/train-wizard.css";
 @import "./styles/train-monitor.css";
 @import "./styles/models-studio.css";
+/* Lab scrollbars last so C/D win over leftover thin/default chrome. */
+@import "./styles/scrollbars.css";
 
 @tailwind base;
 @tailwind components;

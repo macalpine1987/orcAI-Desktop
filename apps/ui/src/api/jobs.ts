@@ -1,5 +1,22 @@
 import { getSidecarBase } from "./sidecar";
 import { withJobVerbosity } from "../lib/integrationSettings";
+import { truncateUserError } from "../lib/userFacingError";
+import {
+  SIDECAR_HTTP_MEDIUM_LONG_MS,
+  SIDECAR_HTTP_SHORT_MS,
+} from "../lib/timeouts";
+
+/** Short HTTP failures for toasts (status + truncated body, not full FastAPI dump). */
+async function throwJobsHttpError(
+  label: string,
+  res: Response,
+): Promise<never> {
+  const detail = (await res.text()).trim();
+  const short = detail ? truncateUserError(detail, 120) : "";
+  throw new Error(
+    short ? `${label}: ${res.status} ${short}` : `${label}: ${res.status}`,
+  );
+}
 
 export type JobRecord = {
   id: string;
@@ -11,6 +28,8 @@ export type JobRecord = {
   /** When the worker entered running (excludes queue wait). */
   started_at?: number | null;
   log: string[];
+  /** Absolute index of log[0] after sidecar ring-buffer trim. */
+  log_base?: number | null;
   result: Record<string, unknown> | null;
   error: string | null;
   command_line?: string | null;
@@ -25,7 +44,7 @@ export async function fetchJobs(projectDir?: string): Promise<JobRecord[]> {
   const url = new URL(`${getSidecarBase()}/v1/jobs`);
   if (projectDir) url.searchParams.set("project_dir", projectDir);
   const res = await fetch(url, {
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_SHORT_MS),
   });
   if (!res.ok) throw new Error(`Jobs list failed: ${res.status}`);
   const data = (await res.json()) as { jobs: JobRecord[] };
@@ -40,12 +59,9 @@ export async function createJob(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ command, params: withJobVerbosity(params) }),
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_SHORT_MS),
   });
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Create job failed: ${res.status} ${detail}`);
-  }
+  if (!res.ok) await throwJobsHttpError("Create job failed", res);
   return (await res.json()) as JobRecord;
 }
 
@@ -74,42 +90,33 @@ export async function createPredictJob(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(withJobVerbosity({ ...params })),
-    signal: AbortSignal.timeout(10_000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_MEDIUM_LONG_MS),
   });
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Predict job failed: ${res.status} ${detail}`);
-  }
+  if (!res.ok) await throwJobsHttpError("Predict job failed", res);
   return (await res.json()) as JobRecord;
 }
 
 export async function cancelJob(jobId: string): Promise<JobRecord> {
   const res = await fetch(`${getSidecarBase()}/v1/jobs/${jobId}/cancel`, {
     method: "POST",
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_SHORT_MS),
   });
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Cancel job failed: ${res.status} ${detail}`);
-  }
+  if (!res.ok) await throwJobsHttpError("Cancel job failed", res);
   return (await res.json()) as JobRecord;
 }
 
 export async function retryJob(jobId: string): Promise<JobRecord> {
   const res = await fetch(`${getSidecarBase()}/v1/jobs/${jobId}/retry`, {
     method: "POST",
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_SHORT_MS),
   });
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Retry job failed: ${res.status} ${detail}`);
-  }
+  if (!res.ok) await throwJobsHttpError("Retry job failed", res);
   return (await res.json()) as JobRecord;
 }
 
 export async function fetchJob(jobId: string): Promise<JobRecord> {
   const res = await fetch(`${getSidecarBase()}/v1/jobs/${jobId}`, {
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_SHORT_MS),
   });
   if (!res.ok) throw new Error(`Job fetch failed: ${res.status}`);
   return (await res.json()) as JobRecord;
@@ -132,7 +139,7 @@ export async function fetchJobLogSince(
 ): Promise<JobLogSlice> {
   const url = new URL(`${getSidecarBase()}/v1/jobs/${jobId}/log`);
   url.searchParams.set("since", String(since));
-  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(SIDECAR_HTTP_SHORT_MS) });
   if (!res.ok) throw new Error(`Job log failed: ${res.status}`);
   return (await res.json()) as JobLogSlice;
 }
@@ -145,7 +152,7 @@ export type JobsQueueSnapshot = {
 
 export async function fetchJobsQueue(): Promise<JobsQueueSnapshot> {
   const res = await fetch(`${getSidecarBase()}/v1/jobs/queue`, {
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_SHORT_MS),
   });
   if (!res.ok) throw new Error(`Jobs queue failed: ${res.status}`);
   return (await res.json()) as JobsQueueSnapshot;
@@ -169,9 +176,6 @@ export async function clearAllJobs(
     ),
     signal: AbortSignal.timeout(30_000),
   });
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Clear jobs failed: ${res.status} ${detail}`);
-  }
+  if (!res.ok) await throwJobsHttpError("Clear jobs failed", res);
   return (await res.json()) as ClearJobsResult;
 }

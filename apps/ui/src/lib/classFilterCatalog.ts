@@ -12,6 +12,15 @@ export type ClassFilterEntry = {
   count: number;
 };
 
+/**
+ * Share of ``count`` relative to the largest class in the rail (0–100).
+ * Empty / non-positive counts → 0. Kept for catalog helpers / tests.
+ */
+export function classSharePercent(count: number, maxCount: number): number {
+  if (!(count > 0) || !(maxCount > 0)) return 0;
+  return Math.max(0, Math.min(100, Math.round((count / maxCount) * 100)));
+}
+
 function cleanCalls(calls: readonly string[] | undefined): string[] {
   const seen = new Set<string>();
   const out: string[] = [];

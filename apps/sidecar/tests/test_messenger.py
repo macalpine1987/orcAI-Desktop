@@ -30,6 +30,20 @@ class JobMessengerTests(unittest.TestCase):
         self.assertIsNotNone(refreshed)
         self.assertTrue(any("test line" in line for line in refreshed.log))
 
+    def test_parse_progress_ignores_metric_percent(self) -> None:
+        self.assertIsNone(
+            JobMessenger._parse_progress("Using confidence threshold 95%")
+        )
+        self.assertAlmostEqual(
+            JobMessenger._parse_progress("Training 40%"), 0.4, places=2
+        )
+        self.assertAlmostEqual(
+            JobMessenger._parse_progress("12%|█▍ | 1/8"), 0.12, places=2
+        )
+        start = JobMessenger._parse_progress("[predict-file] 1/1 clip")
+        self.assertIsNotNone(start)
+        self.assertAlmostEqual(start, 0.0, places=2)
+
 
 if __name__ == "__main__":
     unittest.main()

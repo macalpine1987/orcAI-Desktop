@@ -70,6 +70,16 @@ async function flush(ms = 50) {
   await new Promise((r) => setTimeout(r, ms));
 }
 
+/** Fixed flush races under full-suite load; poll until the tile URL builder runs. */
+async function waitForTileUrl(ms = 3000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    if (spectrogramTileUrlMock.mock.calls.length > 0) return;
+    await flush(25);
+  }
+  throw new Error("spectrogramTileUrl was not called");
+}
+
 describe("SpectrogramViewer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -101,7 +111,7 @@ describe("SpectrogramViewer", () => {
         layout="proLab"
       />,
     );
-    await flush(100);
+    await waitForTileUrl();
     expect(
       container.querySelector('[aria-label*="Spectrogram toolbar" i], [aria-label*="Панель инструментов" i]'),
     ).toBeTruthy();
@@ -124,7 +134,7 @@ describe("SpectrogramViewer", () => {
         layout="proLab"
       />,
     );
-    await flush(150);
+    await waitForTileUrl();
     expect(spectrogramTileUrlMock).toHaveBeenCalledWith(
       expect.objectContaining({ display_kind: "orcai", colormap: "gray" }),
     );
@@ -144,7 +154,7 @@ describe("SpectrogramViewer", () => {
         layout="proLab"
       />,
     );
-    await flush(150);
+    await flush(250);
     expect(container.textContent).toMatch(
       /TF boxes:.*1 with frequency bounds.*3 without|TF-рамки:.*1 с частотными границами.*3 без/i,
     );

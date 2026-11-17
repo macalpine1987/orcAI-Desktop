@@ -10,13 +10,6 @@
     --st-card-rim: #2a2c2f;
   }
 
-  [data-theme="light"] .app-viewport--help-studio {
-    --m16-table-rim-outer: var(--border-strong);
-    --st-panel: var(--mat-face);
-    --st-card: var(--mat-raised);
-    --st-card-rim: var(--border-strong);
-  }
-
   .app-viewport--help-studio .mat-shell-main--help-studio {
     display: flex;
     flex-direction: column;
@@ -87,6 +80,7 @@
     min-height: 0;
     overflow: auto;
     padding: 0 var(--m16-pad-main, 10px) var(--m16-pad-main, 10px);
+    scroll-padding-bottom: var(--m16-pad-main, 10px);
   }
 
   .help-panel-body:has(.help-manual),

@@ -1,3 +1,4 @@
+import { liveLogVerbosity } from "./integrationSettings";
 import { shellQuote } from "./predictCliLine";
 
 export type FilterCliParams = {
@@ -6,6 +7,8 @@ export type FilterCliParams = {
   overwrite?: boolean;
   callDurationLimits?: string;
   labelSuffix?: string;
+  /** When omitted, uses Settings log verbosity (same as createJob inject). */
+  verbosity?: number;
 };
 
 /** Flag order matches sidecar `_OPTIONS["filter-predictions"]`. */
@@ -23,5 +26,12 @@ export function buildFilterCliLine(params: FilterCliParams): string {
   const ls = params.labelSuffix?.trim();
   if (ls === "") parts.push("-ls", shellQuote(""));
   else if (ls && ls !== "*") parts.push("-ls", shellQuote(ls));
+  const verbosity =
+    params.verbosity !== undefined && params.verbosity !== null
+      ? Number(params.verbosity)
+      : liveLogVerbosity();
+  if (Number.isFinite(verbosity)) {
+    parts.push("-v", String(verbosity));
+  }
   return parts.join(" ");
 }

@@ -117,6 +117,8 @@ export function saveFilterSettings(patch: Partial<FilterSettings>): FilterSettin
  * When the queue project changes: drop a foreign recordings dir, stamp the
  * project, and retarget `-cdl` only if the on-the-fly filter is already on.
  * An empty path stays empty — selecting a project must not enable `-cdl`.
+ * Also clear `-ow`: predict settings are global, so a previous project's
+ * "overwrite results" must not stick on a new project with fresh files.
  */
 export function applyProjectCallDurationLimits(
   settings: PredictSettings,
@@ -136,6 +138,7 @@ export function applyProjectCallDurationLimits(
     // Global predict settings used to keep another project's recordings dir;
     // orcAI then overrides every CSV row → FileNotFoundError (logged as ": 2").
     baseDirRecording: "",
+    overwrite: false,
   };
 }
 

@@ -6,19 +6,17 @@ import {
 import { filterJobs, type JobFilter } from "../lib/jobFormat";
 
 type UseJobsListOptions = {
-  /** When set, only jobs for this project dir; omit for full history. */
+  /** Override the provider scope. Omit to use the active project. */
   projectDir?: string | null;
   /** @deprecated polling interval is owned by JobsListProvider */
   pollMs?: number;
 };
 
-/**
- * Jobs list with local filter state. Requires JobsListProvider for the default
- * full-history queue; falls back to context when projectDir matches provider.
- */
+/** Jobs list with local status filter. The provider scope is the active project. */
 export function useJobsList(options: UseJobsListOptions = {}) {
-  const { projectDir = null } = options;
   const ctx = useJobsListOptional();
+  const projectDir =
+    options.projectDir !== undefined ? options.projectDir : (ctx?.projectDir ?? null);
   const [filter, setFilter] = useState<JobFilter>("all");
 
   if (!ctx || ctx.projectDir !== projectDir) {

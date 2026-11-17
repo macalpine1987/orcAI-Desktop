@@ -11,6 +11,22 @@ function read(path: string): string {
   return readFileSync(path, "utf8");
 }
 
+/** Page + model + extracted hooks (string-gate after move-only split). */
+function readProjectsModel(): string {
+  return [
+    read(src("pages/ProjectsPage.tsx")),
+    read(src("hooks/useProjectsPageModel.ts")),
+    read(src("hooks/useProjectStudioLoaders.ts")),
+    read(src("hooks/useProjectStudioLifecycle.ts")),
+    read(src("hooks/useProjectNavActions.ts")),
+    read(src("hooks/useProjectRegistryActions.ts")),
+    read(src("hooks/useProjectRecordingActions.ts")),
+    read(src("hooks/useProjectParametersActions.ts")),
+    read(src("hooks/useProjectWizardFlow.ts")),
+    read(src("hooks/useProjectTableSync.ts")),
+  ].join("\n");
+}
+
 function flatten(obj: Record<string, unknown>, prefix = ""): Set<string> {
   const out = new Set<string>();
   for (const [k, v] of Object.entries(obj)) {
@@ -35,7 +51,7 @@ describe("T-2 projects gate · requirements", () => {
     expect(lib).toMatch(/"recordings",\s*"annotations",\s*"artifacts",\s*"parameters"/);
     expect(lib).toContain("projectsTabsForFocus");
     expect(lib).toMatch(/focus === "recognition"/);
-    const page = read(src("pages/ProjectsPage.tsx"));
+    const page = readProjectsModel();
     for (const c of [
       "ProjectRecordingsTab",
       "ProjectAnnotationsTab",
@@ -56,9 +72,11 @@ describe("T-2 projects gate · requirements", () => {
     expect(wizard).toContain("PROJECT_FOCUSES");
     expect(wizard).toContain("ps-focus-card");
     expect(wizard).toContain("projects.studio.wizard.next");
-    const page = read(src("pages/ProjectsPage.tsx"));
-    expect(page).toMatch(/createProject\(\{[\s\S]*?focus: wizardFocus/);
+    const page = readProjectsModel();
+    const flow = read(src("hooks/useProjectWizardFlow.ts"));
+    expect(page + flow).toMatch(/createProject\(\{[\s\S]*?focus: wizardFocus/);
     expect(page).not.toContain("project_kind: projectKind");
+    expect(page).toContain("useProjectWizardFlow");
   });
 
   it("2b. FR-2.17: no hard lock by project kind in nav / routes / palette", () => {
@@ -80,10 +98,13 @@ describe("T-2 projects gate · requirements", () => {
     expect(panel).toContain("nextStepsFromSummary");
     expect(panel).toContain("isFullCycleReady");
     expect(panel).toContain("projects.studio.readiness.fullCycleReady");
-    const lib = read(src("lib/projectsStudio.ts"));
+    const lib =
+      read(src("lib/projectsStudio.ts")) +
+      "\n" +
+      read(src("lib/projectsStudioReadiness.ts"));
     expect(lib).toMatch(/"recordings",\s*"annotations",\s*"predict",\s*"datasets",\s*"model"/);
     expect(lib).toContain('tab: "filter"');
-    const page = read(src("pages/ProjectsPage.tsx"));
+    const page = readProjectsModel();
     expect(page).toContain('step.action === "filter"');
     expect(page).toContain('openPredict("filter")');
   });
@@ -116,7 +137,10 @@ describe("T-2 projects gate · requirements", () => {
     expect(tab).toContain("onChannelChange(row.recording");
     expect(tab).toContain("resample_to_hz");
     expect(tab).toContain("projects.studio.table.resampleNote");
-    const api = read(src("api/projects.ts"));
+    const api =
+      read(src("api/projects/studio.ts")) +
+      "\n" +
+      read(src("api/projects/types.ts"));
     expect(api).toContain("setProjectRecordingChannel");
     expect(api).toContain("/recording-table/rows/");
   });
@@ -138,7 +162,7 @@ describe("T-2 projects gate · requirements", () => {
     expect(tab).toContain("onAddAnnotations");
     expect(tab).toContain("useAnnotationDropZone");
     expect(tab).toMatch(/v == null/);
-    const api = read(src("api/projects.ts"));
+    const api = read(src("api/projects/studio.ts"));
     expect(api).toContain("/annotations/import");
     const ru = JSON.parse(read(locale("ru"))) as {
       projects: { studio: { annotations: { maskNote: string; add: string } } };
@@ -161,7 +185,13 @@ describe("T-2 projects gate · requirements", () => {
     expect(tab).toContain("projects.studio.params.save");
     expect(tab).toContain("projects.studio.params.cancel");
     expect(tab).toContain("projects.studio.params.export");
-    const api = read(src("api/projects.ts"));
+    expect(tab).toContain("splitParameterExcludedCalls");
+    expect(tab).toContain("ps-params-excluded-btn");
+    const api =
+      read(src("api/projects/studio.ts")) +
+      "\n" +
+      read(src("api/projects/types.ts"));
+    expect(api).toContain("excluded_calls?");
     expect(api).toContain("/parameters/validate");
     expect(api).toContain("saveProjectParameters");
   });
@@ -169,7 +199,7 @@ describe("T-2 projects gate · requirements", () => {
   it("10. field / lab focus: predict and train both reachable", () => {
     const ann = read(src("components/projects/ProjectAnnotationsTab.tsx"));
     expect(ann).toContain("projects.studio.empty.labHint");
-    const page = read(src("pages/ProjectsPage.tsx"));
+    const page = readProjectsModel();
     expect(page).toContain("projects.studio.actions.predict");
     expect(page).toContain("projects.studio.actions.trainWizard");
     expect(read(src("components/projects/ProjectTabs.tsx"))).toContain("ps-tabs-trailing");
@@ -184,7 +214,7 @@ describe("T-2 projects gate · requirements", () => {
   });
 
   it("Projects sits in the same studio-panel frame as Home (m01 rim)", () => {
-    const page = read(src("pages/ProjectsPage.tsx"));
+    const page = readProjectsModel();
     expect(page).toContain('className="studio-panel projects-work-panel"');
     expect(page).toContain('"projects-panel-body"');
     expect(page).toContain('view === "wizard" && "projects-panel-body--wizard"');
@@ -205,7 +235,7 @@ describe("T-2 projects gate · requirements", () => {
     expect(css).not.toContain("max-width: 64rem");
     expect(css).toMatch(/\.ps-wizard-actions\s*\{[^}]*margin-top:\s*auto/s);
     expect(css).toMatch(/\.ps-wizard\s*\{[^}]*background:\s*var\(--mat-raised\)/s);
-    expect(css).toMatch(/\.ps-focus-card-cmd\s*\{[^}]*color:\s*#7dffa3/s);
+    expect(css).toMatch(/\.ps-focus-card-cmd\s*\{[^}]*color:\s*var\(--lcd-accent\)/s);
     expect(css).not.toMatch(/\.ps-focus-card-cmd\s*\{[^}]*color:\s*var\(--text-muted\)/s);
     const focusCard = css.match(/\.ps-focus-card\s*\{[^}]*\}/s)?.[0] ?? "";
     expect(focusCard).toContain("background: #191a1b");
@@ -213,8 +243,19 @@ describe("T-2 projects gate · requirements", () => {
     expect(focusCard).not.toContain("color-mix(in srgb, var(--mat-raised)");
   });
 
+  it("create wizard scrolls like empty landing (no flex-shrink clip)", () => {
+    const css = read(src("styles/projects-studio.css"));
+    expect(css).toMatch(
+      /\.projects-panel-body--wizard,\s*\n\s*\.projects-panel-body--empty\s*\{[^}]*overflow-y:\s*auto/s,
+    );
+    expect(css).toMatch(
+      /\.projects-panel-body--wizard > \*,\s*\n\s*\.projects-panel-body--empty > \*\s*\{[^}]*flex:\s*1\s+0\s+auto[^}]*min-height:\s*min-content/s,
+    );
+    expect(css).toMatch(/\.ps-wizard-frame\s*\{[^}]*flex:\s*1\s+0\s+auto/s);
+  });
+
   it("no-project landing: one composition, toolbar hidden, no duplicate Create", () => {
-    const page = read(src("pages/ProjectsPage.tsx"));
+    const page = readProjectsModel();
     expect(page).toContain("ProjectNoSelectionEmpty");
     expect(page).toMatch(/\{detail \? \([\s\S]*ProjectsActionsBar/);
     const welcome = read(src("components/projects/ProjectNoSelectionEmpty.tsx"));

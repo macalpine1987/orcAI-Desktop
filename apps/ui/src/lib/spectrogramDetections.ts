@@ -164,34 +164,110 @@ function nearestMatchingRow(
   return best;
 }
 
+/** Sum of `offsetTop` from `el` up to `scroller`. Null when the chain stops short. */
+export function offsetTopWithinScroller(
+  el: HTMLElement,
+  scroller: HTMLElement,
+): number | null {
+  let top = 0;
+  let node: HTMLElement | null = el;
+  while (node && node !== scroller) {
+    top += node.offsetTop;
+    const parent: Element | null = node.offsetParent;
+    if (!(parent instanceof HTMLElement)) return null;
+    node = parent;
+  }
+  return node === scroller ? top : null;
+}
+
 /**
- * Scroll `el` into `scroller`, converting viewport deltas through CSS zoom
- * (`getBoundingClientRect` vs `scrollTop` / `clientHeight`).
+ * Scroll `el` into `scroller` using CSS pixels (`offsetTop` / `scrollTop`).
+ * `stickyTop` is the sticky header height in those same pixels.
+ * Returns false when the sizes are zero or `el` is outside `scroller`.
+ *
+ * When ``scroller`` is ``position: static`` it is not an ``offsetParent``, so the
+ * offsetTop chain misses it — fall back to getBoundingClientRect deltas
+ * (Home plan rail, other flex lists).
  */
 export function scrollElementIntoScroller(
   el: HTMLElement,
   scroller: HTMLElement,
-  stickyTopViewport = 0,
-): void {
-  const elRect = el.getBoundingClientRect();
-  const scRect = scroller.getBoundingClientRect();
-  if (!(scRect.height > 0)) return;
-  const zoom =
-    scroller.clientHeight > 1 ? scRect.height / scroller.clientHeight : 1;
-  const topLimit = scRect.top + stickyTopViewport + 2;
-  const bottomLimit = scRect.bottom - 2;
-  const fullyOutside = elRect.bottom < topLimit || elRect.top > bottomLimit;
-  if (fullyOutside) {
-    const rowMid = (elRect.top + elRect.bottom) / 2;
-    const viewMid = (topLimit + bottomLimit) / 2;
-    scroller.scrollTop += (rowMid - viewMid) / zoom;
-    return;
+  stickyTop = 0,
+): boolean {
+  if (!(scroller.clientHeight > 0) || !(el.offsetHeight > 0)) return false;
+  const top = offsetTopWithinScroller(el, scroller);
+  if (top != null) {
+    const rowBottom = top + el.offsetHeight;
+    const viewTop = scroller.scrollTop + stickyTop;
+    const viewBottom = scroller.scrollTop + scroller.clientHeight;
+    const fullyInside = top >= viewTop + 2 && rowBottom <= viewBottom - 2;
+    if (fullyInside) return true;
+    const visible = scroller.clientHeight - stickyTop;
+    const centered = top - stickyTop - (visible - el.offsetHeight) / 2;
+    const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+    scroller.scrollTop = Math.max(0, Math.min(centered, maxScroll));
+    return true;
   }
-  if (elRect.top < topLimit) {
-    scroller.scrollTop -= (topLimit - elRect.top) / zoom;
-  } else if (elRect.bottom > bottomLimit) {
-    scroller.scrollTop += (elRect.bottom - bottomLimit) / zoom;
+  if (!scroller.contains(el)) return false;
+  const row = el.getBoundingClientRect();
+  const box = scroller.getBoundingClientRect();
+  if (!(row.height > 0) || !(box.height > 0)) return false;
+  const viewTop = box.top + stickyTop;
+  const viewBottom = box.bottom;
+  const fullyInside = row.top >= viewTop + 2 && row.bottom <= viewBottom - 2;
+  if (fullyInside) return true;
+  const visible = scroller.clientHeight - stickyTop;
+  const delta = row.top - viewTop - (visible - row.height) / 2;
+  const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+  scroller.scrollTop = Math.max(0, Math.min(scroller.scrollTop + delta, maxScroll));
+  return true;
+}
+
+function scrollsVertically(node: HTMLElement): boolean {
+  if (!(node.clientHeight > 0) || node.scrollHeight <= node.clientHeight + 1) {
+    return false;
   }
+  const overflow = getComputedStyle(node).overflowY;
+  return overflow === "auto" || overflow === "scroll" || overflow === "overlay";
+}
+
+/** Move `scroller` just enough that `el` sits inside its visible box. */
+function scrollRectIntoView(el: HTMLElement, scroller: HTMLElement): void {
+  const row = el.getBoundingClientRect();
+  const box = scroller.getBoundingClientRect();
+  if (!(row.height > 0) || !(box.height > 0)) return;
+  const pad = 8;
+  let delta = 0;
+  if (row.height >= box.height - pad * 2) {
+    delta = row.top - box.top - pad;
+  } else if (row.top < box.top + pad) {
+    delta = row.top - box.top - pad;
+  } else if (row.bottom > box.bottom - pad) {
+    delta = row.bottom - box.bottom + pad;
+  }
+  if (delta === 0) return;
+  const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+  scroller.scrollTop = Math.max(0, Math.min(scroller.scrollTop + delta, maxScroll));
+}
+
+/**
+ * Put the selected detection row into the table's own scroller, then into
+ * every vertical ancestor (the analysis studio). A row already inside the
+ * table can still sit below the studio fold.
+ */
+export function revealElementInScrollers(
+  el: HTMLElement,
+  nearest: HTMLElement | null,
+  stickyTop = 0,
+): boolean {
+  if (!(el.offsetHeight > 0) && el.getClientRects().length === 0) return false;
+  if (nearest) scrollElementIntoScroller(el, nearest, stickyTop);
+  let node = (nearest ?? el).parentElement;
+  while (node && node !== document.body && node !== document.documentElement) {
+    if (scrollsVertically(node)) scrollRectIntoView(el, node);
+    node = node.parentElement;
+  }
+  return true;
 }
 
 /** Rows whose time interval overlaps `[rangeStart, rangeEnd)`. */

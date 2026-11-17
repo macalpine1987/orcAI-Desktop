@@ -104,8 +104,15 @@ export type TrainWizardDraft = {
   model: ModelFields;
   /** Opt-in: insert ``hpsearch`` before train in the from-scratch plan. */
   includeHpsearch: boolean;
+  /** Opt-in: ``hpsearch -pl`` (multi-GPU). Ignored when includeHpsearch is off. */
+  hpsearchParallel: boolean;
   hps: HpsFields;
   testAfterTrain: boolean;
+  /**
+   * ``create-tvt-snippet-tables -n_uts``. ``null`` = omit (orcAI default: same
+   * size as the training table). Only used when testAfterTrain is on.
+   */
+  nUnfilteredTestSnippets: number | null;
   compression: string;
 };
 

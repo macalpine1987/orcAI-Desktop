@@ -23,12 +23,10 @@ type Locale = {
     studio: {
       subtitle: Record<string, string>;
       wizard: {
-        subtitle: string;
         recognitionHint: string;
         trainingHint: string;
         fullHint: string;
       };
-      focus: { hint: string };
       empty: { labHint: string; fullHint: string };
     };
   };
@@ -58,7 +56,7 @@ describe("section subtitles", () => {
       field: "Распознавание без разметки записей.",
       lab: "Обучение по записям и аннотациям.",
       full: "Распознавание и обучение в этом проекте.",
-      wizard: "Имя, папка и задача нового проекта.",
+      wizard: "Цель работы, имя и каталог нового проекта.",
     });
     expect(en.projects.studio.subtitle).toEqual({
       none: "Create a project or open an existing folder.",
@@ -66,14 +64,8 @@ describe("section subtitles", () => {
       field: "Predictions without labeled recordings.",
       lab: "Training from recordings and annotations.",
       full: "Predictions and training in this project.",
-      wizard: "Name, folder, and task for a new project.",
+      wizard: "Work goal, name, and folder for a new project.",
     });
-    expect(ru.projects.studio.wizard.subtitle).toBe(
-      "Задача меняет подсказки, не команды.",
-    );
-    expect(en.projects.studio.wizard.subtitle).toBe(
-      "The task changes hints, not commands.",
-    );
     expect(ru.pages.projects.description).toBe(
       "Папка проекта, таблица записей и файлы проекта.",
     );
@@ -82,9 +74,9 @@ describe("section subtitles", () => {
     );
 
     const predictRu =
-      "Очередь записей, спектрограмма с обнаружениями и фильтр длительности.";
+      "Очередь записей, спектрограмма с метками и фильтр длительности.";
     const predictEn =
-      "Recording queue, spectrogram with detections, and a duration filter.";
+      "Recording queue, spectrogram with labels, and a duration filter.";
     expect(ru.pages.predict.description).toBe(predictRu);
     expect(ru.pages.predict.analysisGuide).toBe(predictRu);
     expect(en.pages.predict.description).toBe(predictEn);
@@ -96,8 +88,8 @@ describe("section subtitles", () => {
     expect(en.pages.models.description).toBe(
       "Built-in and trained models, test metrics, and compatibility.",
     );
-    expect(ru.pages.jobs.description).toBe("Очередь и история задач.");
-    expect(en.pages.jobs.description).toBe("Job queue and history.");
+    expect(ru.pages.jobs.description).toBe("Очередь и история задач активного проекта.");
+    expect(en.pages.jobs.description).toBe("Queue and history for the active project.");
     expect(ru.settings.subtitle).toBe("Среда, данные и интерфейс.");
     expect(en.settings.subtitle).toBe("Runtime, data, and interface.");
   });
@@ -140,12 +132,6 @@ describe("section subtitles", () => {
     expect(en.projects.studio.wizard.fullHint).toBe(
       "Predictions and training in this project.",
     );
-    expect(ru.projects.studio.focus.hint).toBe(
-      "Задача меняет подсказки, не команды.",
-    );
-    expect(en.projects.studio.focus.hint).toBe(
-      "The task changes hints, not commands.",
-    );
     expect(ru.projects.studio.empty.labHint).toBe(
       "Распознавание тоже можно запустить.",
     );
@@ -168,10 +154,10 @@ describe("section subtitles", () => {
 
   it("leaves training and results section lines unchanged", () => {
     expect(ru.pages.pipeline.description).toBe(
-      "Конвейер orcAI: подготовка данных, обучение и проверка модели.",
+      "Конвейер orcAI: подготовка данных, обучение и тестирование модели.",
     );
     expect(en.pages.pipeline.description).toBe(
-      "orcAI pipeline: data prep, model training, and evaluation.",
+      "orcAI pipeline: data prep, model training, and testing.",
     );
     expect(ru.pages.results.description).toBe(
       "Сводка детекций по проекту, сверка с аннотациями и экспорт.",

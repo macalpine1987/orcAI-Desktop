@@ -1,6 +1,13 @@
+/**
+ * Dev/test fallback port — keep in sync with:
+ * - `SIDECAR_DEFAULT_PORT` in `src-tauri/src/sidecar.rs`
+ * - `ORCAI_DESKTOP_PORT` default in `orcai_desktop_sidecar.main`
+ */
+export const SIDECAR_DEFAULT_PORT = 8741;
+
 /** Fallback for browser/dev when VITE_SIDECAR_URL is set explicitly. */
 export const SIDECAR_DEFAULT_BASE =
-  import.meta.env.VITE_SIDECAR_URL ?? "http://127.0.0.1:8741";
+  import.meta.env.VITE_SIDECAR_URL ?? `http://127.0.0.1:${SIDECAR_DEFAULT_PORT}`;
 
 let runtimeBase: string | null = null;
 

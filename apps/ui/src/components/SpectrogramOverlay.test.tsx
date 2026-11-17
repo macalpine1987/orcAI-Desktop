@@ -51,6 +51,120 @@ describe("SpectrogramOverlay", () => {
     unmount();
   });
 
+  it("keeps the clicked wide box when a shorter same-class mark overlaps it", async () => {
+    const onSegmentClick = vi.fn();
+    const wide = {
+      ...baseSeg,
+      label: "whistles",
+      start: 0,
+      stop: 10,
+      start_sec: 0,
+      stop_sec: 10,
+    };
+    const nested = {
+      ...baseSeg,
+      label: "whistles",
+      start: 4.8,
+      stop: 5.2,
+      start_sec: 4.8,
+      stop_sec: 5.2,
+    };
+    const { container, unmount } = renderWithProviders(
+      <div style={{ width: 400, height: 200, position: "relative" }}>
+        <SpectrogramOverlay
+          segments={[wide, nested]}
+          labelNames={["whistles"]}
+          viewStart={0}
+          viewSpan={10}
+          durationSec={60}
+          colorMap={createLabelColorMap(["whistles"])}
+          hiddenLabels={new Set()}
+          soloLabel={null}
+          nyquistHz={8000}
+          onSegmentClick={onSegmentClick}
+          layoutSize={{ w: 400, h: 200 }}
+        />
+      </div>,
+    );
+    await flushEffects();
+    const host = container.querySelector(
+      ".analysis-spectrogram-overlay-layer",
+    ) as HTMLElement;
+    host.getBoundingClientRect = () =>
+      ({
+        x: 0,
+        y: 0,
+        left: 0,
+        top: 0,
+        right: 400,
+        bottom: 200,
+        width: 400,
+        height: 200,
+        toJSON() {
+          return {};
+        },
+      }) as DOMRect;
+    const wideBox = container.querySelector(
+      '[data-testid="spectrogram-overlay-box"]',
+    ) as HTMLElement;
+    wideBox.dispatchEvent(
+      new window.MouseEvent("click", {
+        bubbles: true,
+        clientX: 200,
+        clientY: 30,
+      }),
+    );
+    expect(onSegmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({ start_sec: 0, stop_sec: 10 }),
+    );
+    unmount();
+  });
+
+  it("hides colliding probability labels but keeps the selected one", async () => {
+    const a = {
+      ...baseSeg,
+      label: "SS",
+      start: 1,
+      stop: 1.4,
+      start_sec: 1,
+      stop_sec: 1.4,
+      mean_p: 0.51,
+    };
+    const b = {
+      ...baseSeg,
+      label: "SS",
+      start: 1.2,
+      stop: 1.6,
+      start_sec: 1.2,
+      stop_sec: 1.6,
+      mean_p: 0.64,
+    };
+    const { container, unmount } = renderWithProviders(
+      <div style={{ width: 400, height: 200, position: "relative" }}>
+        <SpectrogramOverlay
+          segments={[a, b]}
+          labelNames={["SS"]}
+          viewStart={0}
+          viewSpan={10}
+          durationSec={60}
+          colorMap={createLabelColorMap(["SS"])}
+          hiddenLabels={new Set()}
+          soloLabel={null}
+          selectedSegment={{ t0: 1.2, t1: 1.6, label: "SS" }}
+          showProbabilityLabels
+          nyquistHz={8000}
+          layoutSize={{ w: 400, h: 200 }}
+        />
+      </div>,
+    );
+    await flushEffects();
+    const probs = [...container.querySelectorAll(".analysis-overlay-prob")].map(
+      (el) => el.textContent,
+    );
+    expect(probs).toEqual(["0.64"]);
+    unmount();
+  });
+
   it("calls onSegmentClick when a box is clicked", async () => {
     const onSegmentClick = vi.fn();
     const { container, unmount } = renderWithProviders(
@@ -188,6 +302,43 @@ describe("SpectrogramOverlay", () => {
     const opacity = parseFloat(box?.getAttribute("data-fill-opacity") ?? "1");
     expect(opacity).toBe(0);
     expect(box?.getAttribute("style") ?? "").toMatch(/transparent|rgba\(.*,\s*0\)/);
+    unmount();
+  });
+
+  it("tracks the live CSS box instead of a taller stale layoutSize hint", async () => {
+    // ResizeObserver mock reports 400×200; a quantized STFT hint of 400×400
+    // used to freeze lanes and thicken bands under fillContainer stretch.
+    const { container, unmount } = renderWithProviders(
+      <div style={{ width: 400, height: 200, position: "relative" }}>
+        <SpectrogramOverlay
+          segments={[baseSeg]}
+          labelNames={["call"]}
+          viewStart={0}
+          viewSpan={10}
+          durationSec={60}
+          colorMap={createLabelColorMap(["call"])}
+          hiddenLabels={new Set()}
+          soloLabel={null}
+          nyquistHz={8000}
+          layoutSize={{ w: 400, h: 400 }}
+        />
+      </div>,
+    );
+    await flushEffects();
+    const host = container.querySelector(
+      ".analysis-spectrogram-overlay-layer",
+    ) as HTMLElement;
+    expect(host.getAttribute("data-overlay-layout-h")).toBe("200");
+    expect(host.getAttribute("data-overlay-layout-w")).toBe("400");
+    const box = container.querySelector(
+      '[data-testid="spectrogram-overlay-box"]',
+    );
+    const heightPct = parseFloat(
+      (box?.getAttribute("style") ?? "").match(/height: ([\d.]+)%/)?.[1] ?? "0",
+    );
+    // Live h=200 → ~11% band; frozen h=400 with 32px cap → 8%.
+    expect(heightPct).toBeGreaterThan(10);
+    expect(heightPct).toBeLessThan(12);
     unmount();
   });
 

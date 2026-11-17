@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { readAnalysisLabCss } from "./readAnalysisLabCss";
 
 const root = resolve(import.meta.dirname, "../..");
 const src = (...parts: string[]) => resolve(root, "src", ...parts);
@@ -28,22 +29,49 @@ describe("T-4 predict analysis gate · requirements", () => {
     );
     expect(view).toContain("SPECTROGRAM_SEGMENT_SEC = 200");
 
-    const viewer = read(src("components/SpectrogramViewer.tsx"));
+    const viewer =
+      read(src("components/SpectrogramViewer.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/useSpectrogramViewerModel.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/useSpectrogramViewerNodes.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/useSpectrogramViewerDerived.ts")) +
+      "\n" +
+      read(src("components/spectrogram/useSpectrogramViewerHover.ts")) +
+      "\n" +
+      read(src("components/spectrogram/useSpectrogramColormap.ts")) +
+      "\n" +
+      read(src("components/spectrogram/useSpectrogramFocusSelection.ts")) +
+      "\n" +
+      read(src("components/spectrogram/SpectrogramViewerChrome.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/SpectrogramChromeToolsPanel.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/SpectrogramChromePlaybackPanel.tsx"));
     expect(viewer).toContain("spectrogram_colormap");
     expect(viewer).toContain("updateProject");
     expect(viewer).not.toContain("notifySaved");
     expect(viewer).toContain("onColormapChange={setColormap}");
     expect(viewer).not.toContain('const colormap = isScientific ? "gray"');
     expect(viewer).toContain("hideColormap={isScientific}");
-    expect(viewer).toContain("display_kind: SPECTROGRAM_DISPLAY_KIND");
     expect(viewer).toContain("showSpectrogram");
-    expect(viewer).toContain("fileNavOnly={!showSpectrogram}");
     expect(viewer).toContain("PredictResultsClassesFilterModal");
-    expect(viewer).toContain("onClassesFilterToggle");
     expect(viewer).toContain("showSpectrogram || !studioChrome");
     expect(viewer).toContain("if (!showSpectrogram) return;");
     expect(viewer).not.toMatch(/display_kind:\s*"linear"/);
     expect(viewer).not.toMatch(/display_kind:\s*"log_mel"/);
+
+    const tileFetch = read(src("hooks/useSpectrogramTileFetch.ts"));
+    expect(tileFetch).toContain("display_kind: SPECTROGRAM_DISPLAY_KIND");
+    expect(tileFetch).not.toMatch(/display_kind:\s*"linear"/);
+    expect(tileFetch).not.toMatch(/display_kind:\s*"log_mel"/);
+
+    const studioRail = read(
+      src("components/spectrogram/SpectrogramStudioSegmentRail.tsx"),
+    );
+    expect(studioRail).toContain("fileNavOnly={!showSpectrogram}");
+    expect(studioRail).toContain("onClassesFilterToggle");
   });
 
   it("2. sidecar tiles are make_spectrogram, 0–16 kHz, quantiles 0.01–0.999", () => {
@@ -51,7 +79,11 @@ describe("T-4 predict analysis gate · requirements", () => {
     expect(adapter).toContain("from orcai.spectrogram import make_spectrogram");
     expect(adapter).toContain("source\": \"make_spectrogram\"");
 
-    const render = read(sidecar("adapters", "spectrogram_render.py"));
+    // Constants live in spectrogram_render_color; façade re-exports them.
+    const render = [
+      read(sidecar("adapters", "spectrogram_render.py")),
+      read(sidecar("adapters", "spectrogram_render_color.py")),
+    ].join("\n");
     expect(render).toContain("ORCAI_VIEW_FMAX_HZ = 16_000.0");
     expect(render).toContain("ORCAI_DEFAULT_QUANTILES = (0.01, 0.999)");
     expect(render).toContain("normalize_display_kind");
@@ -62,12 +94,26 @@ describe("T-4 predict analysis gate · requirements", () => {
   });
 
   it("3. table ↔ spectrogram sync is bidirectional via focusDetection", () => {
-    const viewer = read(src("components/SpectrogramViewer.tsx"));
+    const viewer =
+      read(src("components/SpectrogramViewer.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/useSpectrogramViewerModel.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/useSpectrogramViewerNodes.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/useSpectrogramFocusSelection.ts"));
     expect(viewer).toContain("onRowActivate={(row) => focusDetection(row.t0, row.t1, row.label)}");
     expect(viewer).toContain("focusDetection(t0, t1, seg.label)");
     expect(viewer).toContain("setSelectedSegment");
 
-    const table = read(src("components/SpectrogramDetectionsTable.tsx"));
+    const table =
+      read(src("components/SpectrogramDetectionsTable.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/DetectionsTableBody.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/detectionTableColumns.ts")) +
+      "\n" +
+      read(src("components/spectrogram/DetectionsTableModals.tsx"));
     expect(table).toContain("onRowActivate(row)");
     expect(table).toContain("studioLayout");
 
@@ -102,14 +148,26 @@ describe("T-4 predict analysis gate · requirements", () => {
     const overlay = read(src("components/SpectrogramOverlay.tsx"));
     expect(overlay).toContain("if (hiddenLabels.has(seg.label)) return false");
 
-    const table = read(src("components/SpectrogramDetectionsTable.tsx"));
+    const table =
+      read(src("components/SpectrogramDetectionsTable.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/DetectionsTableBody.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/detectionTableColumns.ts")) +
+      "\n" +
+      read(src("components/spectrogram/DetectionsTableModals.tsx"));
     expect(table).toContain("formatDetectionClassCode");
     expect(table).toContain("formatDetectionTypeLabel");
     expect(table).toMatch(/STUDIO_VISIBLE[\s\S]*class: true[\s\S]*type: true/);
   });
 
   it("5. studio table columns cover (start/end/duration/class/type/probability/file)", () => {
-    const table = read(src("components/SpectrogramDetectionsTable.tsx"));
+    const table =
+      read(src("components/SpectrogramDetectionsTable.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/DetectionsTableBody.tsx")) +
+      "\n" +
+      read(src("components/spectrogram/detectionTableColumns.ts"));
     expect(table).toMatch(
       /STUDIO_VISIBLE: Record<DetectionColumnId, boolean> = \{[\s\S]*time: true[\s\S]*end: true[\s\S]*duration: true[\s\S]*class: true[\s\S]*type: true[\s\S]*confidence: true[\s\S]*file: true/,
     );
@@ -122,9 +180,9 @@ describe("T-4 predict analysis gate · requirements", () => {
   });
 
   it("6. expanded dock uses cqh; spectrogram/table stay capped (Т-4 console)", () => {
-    const css = read(src("styles/analysis-lab.css"));
+    const css = readAnalysisLabCss();
     expect(css).toContain("container-name: studio-results");
-    expect(css).toContain("max-height: min(32rem, 52cqh)");
+    expect(css).toContain("max-height: min(32rem, 48cqh)");
     expect(css).toContain("28cqh");
     expect(css).toContain(".predict-results-class-sidebar");
     expect(css).toMatch(

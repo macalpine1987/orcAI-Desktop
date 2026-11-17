@@ -1,32 +1,36 @@
 # Models
 
-This section lists every model you can use: the ones bundled with the app and the ones trained in your project.
+The **Models** section lists every model available in the project: the built-in ones and those you have trained.
 
-## Bundled models
+## Built-in models
 
-- **`orcai-isl-v1`** — the main model, trained on a large set of recordings of Icelandic killer whales feeding on herring. You can use it as is or fine-tune it on data from another population.
-- **`orcai-nor-v1`** — `orcai-isl-v1` fine-tuned on recordings of Norwegian killer whales.
+| Model | Description |
+|-------|-------------|
+| `orcai-isl-v1` | The primary model, trained on a large set of recordings of Icelandic killer whales hunting herring. Use it as is, or fine-tune it on data from another population |
+| `orcai-nor-v1` | The `orcai-isl-v1` model, fine-tuned on recordings of Norwegian killer whales |
 
-Models you train yourself are stored in the project's `models/` folder, each in its own subfolder.
+Models you train are stored in the project’s `models/` folder, each in its own subfolder.
 
-## What you can do with a model
+## Working with a model
 
-Select a model in the table to see its description on the right: sound classes, spectrogram parameters and test results, if a test has been run.
+When you select a model in the table, its description appears on the right: the sound classes, the spectrogram parameters, and the test results (if a test has been run).
 
-- **Use** — assign the model for predictions and open the **Settings** tab there.
-- **Fine-tune** — open the training wizard with this model as the starting point. The button is available when the project goal is **Model training** or **Full cycle** and the project has at least one annotation.
-- **Test** — measure the model's quality on the project's test set. The project must already have TVT datasets. If the project parameters do not match the model, Test is unavailable.
-- **Import** — add a model from another folder to the project, for example one you received from colleagues.
-- **Export** — copy a model trained in the project to another folder. Bundled models are already in the app and are not exported.
-- **Open folder** — show the project model's files. The folder of a bundled model inside the app does not open.
+| Action | Description |
+|--------|-------------|
+| **Use** | Assigns the model for recognition and opens the **Parameters** tab |
+| **Fine-tune** | Opens the training wizard with the selected model as the starting point. Available when the project goal is “Model training” or “Full cycle” and the project has at least one annotation |
+| **Test** | Measures the model’s quality on the project’s test set. Requires TVT datasets to be ready. Unavailable if the project parameters do not match the model’s parameters |
+| **Import** | Adds a model from another folder to the project, for example one you received from colleagues |
+| **Export** | Copies a trained project model to another folder. Built-in models are part of the application and cannot be exported |
+| **Open folder** | Opens the folder with the files of a project model. The folder of a built-in model cannot be opened |
 
 ## Test results
 
-After a test, two scores are shown for each class:
+After a test, two measures are shown for each class:
 
-- **Precision** — the share of signals detected by the model that really belong to this class. Low precision means many false detections.
-- **Recall** — the share of the real signals of this class that were found. Low recall means the model misses a lot.
+- **Precision**: the share of the signals the model found that really belong to that class. Low precision means many false detections.
+- **Recall**: the share of the real signals of the class that the model found. Low recall means the model misses many signals.
 
 ## Compatibility
 
-A model expects the same classes and the same spectrogram parameters it was trained with. If they differ from the project, the app warns you. You can still assign the model for predictions. Only **Test** is blocked: it reads the project parameters.
+A model is built for the classes and spectrogram parameters used when it was trained. If they differ from the project’s parameters, the application shows a warning. You can still assign such a model for recognition; only **Test** is unavailable, because it uses the project’s parameters.

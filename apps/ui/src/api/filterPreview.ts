@@ -1,5 +1,6 @@
 import { getSidecarBase } from "./sidecar";
 import type { CallDurationLimits } from "../lib/callDurationLimits";
+import { SIDECAR_HTTP_MEDIUM_MS, SIDECAR_HTTP_PREVIEW_MS } from "../lib/timeouts";
 
 export type FilterPreviewClass = {
   label: string;
@@ -18,7 +19,7 @@ export type FilterPreviewResult = {
 
 export async function fetchFilterDefaults(): Promise<CallDurationLimits> {
   const res = await fetch(`${getSidecarBase()}/v1/filter-predictions/defaults`, {
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_MEDIUM_MS),
   });
   if (!res.ok) throw new Error(`Filter defaults failed: ${res.status}`);
   const data = (await res.json()) as { limits: CallDurationLimits };
@@ -38,7 +39,7 @@ export async function fetchFilterPreview(body: {
       call_duration_limits: body.limits,
       label_suffix: body.labelSuffix ?? "*",
     }),
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_PREVIEW_MS),
   });
   if (!res.ok) {
     const detail = await res.text();
@@ -50,7 +51,7 @@ export async function fetchFilterPreview(body: {
 export async function readTextFile(path: string): Promise<string | null> {
   const url = new URL(`${getSidecarBase()}/v1/fs/read-text`);
   url.searchParams.set("path", path);
-  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(SIDECAR_HTTP_MEDIUM_MS) });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Read failed: ${res.status}`);
   const data = (await res.json()) as { content: string };

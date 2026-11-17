@@ -137,7 +137,52 @@ describe("QA · plan / JSON / ETA", () => {
       "test",
     );
     expect(tvt.create_unfiltered_test_snippets).toBe(true);
+    expect(tvt.n_unfiltered_test_snippets).toBeUndefined();
     expect(test.test_unfiltered).toBe(true);
+  });
+
+  it("nUnfilteredTestSnippets maps to -n_uts only with unfiltered test on", async () => {
+    const { buildJobParams } = await import("../trainWizard/plan");
+    const d = emptyDraft("X");
+    d.testAfterTrain = true;
+    d.nUnfilteredTestSnippets = 250;
+    const tvt = await buildJobParams(
+      d,
+      "/tmp/proj",
+      "/tmp/proj/x_orcai_parameter.json",
+      "create-tvt-snippet-tables",
+    );
+    expect(tvt.n_unfiltered_test_snippets).toBe(250);
+    d.testAfterTrain = false;
+    const off = await buildJobParams(
+      d,
+      "/tmp/proj",
+      "/tmp/proj/x_orcai_parameter.json",
+      "create-tvt-snippet-tables",
+    );
+    expect(off.n_unfiltered_test_snippets).toBeUndefined();
+  });
+
+  it("hpsearchParallel maps to parallel for -pl", async () => {
+    const { buildJobParams } = await import("../trainWizard/plan");
+    const d = emptyDraft("X");
+    d.includeHpsearch = true;
+    d.hpsearchParallel = true;
+    const hp = await buildJobParams(
+      d,
+      "/tmp/proj",
+      "/tmp/proj/x_orcai_parameter.json",
+      "hpsearch",
+    );
+    expect(hp.parallel).toBe(true);
+    d.hpsearchParallel = false;
+    const seq = await buildJobParams(
+      d,
+      "/tmp/proj",
+      "/tmp/proj/x_orcai_parameter.json",
+      "hpsearch",
+    );
+    expect(seq.parallel).toBeUndefined();
   });
 
   it("train output_dir is models/; test model_dir is models/<name>", async () => {

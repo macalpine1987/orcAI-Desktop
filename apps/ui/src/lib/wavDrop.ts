@@ -26,18 +26,22 @@ export function filterWavPaths(paths: readonly string[]): string[] {
   return out;
 }
 
-/** Absolute paths from a browser/Tauri FileList drop (`File.path` in webviews). */
-export function pathsFromFileList(files: FileList | File[] | null | undefined): string[] {
+/** Absolute paths from a browser/Tauri FileList drop, including non-WAV files. */
+export function rawPathsFromFileList(files: FileList | File[] | null | undefined): string[] {
   if (!files || files.length === 0) return [];
-  const list = Array.from(files);
   const paths: string[] = [];
-  for (const file of list) {
+  for (const file of Array.from(files)) {
     const withPath = file as File & { path?: string };
     if (typeof withPath.path === "string" && withPath.path.trim()) {
       paths.push(withPath.path);
     }
   }
-  return filterWavPaths(paths);
+  return paths;
+}
+
+/** Absolute WAV paths from a browser/Tauri FileList drop (`File.path` in webviews). */
+export function pathsFromFileList(files: FileList | File[] | null | undefined): string[] {
+  return filterWavPaths(rawPathsFromFileList(files));
 }
 
 export function pointInClientRect(

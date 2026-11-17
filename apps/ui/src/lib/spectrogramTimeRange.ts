@@ -2,6 +2,21 @@ export type TimeRangeSec = { t0: number; t1: number };
 
 export const MIN_TIME_RANGE_SEC = 0.08;
 
+/**
+ * Whether a document pointerdown should clear LMB time selection / loop.
+ * Play/pause/seek/zoom/volume live under spectrogram chrome and must not wipe the loop.
+ */
+export function pointerClearsTimeSelection(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  if (target.closest("[data-spectrogram-plot]")) return false;
+  if (target.closest("[data-preserve-time-selection]")) return false;
+  if (target.closest("[data-spectrogram-chrome]")) return false;
+  if (target.closest("[data-spectrogram-zoom]")) return false;
+  if (target.closest('[role="dialog"]')) return false;
+  if (target.closest(".predict-app-modal-overlay")) return false;
+  return true;
+}
+
 export function normalizeTimeRange(t0: number, t1: number): TimeRangeSec {
   return t0 <= t1 ? { t0, t1 } : { t0: t1, t1: t0 };
 }

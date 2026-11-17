@@ -1,36 +1,55 @@
 # Home
 
-Home is the app's start screen. This is where you turn on the computing components, see the state of the current project and jump straight to common tasks.
+The **Home** page is the start screen of the application. From here you start the runtime, check the state of the current project, and jump to the main operations.
 
 ## Runtime
 
-Before you can run predictions or train models, two parts of the app need to be running:
+Two components are required to recognize recordings and train models:
 
-- **Sidecar (API)** — an internal service that passes commands from the interface to orcAI. It runs only on your computer and does not connect to the internet.
-- **orcAI engine** — the neural network that does the computing, on the processor (CPU) or the graphics card (GPU).
+- **Sidecar (API)**: a helper process through which the interface sends commands to orcAI. It runs only on your computer and does not connect to the internet.
+- **orcAI engine**: the process in which orcAI performs its computations on the central processor (CPU) or the graphics processor (GPU).
 
-Buttons:
+Buttons in the “Runtime” block:
 
-- **Start** — turns both parts on.
-- **Restart** — turns them fully off and on again. Useful if something stops responding.
-- **Stop** — stops computing and drops unfinished jobs from the queue. Finished jobs stay in the list. The app window stays open.
+| Button | Action |
+|--------|--------|
+| **Start** | Starts both components |
+| **Restart** | Stops both components and starts them again. Use it if the runtime stops responding |
+| **Stop** | Stops computations and removes unfinished tasks from the queue. Completed tasks stay in the list. The application window stays open |
 
-When everything is ready, the lamps are green.
+Green indicators mean the runtime is ready.
 
-On macOS, closing the window (or pressing ⌘W) only hides the app: any running work continues in the background. To quit completely, press ⌘Q.
+> **Note (shell).** On macOS, the close button or ⌘W only hides the window: computations keep running in the background; quit fully with ⌘Q. On Windows, minimize the window to keep computations running; closing the window (✕ or Alt+F4) quits the application and stops the runtime.
 
-The choice between CPU and GPU is in **Settings → Runtime**. The engine restarts automatically when you change it.
+Select the computing device (CPU or GPU) in **Settings → Runtime**. The engine restarts automatically after you change the device.
 
 ## Current project
 
-This card shows what the open project contains: how many recordings and annotations it has, how many recordings already have prediction results, and which model is selected. **Open folder** reveals the folder in Finder. **Go** opens **Projects** and does not change any files.
+The current project card shows:
 
-## Quick actions and recent jobs
+- the number of recordings and annotations;
+- the number of recordings that have recognition results;
+- the selected model.
 
-Four cards open the current project: **Recognize recordings**, **Train Model**, **Filter predictions** and **View results**. Recent jobs are listed below; the full list is in **Tasks**.
+The **Open folder** button opens the project folder in your file manager (Finder on macOS, File Explorer on Windows). The **Go to project** button opens the **Projects** section; it does not change any project files.
 
-## Data health warnings
+## Quick actions and recent tasks
 
-The app can point out problems with project data: missing recordings or annotations, an outdated recordings table, or too few examples for training. These tips appear at the top of the window and never block anything.
+Four quick-action cards lead to operations on the current project:
 
-They are off by default. Turn them on in **Settings → Interface → Data health warnings**.
+- **Recognize recordings**;
+- **Train a model**;
+- **Filter**;
+- **View results**.
+
+The cards are unavailable when no project is selected. Recent tasks are listed below the cards. The full list is in the **Jobs** section, which also requires a selected project.
+
+## Tips
+
+The application can show tips in the window header when project data is incomplete or out of date:
+
+- not enough recordings or annotations;
+- the recording table is out of date;
+- not enough snippets for training.
+
+Tips are informational and do not restrict your work. They are off by default; to turn them on, go to **Settings → Interface → Show tips**.

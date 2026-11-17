@@ -1,4 +1,11 @@
-import { Fragment, useEffect, useId, useMemo, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import {
   PREDICT_APP_MODAL_OVERLAY_CLASS,
@@ -6,8 +13,11 @@ import {
 } from "../lib/predictAppModal";
 import { ModalCloseButton } from "../components/ModalCloseButton";
 import { highlightJsonLine } from "../lib/labDockHighlight";
+import { copyText } from "../lib/jobLogExport";
+import { useSaveNotice } from "../ui/saveNotice";
 import { draftToParameterJson } from "./defaults";
 import type { TrainWizardDraft } from "./types";
+import { COPY_FEEDBACK_MS } from "../lib/timeouts";
 
 type Props = {
   open: boolean;
@@ -31,9 +41,17 @@ export function TrainWizardParamsJsonModal({
   onReveal,
 }: Props) {
   const { t } = useTranslation();
+  const { notifyHeaderError } = useSaveNotice();
   const titleId = useId();
   const [copied, setCopied] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
 
   const text = useMemo(() => {
     const jsonObj = draftToParameterJson(draft);
@@ -43,6 +61,7 @@ export function TrainWizardParamsJsonModal({
 
   useEffect(() => {
     if (!open) {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
       setCopied(false);
       setActionBusy(false);
     }
@@ -64,13 +83,14 @@ export function TrainWizardParamsJsonModal({
   const disabled = busy || actionBusy;
 
   const onCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* ignore */
+    const ok = await copyText(text);
+    if (!ok) {
+      notifyHeaderError(t("common.clipboardFailed"));
+      return;
     }
+    setCopied(true);
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
   };
 
   const run = async (fn: () => Promise<void>) => {

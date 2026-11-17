@@ -33,7 +33,8 @@ def _parameter_calls(model_dir: Path) -> list[str]:
         return []
     try:
         data = read_json(param_path)
-    except Exception:  # noqa: BLE001 — model probe optional in tests
+    except (OSError, ValueError, TypeError, KeyError):
+        # Corrupt or unexpected parameter JSON — treat as no class list.
         return []
     if not isinstance(data, dict):
         return []
@@ -132,12 +133,3 @@ def list_trained_models(project_dir: str | Path) -> list[dict[str, Any]]:
                 }
             )
     return sorted(models, key=lambda m: m["id"])
-
-
-def list_all_models(project_dir: str | Path | None = None) -> list[dict[str, Any]]:
-    models = list_builtin_models()
-    if project_dir:
-        trained = list_trained_models(project_dir)
-        for m in trained:
-            models.append(m)
-    return models

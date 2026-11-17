@@ -1,14 +1,18 @@
 import { describe, expect, it } from "vitest";
 import type { ResultsSummaryRow } from "../api/results";
 import {
+  EMPTY_RESULTS_FILTERS,
   filterResultsRows,
   formatKpiDuration,
   formatResultsModels,
   formatResultsThresholds,
   groupRowsByRecording,
+  recordingsInRowOrder,
   rowsToAudacityText,
   rowsToCsv,
   classChartColumns,
+  resultsFilterResetKey,
+  resultsFiltersAreBaseline,
   seedResultsMinProb,
   sortResultsRows,
   shouldKeepNavLabelOverride,
@@ -74,6 +78,16 @@ describe("resultsStudio", () => {
     const cols = text.trim().split("\t");
     expect(cols[2]).toBe("WHISTLE");
     expect(suggestedAudacityName("a.wav")).toBe("a_audacity.txt");
+  });
+
+  it("recordingsInRowOrder keeps first-seen unique names", () => {
+    expect(
+      recordingsInRowOrder([
+        row({ id: "1", label: "A", recording: "b.wav" }),
+        row({ id: "2", label: "B", recording: "a.wav" }),
+        row({ id: "3", label: "C", recording: "b.wav" }),
+      ]),
+    ).toEqual(["b.wav", "a.wav"]);
   });
 
   it("hides predicted rows that have no mean_p when minProb is set", () => {
@@ -164,6 +178,46 @@ describe("resultsStudio", () => {
       fileQuery: "fjord",
     });
     expect(visible.map((r) => r.id)).toEqual(["2"]);
+  });
+
+  it("filters by class code in search query", () => {
+    const rows = [
+      row({ id: "1", label: "SS", recording: "a.wav" }),
+      row({ id: "2", label: "WH", recording: "b.wav" }),
+    ];
+    const visible = filterResultsRows(
+      rows,
+      { ...EMPTY_RESULTS_FILTERS, fileQuery: "ss" },
+      { typeLabelFor: () => "other" },
+    );
+    expect(visible.map((r) => r.id)).toEqual(["1"]);
+  });
+
+  it("filters by type synonym in search query", () => {
+    const rows = [
+      row({ id: "1", label: "SS", recording: "a.wav" }),
+      row({ id: "2", label: "WH", recording: "b.wav" }),
+      row({ id: "3", label: "BUZZ", recording: "c.wav" }),
+    ];
+    const typeLabelFor = (label: string) => {
+      if (label === "SS") return "pulsed calls";
+      if (label === "WH") return "whistles";
+      return "buzz";
+    };
+    expect(
+      filterResultsRows(
+        rows,
+        { ...EMPTY_RESULTS_FILTERS, fileQuery: "pulsed" },
+        { typeLabelFor },
+      ).map((r) => r.id),
+    ).toEqual(["1"]);
+    expect(
+      filterResultsRows(
+        rows,
+        { ...EMPTY_RESULTS_FILTERS, fileQuery: "buzz" },
+        { typeLabelFor },
+      ).map((r) => r.id),
+    ).toEqual(["3"]);
   });
 
   it("summarizes KPI and class buckets from the given rows", () => {
@@ -291,6 +345,42 @@ describe("resultsStudio", () => {
     expect(seedResultsMinProb("filtered", [0.5])).toBeNull();
     expect(seedResultsMinProb("annotations", [0.5])).toBeNull();
     expect(seedResultsMinProb("predicted", [])).toBeNull();
+  });
+
+  it("keeps filter reset key stable when thresholds array is replaced", () => {
+    const a = resultsFilterResetKey("predicted", "/proj", [0.5, 0.8]);
+    const b = resultsFilterResetKey("predicted", "/proj", [0.5, 0.8]);
+    expect(a).toBe(b);
+    expect(resultsFilterResetKey("predicted", "/proj", [0.5])).not.toBe(a);
+    expect(resultsFilterResetKey("filtered", "/proj", [0.5, 0.8])).not.toBe(a);
+    expect(resultsFilterResetKey("predicted", "/other", [0.5, 0.8])).not.toBe(a);
+  });
+
+  it("treats seeded predict threshold as baseline filters for KPI aggregates", () => {
+    expect(
+      resultsFiltersAreBaseline(
+        { ...EMPTY_RESULTS_FILTERS, minProb: 0.5 },
+        "predicted",
+        [0.5],
+      ),
+    ).toBe(true);
+    expect(
+      resultsFiltersAreBaseline(
+        { ...EMPTY_RESULTS_FILTERS, minProb: null },
+        "predicted",
+        [0.5],
+      ),
+    ).toBe(false);
+    expect(
+      resultsFiltersAreBaseline(
+        { ...EMPTY_RESULTS_FILTERS, classLabel: "WHISTLE", minProb: 0.5 },
+        "predicted",
+        [0.5],
+      ),
+    ).toBe(false);
+    expect(
+      resultsFiltersAreBaseline(EMPTY_RESULTS_FILTERS, "filtered", [0.5]),
+    ).toBe(true);
   });
 
   it("keeps a selected class column at count 0 when minProb hid its rows", () => {

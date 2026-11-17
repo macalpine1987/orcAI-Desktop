@@ -3,13 +3,16 @@ import { useTranslation } from "react-i18next";
 import { SegmentedControl } from "../../components/SegmentedControl";
 import { ToggleSwitch } from "../../components/ToggleSwitch";
 import { useSidecarStatus } from "../../hooks/useSidecarStatus";
+import { formatUserFacingErrorRequired } from "../../lib/userFacingError";
 import { usePreferences } from "../../preferences/PreferencesContext";
 import type { ComputeDevice } from "../../preferences/storage";
+import { useSaveNotice } from "../../ui/saveNotice";
 import { SettingsPathsPanel } from "./SettingsPathsPanel";
 import { SettingsRow } from "./SettingsRow";
 
 export function SettingsRuntimePanel() {
   const { t } = useTranslation();
+  const { notifyHeaderError } = useSaveNotice();
   const {
     computeDevice,
     setComputeDevice,
@@ -41,8 +44,9 @@ export function SettingsRuntimePanel() {
         setComputeDevice(device);
         try {
           await restartRuntimeForComputeDevice(device);
-        } catch {
+        } catch (err) {
           setComputeDevice(previous);
+          notifyHeaderError(formatUserFacingErrorRequired(err, t));
         }
         return;
       }
@@ -51,9 +55,11 @@ export function SettingsRuntimePanel() {
     [
       computeDevice,
       enginePhase,
+      notifyHeaderError,
       online,
       restartRuntimeForComputeDevice,
       setComputeDevice,
+      t,
     ],
   );
 

@@ -102,6 +102,11 @@ describe("jobLogExport · extended", () => {
     vi.mocked(isTauri).mockReturnValue(false);
     const click = vi.fn();
     const revoke = vi.fn();
+    const timers: Array<() => void> = [];
+    vi.spyOn(globalThis, "setTimeout").mockImplementation(((fn: TimerHandler) => {
+      if (typeof fn === "function") timers.push(fn as () => void);
+      return 0 as unknown as ReturnType<typeof setTimeout>;
+    }) as typeof setTimeout);
     vi.stubGlobal("URL", {
       createObjectURL: vi.fn(() => "blob:mock"),
       revokeObjectURL: revoke,
@@ -112,12 +117,15 @@ describe("jobLogExport · extended", () => {
         createElement: vi.fn(() => ({
           href: "",
           download: "",
+          rel: "",
           click,
         })),
       },
     );
     expect(await exportJobLogToFile(job(["line"]))).toBe(true);
     expect(click).toHaveBeenCalled();
+    expect(revoke).not.toHaveBeenCalled();
+    for (const fn of timers) fn();
     expect(revoke).toHaveBeenCalledWith("blob:mock");
   });
 });

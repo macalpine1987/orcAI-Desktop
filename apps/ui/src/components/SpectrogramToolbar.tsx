@@ -4,6 +4,8 @@ import type { SpectrogramColormap } from "../lib/spectrogramView";
 import {
   IconChevronLeft,
   IconChevronRight,
+  IconSegmentNext,
+  IconSegmentPrev,
   IconExport,
   IconFilter,
   IconLanes,
@@ -197,7 +199,7 @@ export function SpectrogramToolbar({
               disabled={!canSegmentPrev}
               onClick={onSegmentPrev}
             >
-              <IconChevronLeft />
+              <IconSegmentPrev />
             </ToolbarIconButton>
             <div
               className="min-w-[7.5rem] px-1 text-center font-mono text-[11px] leading-tight text-foreground"
@@ -230,7 +232,7 @@ export function SpectrogramToolbar({
               disabled={!canSegmentNext}
               onClick={onSegmentNext}
             >
-              <IconChevronRight />
+              <IconSegmentNext />
             </ToolbarIconButton>
           </div>
 

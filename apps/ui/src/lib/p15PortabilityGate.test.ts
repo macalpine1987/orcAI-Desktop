@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { readAnalysisLabCss } from "./readAnalysisLabCss";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const uiSrc = join(here, "..");
@@ -37,7 +38,7 @@ describe("portability gate · static UI", () => {
   });
 
   it("analysis-lab axes avoid -apple-system and inherit the portable sans stack", () => {
-    const css = readFileSync(join(styles, "analysis-lab.css"), "utf8");
+    const css = readAnalysisLabCss();
     const tokens = readFileSync(join(styles, "tokens.css"), "utf8");
     expect(css).not.toContain("-apple-system");
     expect(css).toContain("var(--font-sans");
@@ -67,7 +68,7 @@ describe("portability gate · static UI", () => {
     const targets = [
       "workspace/project.ts",
       "workspace/predictSettings.ts",
-      "pages/PipelinePage.tsx",
+      "hooks/usePipelineBoardActions.ts",
       "pages/ResultsPage.tsx",
     ];
     for (const rel of targets) {

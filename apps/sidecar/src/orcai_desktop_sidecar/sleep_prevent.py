@@ -130,20 +130,6 @@ def release_keep_awake(job_id: str) -> None:
             _log.info("System idle sleep allowed again")
 
 
-def sync_keep_awake(*, any_keep_awake_running: bool) -> None:
-    """Legacy boolean sync — prefer :func:`hold_keep_awake` / :func:`release_keep_awake`."""
-    with _lock:
-        if any_keep_awake_running and not _hold_ids:
-            # Anonymous hold so tests / callers without a job id still work.
-            _hold_ids.add("__sync__")
-            _acquire()
-            _log.info("System idle sleep prevented (training / TF job running)")
-        elif not any_keep_awake_running and _hold_ids == {"__sync__"}:
-            _hold_ids.clear()
-            _release()
-            _log.info("System idle sleep allowed again")
-
-
 def is_keep_awake_active() -> bool:
     with _lock:
         return bool(_hold_ids)

@@ -32,16 +32,24 @@ type Props = {
   toolsSlot?: HTMLElement | null;
   lcdSlot?: HTMLElement | null;
   zoomSlot?: HTMLElement | null;
+  /** Portal host for the Classes tools strip (replaces transport). */
+  classesToolsSlot?: HTMLElement | null;
+  classesToolsOpen?: boolean;
+  onClassesToolsOpenChange?: (open: boolean) => void;
   /** Portal studio segment rail between toolbar and spectrogram. */
   segmentSlot?: HTMLElement | null;
   studioFilePicker?: {
     open: boolean;
     onToggle: () => void;
+    onClose?: () => void;
     disabled?: boolean;
     canPrev?: boolean;
     canNext?: boolean;
     onPrev?: () => void;
     onNext?: () => void;
+    files?: readonly { name: string }[];
+    activeFileName?: string | null;
+    onSelect?: (name: string) => void;
   } | null;
   onDetectionTotalChange?: (total: number | null) => void;
   /** Queue / strip files for ±1 neighbor spectrogram warm. */
@@ -69,6 +77,9 @@ export function PredictAnalysisSpectrogramPane({
   toolsSlot = null,
   lcdSlot = null,
   zoomSlot = null,
+  classesToolsSlot = null,
+  classesToolsOpen = false,
+  onClassesToolsOpenChange,
   segmentSlot = null,
   studioFilePicker = null,
   onDetectionTotalChange = undefined,
@@ -118,6 +129,9 @@ export function PredictAnalysisSpectrogramPane({
         toolsSlot={toolsSlot}
         lcdSlot={lcdSlot}
         zoomSlot={zoomSlot}
+        classesToolsSlot={classesToolsSlot}
+        classesToolsOpen={classesToolsOpen}
+        onClassesToolsOpenChange={onClassesToolsOpenChange}
         segmentSlot={segmentSlot}
         studioFilePicker={studioFilePicker}
         wavPath={activeInPackage.path}

@@ -79,11 +79,11 @@ describe("models studio gate", () => {
   });
 
   it("TrainWizard still accepts finetune deep-link props ", () => {
-    const wiz = read("trainWizard/TrainWizard.tsx");
+    const wiz = [read("trainWizard/TrainWizard.tsx"), read("trainWizard/useTrainWizardDraft.ts")].join("\n");
     expect(wiz).toContain("initialScenario");
     expect(wiz).toContain("initialBaseModel");
     expect(wiz).toContain("finetuneBaseModel");
-    const pipe = read("pages/PipelinePage.tsx");
+    const pipe = [read("pages/PipelinePage.tsx"), read("hooks/usePipelineBoard.ts")].join("\n");
     expect(pipe).toContain("initialScenario");
     expect(pipe).toContain('params.get("base")');
   });

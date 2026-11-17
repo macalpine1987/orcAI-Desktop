@@ -1,35 +1,40 @@
-# Tasks
+# Jobs
+Predictions, filtering, the training steps, and model testing run as tasks, one at a time, in queue order. The **Jobs** section shows the tasks of the active project.
 
-Every action that involves computing — predictions, filtering, training steps, model tests — becomes a job. Jobs run one after another, and all of them are listed in this section.
+The “Command” column shows the name of the orcAI command (`predict`, `train`, and so on), which makes it easier to match a task with the orcAI documentation.
 
-The Command column shows the orcAI command name (`predict`, `train` and so on), which makes it easy to match with the orcAI documentation.
+## Task states
 
-## Job states
-
-- **Queued** — the job is waiting for earlier jobs to finish.
-- **Running** — the job is in progress; you can see how far along it is.
-- **Done** — the job finished successfully.
-- **Failed** — the job failed. See the log for the reason.
-- **Cancelled** — the job was stopped by hand.
+| State | Meaning |
+|-------|---------|
+| Queued | The task is waiting for earlier tasks to finish |
+| Running | The task is running; the completion percentage is shown |
+| Done | The task finished successfully |
+| Error | The task failed; the cause is in the log |
+| Canceled | The task was stopped manually |
 
 ## Console
 
-The console at the bottom of the window shows details of the selected job. It has four tabs:
+The console at the bottom of the window shows details about the selected task. It has four tabs:
 
-- **Log** — everything orcAI reported while it was running;
-- **Inspector** — the parameters the job was started with;
-- **Errors** — error messages only;
-- **Command** — the exact orcAI command, which you can repeat in a terminal.
+| Tab | Contents |
+|-----|----------|
+| **Log** | All orcAI messages received while the task ran |
+| **Inspector** | The parameters the task was started with |
+| **Errors** | Error messages only |
+| **Command** | The exact orcAI command, which you can repeat in a terminal |
 
-You can collapse the console when you do not need it.
+You can collapse the console to free up screen space.
 
-## Managing jobs
+## Managing tasks
 
-- **Cancel** — interrupt a running job. If it belongs to a training plan, the following steps of that plan are cancelled too.
-- **Remove** — drop a job that has not started yet. For a plan step this also cancels the following steps.
-- **Retry** — run again a job that failed.
-- **Open** — reveal the result file of a finished job.
-- **Export log** — save the log of the selected job.
-- **Clear** — delete the job history. Running jobs are cancelled as well.
+| Action | Description |
+|--------|-------------|
+| **Cancel** | Interrupts a running task. If the task is part of a training plan, the remaining steps of the plan are removed as well |
+| **Delete** | Removes a task that has not started yet from the queue. For a step in a plan, the following steps are removed too |
+| **Retry** | Runs a failed task again |
+| **Open** | Opens the result file of a completed task |
+| **Export log** | Saves the log of the selected task |
+| **Clear** | Deletes the task history. Running tasks are canceled |
 
-Finished jobs are kept between app sessions. Unfinished ones are dropped when you quit or click **Stop** on Home. Hiding the window on macOS leaves the queue running.
+Completed tasks are kept between application launches. Unfinished tasks are removed when you quit the application or click **Stop** on the **Home** page. Minimizing the window (on macOS also hiding with ⌘W) keeps the queue running; on Windows, minimize for background work — ✕ / Alt+F4 quit the application and clear unfinished tasks.

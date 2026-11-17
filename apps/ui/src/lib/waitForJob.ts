@@ -1,6 +1,7 @@
 import { cancelJob, fetchJob, type JobRecord } from "../api/jobs";
+import { DEFAULT_JOB_TIMEOUT_MS } from "./timeouts";
 
-const DEFAULT_JOB_TIMEOUT_MS = 30 * 60 * 1000;
+export { DEFAULT_JOB_TIMEOUT_MS };
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

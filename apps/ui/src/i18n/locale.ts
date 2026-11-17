@@ -14,39 +14,17 @@ import {
 export type { AppLocale } from "../preferences/storage";
 export { DEFAULT_LOCALE };
 
-/** Russian OS/UI language → ru, anything else → en. */
+/**
+ * Map a BCP 47 / OS language tag to the two UI locales.
+ * Kept as a pure helper for Settings / tests; first launch and factory reset
+ * use DEFAULT_LOCALE (en) — OS auto-detect was removed as an unused path.
+ */
 export function localeFromLanguageTag(tag: string): AppLocale {
   const normalized = tag.trim().toLowerCase().replace(/_/g, "-");
   if (normalized === "ru" || normalized.startsWith("ru-")) {
     return "ru";
   }
   return "en";
-}
-
-/** Browser / WebView fallback (also used in Vite dev). */
-export function detectSystemLocaleSync(): AppLocale {
-  const candidates: string[] = [];
-  if (typeof navigator !== "undefined") {
-    if (navigator.language) candidates.push(navigator.language);
-    if (navigator.languages?.length) {
-      candidates.push(...navigator.languages);
-    }
-  }
-  for (const tag of candidates) {
-    if (localeFromLanguageTag(tag) === "ru") {
-      return "ru";
-    }
-  }
-  return "en";
-}
-
-export async function detectSystemLocaleAsync(): Promise<AppLocale> {
-  try {
-    const { readSystemLocale } = await import("../platform/systemLocale");
-    return await readSystemLocale();
-  } catch {
-    return detectSystemLocaleSync();
-  }
 }
 
 export function migratePreferences(

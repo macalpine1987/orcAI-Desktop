@@ -8,6 +8,8 @@ import {
 type Props = {
   axisMaxHz: number;
   height: number;
+  /** Stretch to the plot column (studio) instead of a fixed px height. */
+  fillContainer?: boolean;
   /** When true, unit is shown in the axis corner instead of atop this scale. */
   unitInCorner?: boolean;
   /** Hide 0 / max kHz labels and inset the top label to avoid edge overlap. */
@@ -29,6 +31,7 @@ type Props = {
 export function SpectrogramFrequencyAxis({
   axisMaxHz,
   height,
+  fillContainer = false,
   unitInCorner = false,
   compactEdgeLabels = false,
   autoTick = false,
@@ -57,7 +60,11 @@ export function SpectrogramFrequencyAxis({
   return (
     <div
       className="analysis-frequency-axis-width flex shrink-0"
-      style={{ height: specHeight }}
+      style={
+        fillContainer
+          ? { height: "100%", alignSelf: "stretch" }
+          : { height: specHeight }
+      }
       aria-label={t("spectrogram.frequencyAxis.ariaLabel")}
     >
       <div className="analysis-frequency-axis-scale relative h-full w-full font-mono text-foreground-muted">

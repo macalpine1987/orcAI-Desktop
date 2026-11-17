@@ -1,4 +1,8 @@
 import { getSidecarBase } from "./sidecar";
+import {
+  SIDECAR_HTTP_MEDIUM_LONG_MS,
+  SIDECAR_HTTP_MEDIUM_MS,
+} from "../lib/timeouts";
 
 export type OrcaiModel = {
   id: string;
@@ -87,14 +91,55 @@ async function throwHttpError(res: Response, fallback: string): Promise<never> {
   throw new Error(message || fallback);
 }
 
-export async function fetchModels(projectDir?: string): Promise<OrcaiModel[]> {
+const MODELS_TTL_MS = 4_000;
+const MODELS_CACHE_MAX_KEYS = 24;
+const modelsCache = new Map<string, { at: number; models: OrcaiModel[] }>();
+
+function modelsCacheKey(projectDir?: string): string {
+  return projectDir ?? "";
+}
+
+function pruneModelsCache(now = Date.now()): void {
+  for (const [key, hit] of modelsCache) {
+    if (now - hit.at > MODELS_TTL_MS) modelsCache.delete(key);
+  }
+  while (modelsCache.size > MODELS_CACHE_MAX_KEYS) {
+    const oldest = modelsCache.keys().next().value;
+    if (oldest == null) break;
+    modelsCache.delete(oldest);
+  }
+}
+
+export function peekModels(projectDir?: string): OrcaiModel[] | null {
+  const key = modelsCacheKey(projectDir);
+  const hit = modelsCache.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.at > MODELS_TTL_MS) {
+    modelsCache.delete(key);
+    return null;
+  }
+  return hit.models;
+}
+
+export async function fetchModels(
+  projectDir?: string,
+  opts?: { fresh?: boolean },
+): Promise<OrcaiModel[]> {
+  if (!opts?.fresh) {
+    const peeked = peekModels(projectDir);
+    if (peeked) return peeked;
+  }
   const url = new URL(`${getSidecarBase()}/v1/models`);
   if (projectDir) url.searchParams.set("project_dir", projectDir);
   const res = await fetch(url, {
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_MEDIUM_MS),
   });
   if (!res.ok) await throwHttpError(res, `Models request failed: ${res.status}`);
   const data = (await res.json()) as { models: OrcaiModel[] };
+  const key = modelsCacheKey(projectDir);
+  if (modelsCache.has(key)) modelsCache.delete(key);
+  modelsCache.set(key, { at: Date.now(), models: data.models });
+  pruneModelsCache();
   return data.models;
 }
 
@@ -105,7 +150,7 @@ export async function fetchModelDetail(
   const url = new URL(`${getSidecarBase()}/v1/models/detail`);
   url.searchParams.set("model_id", modelId);
   if (projectDir) url.searchParams.set("project_dir", projectDir);
-  const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(SIDECAR_HTTP_MEDIUM_LONG_MS) });
   if (!res.ok) await throwHttpError(res, `Model detail failed: ${res.status}`);
   return (await res.json()) as ModelDetail;
 }
@@ -118,7 +163,7 @@ export async function checkModelCompatibility(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ model_id: modelId, project_dir: projectDir }),
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(SIDECAR_HTTP_MEDIUM_MS),
   });
   if (!res.ok) await throwHttpError(res, `Compatibility check failed: ${res.status}`);
   return (await res.json()) as ModelCompatibility;

@@ -1,9 +1,11 @@
+import { errorText, truncateUserError } from "./userFacingError";
 import { exportAudacityLabels } from "../api/labels";
 import { basename, isAbsolutePath, pickDirectory } from "../platform/dialog";
 import { isTauri } from "../platform/tauri";
 import { labelPathForQueueFile } from "./predictQueueUi";
 import { channelForQueueFile } from "./predictQueueStudio";
 import type { PredictQueueFile } from "../workspace/predictQueue";
+import { downloadTextFile } from "./downloadBlob";
 
 export type ExportAudacityBatchResult = {
   exported: number;
@@ -21,16 +23,6 @@ function joinPath(dir: string, fileName: string): string {
 function suggestedAudacityName(labelPath: string): string {
   const stem = basename(labelPath).replace(/\.txt$/i, "");
   return `${stem}_audacity.txt`;
-}
-
-function downloadTextFile(content: string, fileName: string): void {
-  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 export async function exportPackageFilesToAudacity(params: {
@@ -126,7 +118,7 @@ export async function exportPackageFilesToAudacity(params: {
     } catch (err) {
       result.errors.push({
         fileName: file.name,
-        message: err instanceof Error ? err.message : String(err),
+        message: truncateUserError(errorText(err)),
       });
     }
   }

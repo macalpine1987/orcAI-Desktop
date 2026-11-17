@@ -1,6 +1,7 @@
 import type { JobRecord } from "../api/jobs";
 import { isTauri } from "../platform/tauri";
 import { writeTextFileAbsolute } from "../platform/shell";
+import { downloadTextFile } from "./downloadBlob";
 
 export function jobLogText(job: JobRecord, lines?: string[]): string {
   const body = lines ?? job.log;
@@ -31,13 +32,7 @@ export async function exportJobLogToFile(
   }
 
   try {
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = defaultName;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(text, defaultName);
     return true;
   } catch {
     return false;
