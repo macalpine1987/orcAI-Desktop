@@ -8,9 +8,7 @@ The interface is the Lab layout. Russian and English are chosen at startup; Engl
 
 ## Interface
 
-![Predictions: spectrogram and detections](docs/screenshots/predictions.png)
 
-![Training pipeline](docs/screenshots/training.png)
 
 ## Run from source
 
